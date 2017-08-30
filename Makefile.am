@@ -11,8 +11,15 @@ GAPINSTALLLIB = $(BINARCHDIR)/meataxe64.so
 
 lib_LTLIBRARIES = meataxe64.la
 
-meataxe64_la_SOURCES = src/meataxe64.c
-meataxe64_la_CPPFLAGS = $(GAP_CPPFLAGS) -DCONFIG_H
+meataxe64_la_SOURCES = \
+  src/meataxe64.c \
+  src/mtx64/field.c \
+  src/mtx64/conex.c \
+  src/mtx64/pcritGENc.c \
+  src/mtx64/hpmi.c \
+  src/mtx64/linf.c 
+
+meataxe64_la_CPPFLAGS = -Isrc/mtx64 $(GAP_CPPFLAGS) -DCONFIG_H
 meataxe64_la_LDFLAGS = -module -avoid-version
 if SYS_IS_CYGWIN
 meataxe64_la_LDFLAGS += -no-undefined -version-info 0:0:0 
