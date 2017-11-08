@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include "mtx64/field.h"
+#include "mtx64/slab.h"
 
 /* The slab level interface with meataxe 64 works uses mainly
    interfaces defined in mtx64/field.h and mtx64/slab.h.  
@@ -98,7 +99,10 @@ static Obj MTX64_CreateField(Obj self, Obj field_order) {
 
 static Obj MakeMtx64Felt(Obj field, FELT x) {
     Obj f = NewBag(T_DATOBJ, sizeof(FELT)+sizeof(Obj));
-    SET_TYPE_DATOBJ(f, CALL_1ARGS(TYPE_MTX64_Felt, f));
+    UInt q = DataOfFieldObject(field)->fdef;
+    Obj type = CALL_1ARGS(TYPE_MTX64_Felt,
+                          INTOBJ_INT(q));
+    SET_TYPE_DATOBJ(f,type );
     SetFELTOfFELTObject(f, x);
     return f;
 }
@@ -365,27 +369,27 @@ typedef Obj (* GVarFunc)(/*arguments*/);
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateField, 1, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateField, 1, "q"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldOrder, 1, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldCharacteristic, 1, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDegree, 1, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldOrder, 1, "f"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldCharacteristic, 1, "f"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDegree, 1, "f"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateFieldElement, 2, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractFieldElement, 1, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateFieldElement, 2, "f,x"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractFieldElement, 1, "e"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldAdd, 3, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldNeg, 2, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldSub, 3, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldMul, 3, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldInv, 2, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDiv, 3, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldAdd, 3, "f,a,b"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldNeg, 2, "f,a"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldSub, 3, "f,a,b"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldMul, 3, "f,a,b"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldInv, 2, "f,a"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDiv, 3, "f,a,b"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_NewMatrix, 3, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumRows, 1, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumCols, 1, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntry, 3, ""),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntry, 4, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_NewMatrix, 3, "f,nor,noc"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumRows, 1, "m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumCols, 1, "m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntry, 3, "m,i,j"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntry, 4, "m,i,j,x"),
     { 0 } /* Finish with an empty entry */
 
 };

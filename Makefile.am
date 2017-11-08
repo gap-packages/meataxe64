@@ -17,7 +17,8 @@ meataxe64_la_SOURCES = \
   src/mtx64/conex.c \
   src/mtx64/pcritGENc.c \
   src/mtx64/hpmi.c \
-  src/mtx64/linf.c 
+  src/mtx64/linf.c \
+  src/mtx64/slab.c
 
 meataxe64_la_CPPFLAGS = -Isrc/mtx64 $(GAP_CPPFLAGS) -DCONFIG_H
 meataxe64_la_LDFLAGS = -module -avoid-version
