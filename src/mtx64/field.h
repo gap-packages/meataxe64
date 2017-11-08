@@ -3,10 +3,10 @@
          =======      R. A. Parker  mtx64t version 30.6.2015
 */
 
-typedef unsigned char  uint8;
-typedef unsigned short uint16;
-typedef unsigned int   uint32;
-typedef unsigned long uint64;
+typedef uint8_t  uint8;
+typedef uint16_t uint16;
+typedef uint32_t   uint32;
+typedef uint64_t uint64;
 
 extern uint8 * AlignMalloc(size_t bytes);
 extern void AlignFree(uint8 * ptr);
