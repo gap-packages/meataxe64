@@ -247,81 +247,104 @@ Obj MTX64_SetEntry(Obj self, Obj m, Obj col, Obj row, Obj entry)
     return 0;
 }
 
-#if 0
 Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj nrows)
 {
-    Obj ds = DSpaceOfDfmt(src);
-    FixDSpace(ds);
-    DCpy(DataOfDSPaceObject(ds), DataOfDfmtObject(src), INT_INTOBJ(nrows),
-         DataOfDfmtObject(dst));
+    DSPACE ds;
+    Dfmt * sp, *dp;
+    SetDSpaceOfMTX64_Matrix(src, &ds);
+    sp = DataOfMTX64_Matrix(src);
+    dp = DataOfMTX64_Matrix(dst);
+    DCpy(&ds, sp, INT_INTOBJ(nrows), dp);
     return 0;
 }
 
 Obj MTX64_DCut(Obj self, Obj m, Obj nrows, Obj startcol, Obj clip ) 
 {
-    Obj ms = DSpaceOfDfmt(m);
-    Obj cbs = DSpaceOfDfmt(clip);
-    FixDSpace(ms);
-    FixDSpace(cbs);
-    DCut(DataOfDSPaceObject(ms), INT_INTOBJ(nrows), INT_INTOBJ(startcol),
-         DataOfDfmtObject(m), DataOfDSPaceObject(cbs), DataOfDfmtObject(cb));
+    DSPACE ms, cs;
+    Dfmt * mp, *cp;
+    SetDSpaceOfMTX64_Matrix(m, &ms);
+    SetDSpaceOfMTX64_Matrix(clip, &cs);
+    mp = DataOfMTX64_Matrix(m);
+    cp = DataOfMTX64_Matrix(clip);
+    DCut(&ms, INT_INTOBJ(nrows), INT_INTOBJ(startcol),
+         mp, &cs, cp);
     return 0;
 }
 
 Obj MTX64_DPaste(Obj self, Obj clip, Obj nrows, Obj startcol, Obj m)
 {
-    Obj ms = DSpaceOfDfmt(m);
-    Obj cbs = DSpaceOfDfmt(cb);
-    FixDSpace(ms);
-    FixDSpace(cbs);
-    DPaste(DataOfDSPaceObject(cbs), DataOfDfmtObject(cb),
-           INT_INTOBJ(nrows), INT_INTOBJ(startcol),
-         DataOfSpaceObject(ms), DataOfDfmtObject(m), );
+    DSPACE ms, cs;
+    Dfmt * mp, *cp;
+    SetDSpaceOfMTX64_Matrix(m, &ms);
+    SetDSpaceOfMTX64_Matrix(clip, &cs);
+    mp = DataOfMTX64_Matrix(m);
+    cp = DataOfMTX64_Matrix(clip);
+    DPaste(&cs, cp, INT_INTOBJ(nrows), INT_INTOBJ(startcol), &ms, mp );
     return 0;
     
 }
 
-Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2)
+Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2, Obj d)
 {
-    Obj ds = DSpaceOfDfmt(d1);
-    Obj d = MTX64_MakeDfmt(ds, INT_INTOBJ(nrows));
-    FixDSpace(ds);
-    DAdd( DataOfDSpaceObject(ds), INT_INTOBJ(nrows), DataOfDfmtObject(d1),
-          DataOfDfmtObject(d2), DataOfDfmtObject(d));
-    return d;
+    DSPACE ds;
+    Dfmt * d1p, *d2p, *dp;
+    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    d1p = DataOfMTX64_Matrix(d1);
+    d2p = DataOfMTX64_Matrix(d2);
+    dp = DataOfMTX64_Matrix(d);
+    DAdd( &ds, INT_INTOBJ(nrows), d1p, d2p, dp);
+    return 0;
 }
 
-Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2)
+Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2, Obj d)
 {
-    Obj ds = DSpaceOfDfmt(d1);
-    Obj d = MTX64_MakeDfmt(ds, INT_INTOBJ(nrows));
-    FixDSpace(ds);
-    DSub( DataOfDSpaceObject(ds), INT_INTOBJ(nrows), DataOfDfmtObject(d1),
-          DataOfDfmtObject(d2), DataOfDfmtObject(d));
-    return d;
+    DSPACE ds;
+    Dfmt * d1p, *d2p, *dp;
+    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    d1p = DataOfMTX64_Matrix(d1);
+    d2p = DataOfMTX64_Matrix(d2);
+    dp = DataOfMTX64_Matrix(d);
+    DSub( &ds, INT_INTOBJ(nrows), d1p, d2p, dp);
+    return 0;
 }
+
 
 Obj MTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2)
 {
-    Obj ds = DSpaceOfDfmt(d1);
-    FixDSpace(ds);
-    DSMad( DataOfDSpaceObject(ds), GetFELTFromFELTObject(scalar),
-           INT_INTOBJ(nrows), DataOfDfmtObject(d1),
-          DataOfDfmtObject(d2));
+    DSPACE ds;
+    Dfmt * d1p, *d2p;
+    FELT x;
+    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    d1p = DataOfMTX64_Matrix(d1);
+    d2p = DataOfMTX64_Matrix(d2);
+    x = GetFELTFromFELTObject(scalar);
+    DSMad( &ds, x, INT_INTOBJ(nrows), d1p, d2p);
     return 0;
 }
 
 // In place?
 Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1)
 {
-    Obj ds = DSpaceOfDfmt(d1);
-    FixDSpace(ds);
-    DSMul( DataOfDSpaceObject(ds), GetFELTFromFELTObject(scalar),
-           INT_INTOBJ(nrows), DataOfDfmtObject(d1));
-    return 0;
-    
+    DSPACE ds;
+    Dfmt *dp;
+    FELT x;
+    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    dp = DataOfMTX64_Matrix(d1);
+    x = GetFELTFromFELTObject(scalar);
+    DSMul( &ds, x, INT_INTOBJ(nrows), dp);
+    return 0;    
 }
 
+Obj MTX64_DNzl(Obj self, Obj m)
+{
+    DSPACE ds;
+    Dfmt *mp;
+    SetDSpaceOfMTX64_Matrix(m, &ds);    
+    mp = DataOfMTX64_Matrix(m);
+    return INTOBJ_INT(DNzl(&ds,mp));
+}
+    
+#if 0    
 
 // Higher level stuff
 Obj MTX64_SLEchelize(Obj self, Obj a, Obj nrows, Obj ncols)
@@ -390,6 +413,17 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumCols, 1, "m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntry, 3, "m,i,j"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntry, 4, "m,i,j,x"),
+
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCpy, 3, "src,dst,nrows"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCut, 4, "m,nrows,startcol,clip"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DPaste, 4, "clip,nrows,startcol,m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DAdd, 4, "nrows,d1,d2,d"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSub, 4, "nrows,d1,d2,d"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMad, 4, "nrows,scalar,d1,d2"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMul, 3, "nrows,scalar,d1"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DNzl, 1, "m"),
+
+    
     { 0 } /* Finish with an empty entry */
 
 };
