@@ -47,6 +47,17 @@
 static Obj TYPE_MTX64_Field;     // global variable. All FIELDS have same type 
 static Obj TYPE_MTX64_Felt;      // function, takes field
 static Obj TYPE_MTX64_Matrix;    // function takes field
+static Obj TYPE_MTX64_BitString; // global variable, type of MTX64 Bitstring objects
+
+static inline uint64_t *DataOfBitStringObject(Obj bs) {
+    return (uint64_t *)(ADDR_OBJ(bs)+1);
+}
+
+static inline Obj MTX64_MakeBitString(UInt len) {
+    Obj bs = NewBag(T_DATOBJ, sizeof(Obj) + 2*sizeof(uint64_t) + 8*((len + 63)/64));
+    SET_TYPE_DATOBJ(bs, TYPE_MTX64_BitString);
+    return bs;
+}
 
 static inline FIELD * DataOfFieldObject( Obj f) {
     return (FIELD *)(ADDR_OBJ(f)+1);
@@ -347,8 +358,20 @@ Obj MTX64_DNzl(Obj self, Obj m)
 #if 0    
 
 // Higher level stuff
-Obj MTX64_SLEchelize(Obj self, Obj a, Obj nrows, Obj ncols)
+Obj MTX64_SLEchelize(Obj self, Obj a, Obj nrows)
 {
+    MTX64_Matrix_Header * h = HeaderOfMTX64_Matrix(a);
+    UInt nrows = h->nor;
+    UInt ncols = h->noc;
+    UInt rklimit = (nrows > ncols) ? ncols: nrows; // minimum
+    Obj rs = MTX64_MakeBitString(nrows);
+    Obj cs = MTX64_MakeBitString(nrows);
+    FELT det;
+    Obj field = CALL_1ARGS(FieldOfMTX64Matrix,a);
+    FIELD *f = DataOfFieldObject(field);
+    Obj m = NEW_MTX64_Matrix(f, rklimit, rklimit);
+    Obj c = NEW_MTX64_Matrix(f, 
+    
     Obj result;
     uint64_t rank;
     uint64_t *rs, *cs;
@@ -370,18 +393,37 @@ Obj MTX64_SLEchelize(Obj self, Obj a, Obj nrows, Obj ncols)
 
     return result;
 }
-
-Obj MTX64_SLMultiply(Obj self, Obj field, Obj a, Obj b)
-{
-    
-}
-
-Obj MTX64_SLTranspose(Obj self, Obj field, Obj mat)
-{
-
-}
-
 #endif
+
+Obj MTX64_SLMultiply(Obj self, Obj a, Obj b, Obj c)
+{
+    MTX64_Matrix_Header * ha = HeaderOfMTX64_Matrix(a);
+    MTX64_Matrix_Header * hb = HeaderOfMTX64_Matrix(b);
+    UInt nora = ha->nor;
+    UInt noca = ha->noc;
+    UInt nocb = hb->noc;
+    Obj field = CALL_1ARGS(FieldOfMTX64Matrix,a);
+    FIELD *f = DataOfFieldObject(field);
+    Dfmt *ap = DataOfMTX64_Matrix(a);
+    Dfmt *bp = DataOfMTX64_Matrix(b);
+    Dfmt *cp = DataOfMTX64_Matrix(c);
+    SLMul(f,ap,bp,cp,nora,noca,nocb);
+    return 0;
+}
+
+Obj MTX64_SLTranspose(Obj self, Obj mat, Obj tra)
+{
+    MTX64_Matrix_Header * h = HeaderOfMTX64_Matrix(mat);
+    UInt nora = h->nor;
+    UInt noca = h->noc;
+    Obj field = CALL_1ARGS(FieldOfMTX64Matrix,mat);
+    FIELD *f = DataOfFieldObject(field);
+    Dfmt *mp = DataOfMTX64_Matrix(mat);
+    Dfmt *tp = DataOfMTX64_Matrix(tra);
+    SLTra(f, mp, tp, nora, noca);
+    return 0;
+}
+
 
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
@@ -423,6 +465,8 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMul, 3, "nrows,scalar,d1"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DNzl, 1, "m"),
 
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLMultiply, 3, "a, b, c"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLTranspose, 2, "m, t"),
     
     { 0 } /* Finish with an empty entry */
 
@@ -437,6 +481,7 @@ static Int InitKernel( StructInitInfo *module )
     InitHdlrFuncsFromTable( GVarFuncs );
 
     ImportGVarFromLibrary( "MTX64_FieldType", &TYPE_MTX64_Field);
+    ImportGVarFromLibrary( "MTX64_BitStringType", &TYPE_MTX64_BitString);
     ImportFuncFromLibrary( "MTX64_FieldEltType", &TYPE_MTX64_Felt);
     ImportFuncFromLibrary( "MTX64_MatrixType", &TYPE_MTX64_Matrix);
     ImportFuncFromLibrary( "FieldOfMTX64Matrix", &FieldOfMTX64Matrix);
