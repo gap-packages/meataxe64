@@ -14,7 +14,7 @@
 #
 BindGlobal( "MTX64_FieldFamily", NewFamily("MTX64_FieldFamily"));
 BindGlobal( "MTX64_FieldType",
-        NewType(MTX64_FieldFamily, IsMTX64FiniteField ) );
+        NewType(MTX64_FieldFamily, IsMTX64FiniteField and IsDataObjectRep) );
 
 
 InstallMethod( MTX64_FiniteField, "for a size",
@@ -56,7 +56,7 @@ BindGlobal("MTX64_FieldEltType", MemoizePosIntFunction(function(q)
     fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_ElementFamily"));
     fam!.q := q;
     fam!.field := MTX64_FiniteField(q);    
-    return NewType(fam, IsMTX64FiniteFieldElement);
+    return NewType(fam, IsMTX64FiniteFieldElement and IsDataObjectRep);
 end, rec(flush := true)));
 
     
@@ -81,8 +81,30 @@ function(e)
                   , ">");
 end);
 
+BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
+    local fam, type;
+    fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_MatrixFamily"));
+    fam!.q := q;
+    fam!.field := MTX64_FiniteField(q);    
+    return NewType(fam, IsMTX64Matrix and IsDataObjectRep);
+end, rec(flush := true)));
+
+BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
 
 
+InstallMethod( ViewString, "for a meataxe64 matrix",
+               [ IsMTX64Matrix ],
+function(m)
+    local f;
+    f := FieldOfMTX64Matrix(m);    
+    return STRINGIFY("< matrix "
+                   , MTX64_Matrix_NumRows(m)
+                   , "x"
+                   , MTX64_Matrix_NumCols(m)
+                  , " : "
+                  , ViewString(f)
+                  , ">");
+end);
 
 
 

@@ -74,8 +74,8 @@ static inline Obj NEW_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
     DSPACE ds;
     Obj m;
     DSSet(DataOfFieldObject(f), noc, &ds);
-    m = NewBag(T_DATOBJ, sizeof(MTX64_Matrix_Header) + ds.nob*nor);
-    SET_TYPE_DATOBJ(m, CALL_1ARGS(TYPE_MTX64_Matrix,f));
+    m = NewBag(T_DATOBJ, sizeof(Obj) + sizeof(MTX64_Matrix_Header) + ds.nob*nor);
+    SET_TYPE_DATOBJ(m, CALL_1ARGS(TYPE_MTX64_Matrix,INTOBJ_INT(DataOfFieldObject(f)->fdef)));
     HeaderOfMTX64_Matrix(m)->noc = noc;
     HeaderOfMTX64_Matrix(m)->nor = nor;
     return m;
@@ -404,7 +404,7 @@ static Int InitKernel( StructInitInfo *module )
 
     ImportGVarFromLibrary( "MTX64_FieldType", &TYPE_MTX64_Field);
     ImportFuncFromLibrary( "MTX64_FieldEltType", &TYPE_MTX64_Felt);
-    ImportFuncFromLibrary( "MTX64_DfmtType", &TYPE_MTX64_Matrix);
+    ImportFuncFromLibrary( "MTX64_MatrixType", &TYPE_MTX64_Matrix);
     ImportFuncFromLibrary( "FieldOfMTX64Matrix", &FieldOfMTX64Matrix);
 
     /* return success */
