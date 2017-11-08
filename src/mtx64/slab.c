@@ -1,6 +1,6 @@
 /*
          slab.c  -   Slab Routines Code
-         ======      R. A. Parker 8.7.2015
+         ======      R. A. Parker 18.8.2017
 */
 
 #include <stdio.h>
@@ -12,213 +12,24 @@
 #include "pcrit.h"
 #include "slab.h"
 #include "linf.h"
+#include "pmul.h"
 #include "bitstring.h"
 
-void HDump1(HPMI * hp)
+int  FieldSet1(uint64_t fdef, FIELD * f, int flags)
 {
-    uint16 * Thpv;
-    uint8  * Thpa;
-    uint64 * Thpb;
-    uint8  * Thpc;
-    int i;
-    Thpv=(uint16 *)(((uint8 *)hp->f)+(hp->f)->Thpv);
-    printf("Thpv\n");
-    for(i=0;i<243;i++)
-    {
-        printf("%3d %x\n",i,Thpv[i]);
-    }
-    Thpa=((uint8 *)hp->f)+(hp->f)->Thpa;
-    printf("Thpa\n");
-    for(i=0;i<256;i++)
-    {
-        printf("%2x %d\n",i,Thpa[i]);
-    }
-    Thpb=(uint64 *)(((uint8 *)hp->f)+(hp->f)->Thpb);
-    printf("Thpb\n");
-    for(i=0;i<243;i++)
-    {
-        printf("%3d %lx\n",i,Thpb[i]);
-    }
-    Thpc=((uint8 *)hp->f)+(hp->f)->Thpc;
-    printf("Thpc\n");
-    for(i=0;i<1023;i++)
-    {
-        printf("%3x %d\n",i,Thpc[i]);
-    }
+    int res;
+    res=FieldASet1(fdef,f,flags);
+    if(res!=1) return res;
+    hpmiset(f);
+    linftab(f);
+    return 1;   
 }
 
-void HDump(HPMI * hp)
+void FieldSet (uint64_t fdef, FIELD * f)
 {
-    const FIELD * f;
-    f=hp->f;
-    printf(" cauldron %ld\n",(long)f->cauldron);
-    printf(" cauldbytes  %ld\n",(long)f->cauldbytes);
-    printf(" dfmtcauld  %ld\n",(long)f->dfmtcauld);
-    printf(" alcove   %ld\n",(long)f->alcove);
-    printf(" alcovebytes %ld\n",(long)f->alcovebytes);
-    printf(" idealnz0 %ld\n",(long)f->idealnz0);
-    printf(" maxawa   %ld\n",(long)f->maxawa);
-    printf(" brickslots  %ld\n",(long)f->brickslots);
-    printf(" minslab  %ld\n",(long)f->minslab);
-    printf(" nora     %ld\n",(long)hp->nora);
-    printf(" noca     %ld\n",(long)hp->noca);
-    printf(" noba     %ld\n",(long)hp->noba);
-    printf(" nocb     %ld\n",(long)hp->nocb);
-    printf(" nobbc    %ld\n",(long)hp->nobbc);
-    printf(" nz0      %ld\n",(long)hp->nz0);
-    printf(" nz1      %ld\n",(long)hp->nz1);
-    printf(" bytesnz1 %ld\n",(long)hp->bytesnz1);
-    printf(" nz2      %ld\n",(long)hp->nz2);
-    printf(" nz3      %ld\n",(long)hp->nz3);
-    printf(" nz4      %ld\n",(long)hp->nz4);
-    printf(" alen     %ld\n",(long)hp->alen);
-    printf(" a        %ld\n",(long)hp->a);
-    printf(" ix       %ld\n",(long)hp->ix);
-    printf(" bwa      %ld\n",(long)hp->bwa);
-    printf(" sparsity %ld\n",(long)hp->sparsity);
-    printf("\n");
-#ifdef NEVER
-    HDump1(hp);
-#endif
-}
-
-void PLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
-          Dfmt * c, uint64 nora, uint64 noca, uint64 nocb)
-{
-    const Dfmt *da, *db;
-    Dfmt *dc;
-    uint8 * bb;
-    uint8 * cc;         // Cfmt answer
-    uint8 * ct;         // pointer to current cauldron
-    DSPACE dsa;
-    DSPACE dsb;
-    uint64 i,j;
-    FELT e;
-    HPMI hp;
-    uint64 nz0,nz1,nz2,nz3,nz4;
-    uint64 z1,z2,z3,z4;
-    uint64 alca;
-    if(nocb==0) return;
-    if(nora==0) return;
-    hp.f=f;
-    PSSet(f,nocb,&dsb);
-    PSSet(f,noca,&dsa);
-    da=a;
-    db=b;
-    dc=c;
-    memset(dc,0,dsb.nob*nora);
-    if(noca==0) return;
-    if(f->hpmischeme == 0)  // no HPMI at all - ground field steam
-    {
-        for(i=0;i<nora;i++)
-        {
-            db=(Dfmt *) b;
-            for(j=0;j<noca;j++)
-            {
-                e=DUnpak(&dsa,j,da);
-                DSMad(&dsb,e,1,db,dc);
-                db+=dsb.nob;
-            }
-            da+=dsa.nob;
-            dc+=dsb.nob;
-        }
-        return;
-    }
-    hp.nora=nora;
-    hp.noca=noca;
-    hp.noba=dsa.nob;
-    hp.nocb=nocb;
-    hp.nobbc=dsb.nob;
-
-/*  First understand how to chop the rows of A/C  */
-/*      nz0 rows are done by brick mad, nz4 times */
-/*      note nora is nonzero if we get here       */
-
-        // how many set of rows down A/C.
-    nz4=(nora+f->idealnz0-1)/f->idealnz0;
-        // max number of rows A/C at a time
-    nz0=(nora+nz4-1)/nz4;
-        // apply the little theorem
-    nz4=(nora+nz0-1)/nz0;
-
-/*  Now understand how to chop the cols of A = rows of B         */
-/*    alcove * nz1 (Afmt conversion size) * nz3 to make them all */
-
-        // how many alcoves are there to do in all
-    alca=(noca+f->alcove-1)/f->alcove;
-        // how many alcoves would we like to do at once
-    nz1=f->maxawa/(f->alcovebytes*nz0);
-    nz3=(alca+nz1-1)/nz1;               // multiples we need
-    nz1=(alca+nz3-1)/nz3;               // ideal size for that multiple
-        // need to make sure that nz1 alcoves is an integral
-        // number of bytes of Dfmt
-    while(((f->alcove*nz1)%f->pentbyte)!=0) nz1--;
-    if(nz1<1)
-    {
-        // if nz1 was zero, find its smallest positive value
-        nz1++;
-        while(((f->alcove*nz1)%f->pentbyte)!=0) nz1++;
-    }
-        // so how many chunks (nz3) do we actually need to do
-    nz3=(alca+nz1-1)/nz1;
-
-/*  Finally how many cauldrons are there.  That's easy      */
-    nz2=(nocb+f->cauldron-1)/f->cauldron;
-
-    hp.nz0=nz0;
-    hp.nz1=nz1;
-// following line assumes entries fit in a byte
-// and that the field is a ground field
-    hp.bytesnz1=(f->alcove*nz1*f->pbytesper)/f->pentbyte;
-    hp.nz2=nz2;
-    hp.nz3=nz3;
-    hp.nz4=nz4;
-
-/*  First job is to convert the matrix to Bfmt            */
-/*  This is a no-op in characteristic 2 but some          */
-/*  flags, mallocs etc will be needed here in due course  */
-
-        // Allocate all the work areas we need
-    AllocWA(&hp);
-/*  If there is a Bfmt, allocate it and then convert      */
-/*  matrix b into Bfmt                                    */
-    bb=NULL;                  // avoid compiler warnings
-    if(f->bfmt==1)
-    {
-        bb=AlignMalloc(f->cauldbytes*hp.nz2*hp.noca);
-        DtoB(&hp, b, bb);
-    }
-        // Allocate and zeroize the answer Cfmt area
-    cc=AlignMalloc(f->cauldbytes*hp.nz2*hp.nora);
-    CZer(&hp,cc);
-    for(z4=0;z4<nz4;z4++)
-    {
-      for(z3=0;z3<nz3;z3++)
-      {
-        DtoA(&hp,a,z4,z3);
-        for(z2=0;z2<nz2;z2++)
-        {
-          ct=cc + (z4*nz0+z2*hp.nora)*f->cauldbytes;
-          for(z1=0;z1<nz1;z1++)
-          {
-// grab the z3 z2 z1 data into the brick work area
-            if(f->bfmt==0)
-                DSeed(&hp,b,z3,z2,z1);
-            else
-                BSeed(&hp,bb,z3,z2,z1);
-// populate the brick with the grease table
-            BGrease(&hp);
-// do the brick mad itself
-            BrickMad(&hp,ct,z1);
-          }
-        }
-      }
-    }
-    CtoD(&hp,cc,c);
-// free all the things we used
-    AlignFree(cc);
-    if(f->bfmt==1) AlignFree(bb);
-    FreeWA(&hp);
+    int res;
+    res=FieldSet1(fdef,f,0);
+    (void)res;
 }
 
 void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
@@ -234,13 +45,10 @@ void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
         LLMul(f,a,b,c,nora,noca,nocb);
         return;
     }
-    if(f->pow==1)    // maybe ground field has HPMI
+    if(f->pow==1)    // Ground field - just call PLMul
     {
-        if(f->hpmischeme != 0)  // HPMI usable
-        {
-            PLMul(f,a,b,c,nora,noca,nocb);
-            return;
-        }
+        PLMul(f,a,b,c,nora,noca,nocb);
+        return;
     }
 // else do it by steam over extension field
     DSSet(f,noca,&dsa);
@@ -772,25 +580,35 @@ void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
     }
 }
 
-extern uint64 SLEch(const FIELD *f, Dfmt *a, uint64 *rs, uint64 *cs,
-                    Dfmt *m, Dfmt *c, Dfmt *r, uint64 nor, uint64 noc)
+// "recursive" Dfmt echelize routine (not yet recursive)
+
+uint64_t RCEchS(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
+             FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor, int lev)
 {
     int * piv;
     uint64 fel;
     uint64 nck,rank,i,j,z,col;
     size_t sbsr, sbsc;
-    DSPACE dsa,dsk,dsm,dsr;
+    FELT deter;
+    DSPACE dsk,dsm,dsr;
     Dfmt *vo, *junk;
     Dfmt *k;
     Dfmt *va,*vk;
+    const FIELD * f;
 
+    if(lev!=1)
+    {
+        printf("No recursive stuff implemented yet\n");
+        exit(13);
+    }
+    f=ds->f;
+    deter=1;
     k=r;    // use remnant area for keeptrack
     piv=malloc(nor*sizeof(int));
-    DSSet(f,noc,&dsa);
-    vo=malloc(dsa.nob);
-    junk=malloc(dsa.nob);
+    vo=malloc(ds->nob);
+    junk=malloc(ds->nob);
     nck=nor;
-    if(nck>noc) nck=noc;
+    if(nck>ds->noc) nck=ds->noc;
     DSSet(f,nck,&dsk);
     memset(m,0,nck*dsk.nob);
     memset(k,0,nor*dsk.nob);   // keeptrack starts as zero
@@ -798,34 +616,35 @@ extern uint64 SLEch(const FIELD *f, Dfmt *a, uint64 *rs, uint64 *cs,
     sbsr=8*(2+(nor+63)/64);
     memset(rs,0,sbsr);
     rs[0]=nor;
-    sbsc=8*(2+(noc+63)/64);
+    sbsc=8*(2+(ds->noc+63)/64);
     memset(cs,0,sbsc);
-    cs[0]=noc;
+    cs[0]=ds->noc;
 
     rank=0;
 
     for(i=0;i<nor;i++)
     {
-        va=a+i*dsa.nob;
+        va=a+i*ds->nob;
         vk=k+i*dsk.nob;
-        col=DNzl(&dsa,va);
+        col=DNzl(ds,va);
         if(col==ZEROROW) continue;
         piv[i]=col;
-        fel=DUnpak(&dsa,col,va);
+        fel=DUnpak(ds,col,va);
         fel=FieldInv(f,fel);
         fel=FieldNeg(f,fel);
-        DSMul(&dsa,fel,1,va);
+        DSMul(ds,fel,1,va);
         DPak(&dsk,rank,vk,1);
         DSMul(&dsk,fel,1,vk);
+        deter=FieldMul(f,fel,deter);
         BSBitSet(rs,i);
         BSBitSet(cs,col);
         rank++;
         for(j=0;j<nor;j++)
         {
             if(j==i) continue;
-            fel=DUnpak(&dsa,col,a+j*dsa.nob);
-            DSMad(&dsa,fel,1,va,a+j*dsa.nob);
-            DSMad(&dsk,fel,1,vk,k+j*dsk.nob);
+            fel=DUnpak(ds,col,a+j*ds->nob);   // create A1
+            DSMad(ds,fel,1,va,a+j*ds->nob);
+            DSMad(&dsk,fel,1,vk,k+j*dsk.nob); // consume A1
         }
     }
 
@@ -842,7 +661,8 @@ extern uint64 SLEch(const FIELD *f, Dfmt *a, uint64 *rs, uint64 *cs,
         z++;     
     }
     z=0;                   // now get multiplier out
-    for(i=0;i<noc;i++)     // by permuting the rows of keeptrack
+// still need to sort out the sign of the determinant here
+    for(i=0;i<ds->noc;i++)     // by permuting the rows of keeptrack
     {
         if(BSBitRead(cs,i)==0) continue;
         for(j=0;j<nor;j++)
@@ -853,17 +673,17 @@ extern uint64 SLEch(const FIELD *f, Dfmt *a, uint64 *rs, uint64 *cs,
             z++;
         }
     }
-    DSSet(f,noc-rank,&dsr);
+    DSSet(f,ds->noc-rank,&dsr);
     memset(r,0,(nor-rank)*dsr.nob);
     z=0;                   // finally the remnant
-    for(i=0;i<noc;i++)     // by permuting the rows of matrix a
+    for(i=0;i<ds->noc;i++)     // by permuting the rows of matrix a
     {
         if(BSBitRead(cs,i)==0) continue;
         for(j=0;j<nor;j++)
         {
             if(BSBitRead(rs,j)==0) continue;
             if(piv[j]!=i) continue;
-            BSColSelect(f,cs,1,a+j*dsa.nob,junk,r+z*dsr.nob);
+            BSColSelect(f,cs,1,a+j*ds->nob,junk,r+z*dsr.nob);
             z++;
 // I think this can break
         }
@@ -872,8 +692,25 @@ extern uint64 SLEch(const FIELD *f, Dfmt *a, uint64 *rs, uint64 *cs,
     free(piv);
     free(vo);
     free(junk);
+    *det=deter;
     return rank;
 
+}
+
+// no separate implementation of SLEch as yet with non-standard rows
+
+uint64_t SLEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
+             FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor)
+{
+    return RCEchS(ds,a,rs,cs,det,m,c,r,nor,1);
+}
+
+// SLEchS must return standard rows in the row select
+
+uint64_t SLEchS(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
+             FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor)
+{
+    return RCEchS(ds,a,rs,cs,det,m,c,r,nor,1);
 }
 
 /* end of slab.c  */

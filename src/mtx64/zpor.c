@@ -10,6 +10,7 @@
 #include "field.h"
 #include "io.h"
 #include "bitstring.h"
+#include "pcrit.h"
  
 int main(int argc,  char **argv)
 {

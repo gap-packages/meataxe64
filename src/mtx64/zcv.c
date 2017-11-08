@@ -156,7 +156,7 @@ int main(int argc,  char **argv)
         LogString(81,"Can't malloc field structure");
         exit(8);
     }
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     dig[0]=0;
     dig[1]=1;
     for(i=2;i<=10;i++)

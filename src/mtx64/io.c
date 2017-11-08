@@ -39,6 +39,20 @@ extern void LogCmd(int argc, char ** argv)
     XUnlock();
 }
 
+
+void CLogCmd(int argc, const char *argv[])
+{
+    int i;
+    FILE * logfile;
+    XLock();
+    logfile=fopen("logfile","ab");
+    fprintf(logfile,"01 ");
+    for(i=0;i<argc;i++) fprintf(logfile,"%s ",argv[i]);
+    fprintf(logfile,"\n");
+    fclose(logfile);
+    XUnlock();
+}
+
 /* initialize the hash variables in the EFIL  */
 
 static void bcsstart(EFIL * e)
@@ -494,7 +508,7 @@ void ERClose(EFIL * e)
     (void) i;
 }
 
-extern void LogString(int type, char * string)
+extern void LogString(int type, const char *string)
 {
     FILE * logfile;
     XLock();

@@ -1,19 +1,116 @@
-/*    Meataxe-64    pcrit0.c     */
+/*    Meataxe-64    pcritGENc.c     */
 /*    ==========    ========     */
 
-/*    R. A. Parker     10.July 2015 */
+/*    R. A. Parker     5.Nov 2017 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include "field.h"
+#include "tabmake.h"
 
-/* this routine is here because it depend on technology */
-
-extern void pchal(FIELD * f)
+void hpmiset(FIELD * f)
 {
-    f->pcgen=0;
+    f->cauldron=0;
+    if(f->charc==2)
+    {
+        f->AfmtMagic=1;
+        f->BfmtMagic=1;
+        f->CfmtMagic=1;
+        f->BwaMagic=2;
+        f->GreaseMagic=2;
+        f->SeedMagic=2;
+        f->cauldron=512;
+        f->bfmtcauld=64;
+        f->cfmtcauld=64;
+        f->dfmtcauld=64;
+        f->alcove=32;
+        f->alcovebytes=5;
+        f->recbox=1024;
+        f->czer=0;
+        f->bzer=0;
+        f->bbrickbytes=2049;
+        f->bwasize=8192;
+    }
+    return;
+}
+
+// GEN implementation of large fields of characteristic 2
+
+void pccl32 (const uint64_t * clpm, uint64_t scalar, uint64_t noc, 
+                      uint32_t * d1, uint32_t * d2)
+{
+    uint64_t i,x,y,p,res,z;
+    z=1;
+    z=z<<(64-clpm[2]);
+
+    p=clpm[1]>>(clpm[2]-1);
+
+    for(i=0;i<noc;i++)
+    {
+        x=scalar>>clpm[2];
+        y=*(d1++);
+        res=0;
+// invariant - answer = res + x*y
+        while(x!=0)
+        {
+            if((x&1)!=0)
+                res^=y;
+            x=x>>1;
+            y=y<<1;
+            if((y&z)!=0) y^=p;
+        }
+        y=*d2;
+        *(d2++)=y^res;
+    }
+}
+
+void pccl64 (const uint64_t * clpm, uint64_t scalar, uint64_t noc, 
+                      uint64_t * d1, uint64_t * d2)
+{
+    uint64_t i,x,y,p,res,z;
+    z=1;
+    z=z<<(64-clpm[2]);
+    p=clpm[1]>>(clpm[2]-1);
+
+    for(i=0;i<noc;i++)
+    {
+        y=*(d1++);
+        x=scalar>>clpm[2];
+        res=0;
+// invariant - answer = res + x*y
+        while(x!=0)
+        {
+            if((x&1)!=0)
+                res^=y;
+            x=x>>1;
+            y=y<<1;
+            if((y&z)!=0) y^=p;
+        }
+        y=*d2;
+        *(d2++)=y^res;
+    }
+}
+
+/* choose suitable nor from nob  */
+uint64_t pcstride(uint64_t s)
+{
+    uint64_t i,j,k,d;
+    if(s<600) return 200;    // fits in L2 in its entirety
+    for(i=1;i<25;i++)        // how many L1 banks can we use
+    {
+        d=s*i;
+        if( ((d+7)&4095)<15) break;
+    }
+    for(j=1;j<50;j++)        // how many L2 banks can we use
+    {
+        d=s*j;
+        if( ((d+15)&65535)<31) break;
+    }
+    k=8*i;
+    if(k<(4*j)) k=4*j;
+    return k;
 }
 
 extern uint64_t pcpmad(uint64_t p,uint64_t a,uint64_t b,uint64_t c)
@@ -45,14 +142,14 @@ extern uint64_t pcpmad(uint64_t p,uint64_t a,uint64_t b,uint64_t c)
 }
 
 
-void pcxor(Dfmt * d, const Dfmt * s1, const Dfmt * s2, int nob)
+void pcxor(uint8_t * d, const uint8_t * s1, const uint8_t * s2, int nob)
 {
     uint64_t i;
     for(i=0;i<nob;i++)
         *(d++) = *(s1++) ^ *(s2++);
 }
 
-void pcbunf(Dfmt * d, const Dfmt * s, uint64_t nob,
+void pcbunf(uint8_t * d, const uint8_t * s, uint64_t nob,
                    const uint8_t * t1, const uint8_t * t2)
 {
     uint64_t i;
@@ -63,7 +160,7 @@ void pcbunf(Dfmt * d, const Dfmt * s, uint64_t nob,
     }
 }
 
-void pcxunf(Dfmt * d, const Dfmt * s, uint64_t nob,
+void pcxunf(uint8_t * d, const uint8_t * s, uint64_t nob,
                    const uint8_t * t1)
 {
     uint64_t i;
@@ -74,7 +171,7 @@ void pcxunf(Dfmt * d, const Dfmt * s, uint64_t nob,
     }
 }
 
-void pcunf(Dfmt * d, uint64_t nob, const uint8_t * t1)
+void pcunf(uint8_t * d, uint64_t nob, const uint8_t * t1)
 {
     uint64_t i;
     for(i=0;i<nob;i++)
@@ -84,8 +181,8 @@ void pcunf(Dfmt * d, uint64_t nob, const uint8_t * t1)
     }
 }
 
-void pcbif(Dfmt * d,  const Dfmt * s1, const Dfmt * s2,
-            uint64_t nob, const uint8 * t)
+void pcbif(uint8_t * d,  const uint8_t * s1, const uint8_t * s2,
+            uint64_t nob, const uint8_t * t)
 {
     uint64_t i;
     for(i=0;i<nob;i++)
@@ -94,18 +191,18 @@ void pcbif(Dfmt * d,  const Dfmt * s1, const Dfmt * s2,
 
 /*  characteristic 2 brick mad routine  */
 
-void pcbm2(const uint8 *a, uint8 * bv, uint8 *c)
+void pcbm2(const uint8_t *a, uint8_t * bv, uint8_t *c)
 {
-    uint64 *b;
-    uint8 * ap;
-    uint64 * bkr;
-    uint64 * cp;
+    uint64_t *b;
+    uint8_t * ap;
+    uint64_t * bkr;
+    uint64_t * cp;
     int ax;
     int i,j;
-    uint64 *ptc,*pt1,*pt2,*pt3,*pt4;
-    b=(uint64 *) bv;
-    ap=(uint8 *) a;       // ap is pointer to Afmt
-    cp=(uint64 *) c;      // cp is pointer to Cfmt
+    uint64_t *ptc,*pt1,*pt2,*pt3,*pt4;
+    b=(uint64_t *) bv;
+    ap=(uint8_t *) a;       // ap is pointer to Afmt
+    cp=(uint64_t *) c;      // cp is pointer to Cfmt
 
     ax=*(ap++);           // get the very first byte of Afmt
 
@@ -132,35 +229,23 @@ void pcbm2(const uint8 *a, uint8 * bv, uint8 *c)
 
 
 /*  characteristic 3 routines  */
-void pcad3(const uint8 *a, const uint8 *b, uint8 * c)
+void pcad3(const uint8_t *a, const uint8_t *b, uint8_t * c)
 {
-    printf("pcad3 not implemented in pcrit0\n");
+    printf("pcad3 not implemented in GEN\n");
 }
 
-void pcbm3(const uint8 *a, uint8 * bv, uint8 *c)
+void pcbm3(const uint8_t *a, uint8_t * bv, uint8_t *c)
 {
-    printf("pcbm3 Not implemented yet in pcrit0\n");
+    printf("pcbm3 not implemented yet in GEN\n");
 }
 
-
-/* choose suitable nor from nob  */
-uint64_t pcstride(uint64_t s)
+void pcbmas(const uint8_t *a, uint8_t * bv, uint8_t *c,
+            const uint64_t * parms)
 {
-    uint64_t i,j,k,d;
-    if(s<600) return 200;    // fits in L2 in its entirety
-    for(i=1;i<25;i++)        // how many L1 banks can we use
-    {
-        d=s*i;
-        if( ((d+7)&4095)<15) break;
-    }
-    for(j=1;j<50;j++)        // how many L2 banks can we use
-    {
-        d=s*j;
-        if( ((d+15)&65535)<31) break;
-    }
-    k=8*i;
-    if(k<(4*j)) k=4*j;
-    return k;
+    printf("pcbmas not implemented yet in GEN\n");
 }
-
+void pcchain(const uint8_t *prog, uint8_t * bv, const uint64_t * parms)
+{
+    printf("pcchain not implemented yet in GEN\n");
+}
 /* end of pcrit0c.c  */

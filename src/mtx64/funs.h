@@ -1,7 +1,79 @@
 /*
-         funs.h  -   Level III functions prototypes
-         ======      R. A. Parker 8.10.2015
+         funs.h  -   functions prototypes
+         ======      R. A. Parker 14.9.2017
 */
+
+// This file is in the process of re-organization
+
+// First the large functions each in a separate own source file
+
+
+extern void fTranspose(const char * tmp, const char *in, int sin,
+                 const char *out, int sout);
+extern void fMultiply(const char * tmp, const char *m1, int s1, 
+                 const char *m2, int s2, const char *m3, int s3);
+extern uint64_t fProduceNREF(const char * tmp, const char *m1, int s1,
+                     const char *b2, int s2,const char *m3, int s3);
+
+// funs1 (Gaussian-related) functions
+extern void fColumnExtract(const char *bs, int sbs, const char *in, int sin, 
+          const char *sel, int ssel, const char * nsel, int snsel);
+extern void fRowRiffle(const char *bs, int sbs, const char * ins, int sins,
+                 const char * inn, int sinn, const char * out, int sout);
+extern void fPivotCombine(const char *b1, int sb1, const char *b2, int sb2,
+                          const char *bc, int sbc, const char *br, int sbr);
+extern uint64_t fColumnRiffleIdentity(const char *bs, int sbs,
+              const char *rm, int srm, const char *out, int sout);
+
+// funs2 (small, composite) functions
+extern void fMultiplyAdd(const char * tmp, const char *m1, int s1,
+           const char *m2, int s2, const char *m3, int s3,
+           const char * m4, int s4);
+extern uint64_t fNullSpace(const char *tmp, const char *m1, int s1,
+                           const char *m2, int s2);
+
+// funs3 field-changing routines
+extern void fFrobenius(const char *m1, int s1, const char *m2, int s2);
+
+extern int  fFieldContract(const char *m1, int s1, uint64_t newfield,
+                           const char *m2, int s2);
+extern void fFieldExtend(const char *m1, int s1, uint64_t newfield,
+                         const char *m2, int s2);
+
+// funs4 pieces of tensor powers
+extern void fTensor(const char *m1, int s1, 
+                 const char *m2, int s2, const char *m3, int s3);
+extern void fExteriorSquare(const char *m1, int s1,
+                           const char *m2, int s2);
+extern void fExteriorCube(const char *m1, int s1, 
+                          const char *m2, int s2);
+extern void fSymmetricSquare(const char *m1, int s1,
+                           const char *m2, int s2);
+
+// funs5 miscellanous small functions
+extern void fAdd(const char *fn1, int s1, const char *fn2, int s2,
+                 const char *fn3, int s3);
+extern FELT fTrace(const char *m1, int s1);
+
+void fProjectiveVector(const char *m1, int s1, uint64_t pvec,
+                       const char *m2, int s2);
+void fMulMatrixMap(const char *m1, int s1, const char *x2, int s2,
+                       const char *m3, int s3);
+
+// The remainder is to be considered, and either removed
+// or put into the first part
+
+typedef struct
+{
+    FIELD * f;
+} TLS;
+
+extern uint64_t fech(const char *m1, int s1, const char *b2, int s2,
+                const char *b3, int s3, const char *m4, int s4,
+                const char *m5, int s5, const char *m6, int s6);
+// Scalar multiply
+extern void fsmu(TLS * tls, const char *fn1, int s1,
+                 const char *fn2, int s2, FELT sc);
 
 /*
  * Chop on disc for operations such as ftr, fmu
@@ -31,52 +103,8 @@ extern char ***fchp(const char *fname, const char *tmp, unsigned int rchops, uns
 extern void fasp(const char *fname, char ***tmpnames, unsigned int rchops, unsigned int cchops);
 
 /*
- * Individual transpose a file in to produce a file out
- * slient is TRUE if a silent close is to be done, otherwise FALSE
- */
-extern void ftra(const char *in, int sin, const char *out, int sout);
-
-/*
- * Individual multiply, C = A * B
- * slient is TRUE if a silent close is to be done, otherwise FALSE
- */
-extern void fmu(const char *out, const char *ina, const char *inb, int silent);
-
-/*
- * Individual multiply and add, C += A * B
- * slient is TRUE if a silent close is to be done, otherwise FALSE
- */
-extern void fmad1(const char *ina, const char *inb, const char *inc, const char *out, const char *tmp, int silent);
-
-/*
- * Add, C = A + B
- * slient is TRUE if a silent close is to be done, otherwise FALSE
- */
-extern void fadd(const char *out, const char *ina, const char *inb, int silent);
-
-/*
- * zcx, split input using bitstring into selected and non selected
- */
-extern void fcx(const char *bits, const char *in, const char *out_sel, const char *out_nonsel, int silent);
-
-/*
- * zpc, combine pivots into unified pivot plus riffle
- */
-extern void fpc(const char *bs_in1, const char *bs_in2, const char *bs_out, const char *riffle, int silent);
-
-/*
- * zrr, row riffle
- */
-extern void frr(const char *bs_in, const char *row_in1, const char *row_in2, const char *row_out, int silent);
-
-/*
- * zpef, produce echelon form
- */
-extern void fpef(const char *in, const char *outbs, const char *outrm, int silent);
-
-/*
  * zmkn, make null-space from bitstring and transposed remnant
  */
-extern uint64_t fmkn(const char *bs, int sbs, const char *rm, int srm, const char *out, int sout);
+
 
 /* end of funs.h  */

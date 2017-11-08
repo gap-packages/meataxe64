@@ -1,45 +1,20 @@
 /*
-              ftra.c     Slab based transpose for layer IV
-              ======     R. A. Parker   18.10.2016
+              ftra.c     Disk chopping transpose
+              ======     R. A. Parker   1.6.2017
+     Does not yet chop on disk
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include "mezz.h"
 #include "field.h"
-#include "slab.h"
-#include "io.h"
+#include "funs.h"
 
-int ftra(const char *in, int sin, const char *out, int sout)
+void fTranspose(const char *tmp, const char *in, int sin, 
+         const char *out, int sout)
 {
-    FIELD * f;
-    EFIL *e1, *e2;
-    uint64 hdr[5];
-    DSPACE ads,bds;
-    Dfmt *am,*bm;
-    uint64 fdef,nora,noca;
-    e1=ERHdr(in,hdr);
-    fdef=hdr[1];
-    nora=hdr[2];
-    noca=hdr[3];
-    f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
-    hdr[2]=noca;
-    hdr[3]=nora;
-    e2=EWHdr(out,hdr);
-    DSSet(f,noca,&ads);
-    DSSet(f,nora,&bds);
-    am=malloc(ads.nob*nora);
-    bm=malloc(bds.nob*noca);   
-    ERData(e1,ads.nob*nora,am);
-    SLTra(f,am,bm,nora,noca);
-    EWData(e2,bds.nob*noca,bm);
-    ERClose1(e1,sin);
-    EWClose1(e2,sout);
-    free(f);
-    free(am);
-    free(bm);
-    return 0;
+    mtra(in,sin,out,sout);
+    return;
 }
 
-/* end of ztr2.c  */
+/* end of ftra.c  */

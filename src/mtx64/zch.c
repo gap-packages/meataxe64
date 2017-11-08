@@ -38,7 +38,7 @@ int main(int argc,  char **argv)
     nor=hdr[2];
     noc=hdr[3];
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,noc,&ds1);
     j=nor/chops;
     for(i=0;i<chops;i++) rch[i]=j;

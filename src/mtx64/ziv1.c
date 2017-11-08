@@ -36,7 +36,7 @@ int main(int argc,  char **argv)
         exit(15);
     }
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,dim,&ds);
     m1=malloc(ds.nob*dim);   // Input matrix
     m2=malloc(ds.nob*dim);   // Inverse

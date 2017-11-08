@@ -1,0 +1,9 @@
+ztr a1 ax1
+ztr a2 ax2
+ztr af axf
+znu axf axn
+zsv axn 0 axn1
+if [ $? -ne 0 ]
+  then exit 1
+  fi
+zsp axn1 ax 2 ts tq

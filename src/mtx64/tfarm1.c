@@ -12,6 +12,8 @@
 #include <time.h>
 
 #include "tfarm.h"
+#include "tuning.h"
+#define SCALE MAXCHOP*MAXCHOP*MAXCHOP
 
 /* Global Variables */
 
@@ -22,15 +24,7 @@
 
 int closejobs;
 
-void TFUpJobs(void)
-{
-    TfAdd(&closejobs,1);
-}
 
-void TFDownJobs(void)
-{
-    TfAdd(&closejobs,-1);
-}
 
 /* stopfree is incremented by TFStopMOJFree and decremented  */
 /* by TFStartMOJFree, and if non-zero, TFRelease blocks      */
@@ -88,6 +82,23 @@ void LcMainKick(void)
     pthread_cond_broadcast(&maincond);
 }
 
+void TFUpJobs(void)
+{
+    TfAdd(&closejobs,1);
+}
+
+void TFDownJobs(void)
+{
+    int i;
+    i=TfAdd(&closejobs,-1);
+    if(i==0)
+    {
+        Lock();
+        LcMainKick();
+        Unlock();
+    }
+}
+
 #define TFMSIZE 10
 uint64_t * TFM;
 #define TFMFRE 0
@@ -112,11 +123,13 @@ int runjobs;
 
 void TFWaitEnd(void)
 {
+    Lock();
     while(1)  // wait until all submitted jobs completed
     {
-        TfPause(100);
         if(closejobs==0) break;
+        LcMainPause();
     }
+    Unlock();
     while(1)  // wait until all threads got lock (at least) to suspend
     {
         if( (runjobs+nothreads)==0) break;
@@ -522,6 +535,7 @@ void TFClose(void)
     fakejob=2;                  // instruction to shut down thread
     for(i=0;i<nothreads;i++)
     {
+        Lock();
         thread=TfUnQThread((jobstruct *)fakejob);
         pthread_join(*(mythread+thread),NULL);
     }
@@ -532,8 +546,6 @@ void TFClose(void)
     free(TFM);
 }
 
-#define SCALE 50000
-
 void   TFInit(int threads)
 {
     int i;
@@ -542,7 +554,8 @@ void   TFInit(int threads)
     jobstruct * tfjob;
     rdlstruct * tfrdl;
     MOJ mj;
-    nmojes=2*SCALE;
+    jobx=SCALE*8;
+    nmojes=jobx*2;
     closejobs=0;
     TFM=malloc(TFMSIZE*sizeof(uint64_t));
     FRE=malloc(FRESIZE*sizeof(uint64_t));
@@ -550,8 +563,7 @@ void   TFInit(int threads)
     *FRE=0;      // none yet to free
 // following is temporary fix for zpe needs.
 // redesign it better for V2
-    jobx=SCALE;
-    rdlx=3*SCALE;
+    rdlx=3*nmojes;
     tfjob=AlignTalloc(jobx*sizeof(jobstruct));
     TfAppend(FRE,(uint64_t)tfjob);
     *(TFM+TFMJOB)=0;     // freechain of jobs empty

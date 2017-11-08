@@ -1,0 +1,980 @@
+zrd a1 2 5071 5071 19
+zch a1 3
+zas a1 3
+znu a1 a2 > junk
+zpr a2 > junk
+zcv a3 < junk
+zad a2 a3 a4
+zrn a4 > junk
+zrd a1 2 5077 5077 750
+zpe a1 x y > junk
+zrd a1 2 5402 5401 69
+zrn a1 > junk
+zrd a1 2 6300 3000 1
+zrd a2 2 3000 5700 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zrd a4 2 3000 5700 3
+zad a2 a4 a5
+ztr a1 a3
+ztr a2 a4
+zmu a4 a3 a5
+ztr a5 a6
+zrd a1 2 100 100 1
+ztc a1 > junk
+zrd a1 2 71 71 1
+zrd a2 2 69 69 2
+zte a1 a2 a3
+zrn a3 > junk
+ze2 a1 a3
+ze2 a2 a4
+zrd a1 2 10 50 1
+ze2 a1 a2
+zpe a2 x y > junk
+zrd a1 2 25 35 1
+ze3 a1 a2
+zrd a1 2 70 71 1
+zrd a2 2 71 72 2
+zrd a3 2 72 73 3
+zrd a4 2 73 74 4
+zrd a8 2 30 31 5
+zrd a9 2 31 32 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+zrd a1 3 3107 3107 73
+zch a1 4
+zas a1 4
+zrn a1 > junk
+zrd a1 3 3668 3665 49
+znu a1 a2 > junk
+zrd a1 3 4400 2500 1
+zrd a2 3 2500 3600 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zrd a1 3 3000 2000 1
+zrd a2 3 3000 2000 2
+zad a1 a2 a3
+zrd a1 3 80 75 1
+ze2 a1 a2
+zrd a1 3 30 29 1
+ze3 a1 a2
+zpr a1 > junk
+zcv a2 < junk
+zad a1 a2 a3
+zad a1 a3 a4
+zrn a4 > junk
+zrd a1 3 100 100 1
+ztc a1 > junk
+zrd a1 3 30 40 1
+zrd a2 3 50 60 2
+zte a1 a2 a3
+ztr a3 a6
+ztr a1 a4
+ztr a2 a5
+zte a4 a5 a6
+
+
+zrd a1 3 70 71 1
+zrd a2 3 71 72 2
+zrd a3 3 72 73 3
+zrd a4 3 73 74 4
+zrd a8 3 30 31 5
+zrd a9 3 31 32 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+
+zrd a1 4 2703 2703 2
+znu a1 a2 > junk
+zrd a1 4 3703 3703 224
+zpe a1 x y > junk
+zrd a1 4 3101 3100 6
+znu a1 a2 > junk
+zrd a1 4 4000 3000 1
+zrd a2 4 3000 3900 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a3 4 4000 3000 3
+zad a1 a3 a4
+zrd a1 4 99 99 1
+ze2 a1 a2
+zrd a1 4 25 24 1
+zch a1 4
+zas a1 4
+ze3 a1 a2
+zpr a1 > junk
+zcv a1 < junk
+ztr a1 a2
+zte a1 a2 a3
+zrd a1 4 1000 1000 1
+zrd a2 4 1000 1000 2
+zmu a1 a2 a3
+ztr a1 a4
+ztr a2 a5
+zmu a5 a4 a6
+ztr a6 a7
+zad a7 a3 a8
+znu a8 a9 > junk
+
+
+
+zrd a1 4 50 51 1
+zrd a2 4 51 52 2
+zrd a3 4 52 53 3
+zrd a4 4 53 54 4
+zrd a8 4 25 26 5
+zrd a9 4 26 27 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+
+
+
+zrd a1 5 2601 2601 9
+zch a1 6
+zas a1 6
+znu a1 a2 > junk
+zrd a1 5 2617 2617 227
+zrn a1 > junk
+zrd a1 5 2502 2500 88
+znu a1 a2 > junk
+zrd a1 5 3200 2500 1
+zrd a2 5 2500 3200 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zad a3 a3 a4
+znu a4 a5 > junk
+zrd a1 5 50 50 1
+ztc a1 > junk
+zad a1 a1 a2
+ztc a2 > junk
+ze2 a1 a2
+zmu a1 a1 a3
+zmu a2 a2 a4
+ze2 a3 a5
+zpr a3 > junk
+zcv a5 < junk
+zrd a1 5 20 20 1
+ze3 a1 a2
+ztc a2 > junk
+ztr a2 a3
+ztc a3 > junk
+
+
+zrd a1 5 50 51 1
+zrd a2 5 51 52 2
+zrd a3 5 52 53 3
+zrd a4 5 53 54 4
+zrd a8 5 25 26 5
+zrd a9 5 26 27 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+
+zrd a1 7 1907 1907 9
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a2 7 1907 1907 1
+zad a1 a2 a3
+zpr a3 > junk
+zcv a5 < junk
+ztc a1 > junk
+ztc a2 > junk
+ztc a5 > junk
+zmu a1 a2 a3
+ztr a1 a4
+ztr a2 a5
+zmu a5 a4 a6
+ztr a6 a7
+zrd a1 7 15 16 1
+ze2 a1 a2
+ze3 a1 a2
+
+
+zrd a1 7 40 41 1
+zrd a2 7 41 42 2
+zrd a3 7 42 43 3
+zrd a4 7 43 44 4
+zrd a8 7 20 21 5
+zrd a9 7 21 22 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+
+zrd a1 8 1803 1803 5
+zpe a1 x y > junk
+znu a1 a2 > junk
+zpr a2 > junk
+zcv a3 < junk
+zrd a2 8 1803 1803 1
+zad a1 a2 a3
+ztc a1 > junk
+ztc a2 > junk
+ztc a3 > junk
+ztr a1 a4
+ztr a2 a5
+zad a4 a5 a6
+ztr a3 a7
+zad a7 a6 a8
+zrn a8 > junk
+zrd a1 8 17 17 1
+ze2 a1 a2
+ze3 a1 a3
+zrd a2 8 19 19 2
+zte a1 a2 a3
+
+zrd a1 9 1707 1707 21
+zpe a1 x y > junk
+znu a1 a5 > junk
+zpr a5 > junk
+zcv a6 < junk
+zrd a1 9 1800 1300 1
+zrd a2 9 1300 1700 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a2 9 1800 1300 3
+zch a2 3
+zas a2 3
+zad a1 a2 a3
+zrd a1 9 1400 1400 2
+ztc a1 > junk
+zrd a1 9 19 21 1
+ze2 a1 a2
+ze3 a1 a2
+zrd a2 9 23 25 4
+zte a1 a2 a3
+
+
+
+zrd a1 11 1403 1403 23
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a2 11 1403 1403 1
+zad a1 a2 a3
+ztc a1 > junk
+ztc a2 > junk
+ztc a3 > junk
+zpr a3 > junk
+zcv a4 < junk
+zmu a1 a2 a3
+ztr a1 a4
+ztr a2 a5
+ztr a3 z6
+zmu a5 a4 a7
+zrd a1 11 20 20 1
+ze2 a1 a2
+ze3 a1 a2
+zte a1 a1 a2
+
+
+zrd a1 13 1507 1507 18
+zrn a1 > junk
+zrd a1 13 1800 1200 1
+zrd a2 13 1200 1700 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+zpr a4 > junk
+zcv a5 < junk
+zrd a2 13 1800 1200 3
+zad a1 a2 a3
+zrd a1 13 20 20 1
+ztc a1 > junk
+ze2 a1 a2
+ztc a2 > junk
+ze3 a1 a2
+ztc a2 > junk
+zte a1 a1 a2
+ztc a2 > junk
+
+
+zrd a1 16 1403 1403 4
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 16 20 21 1
+ze2 a1 a2
+ze3 a1 a2
+zte a1 a1 a2
+
+zrd a1 16 30 31 1
+zrd a2 16 31 32 2
+zrd a3 16 32 33 3
+zrd a4 16 33 34 4
+zrd a8 16 15 16 5
+zrd a9 16 16 17 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+zrd a1 17 800 800 1
+zrd a2 17 800 800 2
+ztr a1 a3
+ztr a2 a4
+zmu a1 a2 a5
+ztr a5 a6
+zmu a3 a4 a7
+ztc a1 > junk
+ztc a2 > junk
+zad a1 a2 a3
+ztc a3 > junk
+zrd a1 19 20 20 1
+ze2 a1 a2
+ze3 a1 a2
+zrd a2 19 20 20 2
+zte a1 a2 a3
+zrd a1 23 1100 1100 1
+zrd a2 23 1100 1100 2
+zad a1 a2 a3
+zad a2 a1 a4
+zpr a3 > junk
+zcv a4 < junk
+ztc a1 > junk
+ztc a2 > junk
+ztc a4 > junk
+zrd a1 25 1507 1507 24
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 25 20 20 1
+ze2 a1 a2
+ze3 a1 a2
+zte a1 a1 a2
+
+zrd a1 27 1491 1491 13
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a2 27 1491 1491 1
+zad a1 a2 a3
+ztc a1 > junk
+ztc a2 > junk
+ztc a3 > junk
+zmu a1 a2 a3
+ztr a1 a4
+ztr a2 a5
+zmu a5 a4 a6
+ztr a6 a7
+zrd a1 29 100 100 1
+zrd a2 29 100 100 2
+ztc a1 > junk
+ztc a2 > junk
+zad a1 a2 a3
+ztc a3 > junk
+
+zrd a1 31 20 20 1
+ze2 a1 a2
+zrd a1 32 30 30 1
+zte a1 a1 a2
+zrd a1 49 1717 1717 24
+zpe a1 x y > junk
+ztr a1 a2
+zad a1 a2 a3
+ztr a3 a4
+zrd a1 64 1515 1515 11
+zrn a1 > junk
+
+zrd a1 49 30 31 1
+zch a1 2
+zas a1 2
+zrd a2 49 31 32 2
+zrd a3 49 32 33 3
+zrd a4 49 33 34 4
+zrd a8 49 15 16 5
+zrd a9 49 16 17 6
+zmu a1 a2 a5
+ze2 a5 a6
+zmu a3 a4 a6
+zte a5 a6 a7
+zte a1 a3 a5
+zte a2 a4 a6
+zmu a5 a6 a7
+ze2 a1 a3
+ze2 a2 a4
+zmu a3 a4 a5
+zmu a8 a9 a7
+ze3 a7 a4
+ze3 a8 a5
+ze3 a9 a6
+zmu a5 a6 a4
+
+zrd a1 64 1600 1100 1
+zrd a2 64 1100 1700 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zrd a1 73 1517 1517 9
+zrn a1 > junk
+
+
+zrd a1 121 1543 1543 55
+zpe a1 x y > junk
+zrd a1 121 1400 1000 1
+zrd a2 121 1000 1500 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a1 125 1321 1321 42
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 2 6667 6667 4
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 2 6667 6667 1
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 2 6667 6667 2
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 3 4667 4667 3
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 3 4667 4667 2
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 3 4667 4667 1
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 4 3667 3667 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 4 3667 3667 4
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 5 3067 3067 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 5 3067 3067 3
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 7 2767 2767 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 7 2767 2767 2
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 8 2567 2567 2
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 8 2567 2567 1
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 9 2467 2467 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 9 2467 2467 18
+zpe a1 x y > junk
+znu a1 a2 > junk
+zrd a1 11 2267 2267 1
+zrn a1 > junk
+zrd a1 11 2267 2267 21
+zpe a1 x y > junk
+zrd a1 13 2167 2167 1
+zrn a1 > junk
+zrd a1 13 2167 2167 29
+zpe a1 x y > junk
+zrd a1 16 1963 1963 1
+zrn a1 > junk
+zrd a1 16 1963 1963 10
+zpe a1 x y > junk
+zrd a1 17 1933 1933 1
+zrn a1 > junk
+zrd a1 17 1933 1933 11
+zpe a1 x y > junk
+zrd a1 19 1930 1930 1
+zrn a1 > junk
+zrd a1 19 1930 1930 38
+zpe a1 x y > junk
+zrd a1 23 1880 1880 1
+zrn a1 > junk
+zrd a1 23 1880 1880 9
+zpe a1 x y > junk
+zrd a1 25 1800 1800 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 25 1800 1800 18
+zpe a1 x y > junk
+zrd a1 27 1740 1740 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 27 1740 1740 53
+zpe a1 x y > junk
+zrd a1 29 1720 1720 1
+zrn a1 > junk
+znu a1 a2 > junk
+zrd a1 29 1720 1720 12
+zpe a1 x y > junk
+zrd a1 31 1710 1710 1
+zrn a1 > junk
+zrd a1 163 1202 1200 1
+zrd a2 163 1200 1202 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+zrd a2 163 1202 1200 2
+zad a1 a2 a3
+ztr a3 a4
+ztr a4 a5
+zpr a1 > junk
+zcv a2 < junk
+zrd a1 163 1002 1002 1
+zch a1 16
+zas a1 16
+ztc a1 > junk
+zrd a1 256 1102 1100 1
+zrd a2 256 1100 1102 2
+zmu a1 a2 a3
+zrn a3 > junk
+ztr a3 a4
+zpe a4 x y > junk
+ztc a3 > junk
+ztc a4 > junk
+znu a4 a5 > junk
+zad a3 a4 a5
+ztr a5 a6
+zpr a3 > junk
+zcv a4 < junk
+zrd a1 343 992 990 1
+zrd a2 343 990 992 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztc a5 > junk
+zpr a1 > junk
+zcv a5 < junk
+zrd a1 343 1100 700 1
+zrd a2 343 700 1200 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+zrd a1 729 922 920 1
+zrd a2 729 920 922 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+ztc a3 > junk
+zmu a4 a3 a5
+zrn a5 > junk
+ztr a5 a6
+zpe a6 x y > junk
+zpr a4 > junk
+zcv a4 < junk
+zrd a1 1949 902 900 1
+zrd a2 1949 900 902 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a1 3539 922 920 1
+zrd a2 3539 920 922 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+ztr a4 a5
+ztr a3 a6
+zmu a6 a5 a7
+zrn a7 > junk
+ztr a2 a3
+zad a1 a3 a4
+zrd a1 3539 1000 700 1
+zrd a2 3539 700 900 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+zrd a1 3539 700 700 1
+zch a1 3
+zas a1 3
+zrd a2 3539 700 700 2
+ztc a1 > junk
+ztc a2 > junk
+zad a1 a2 a3
+ztc a3 > junk
+zpr a1 > junk
+zcv a9 < junk
+ztr a1 a4
+ztr a2 a5
+ztr a3 z6
+zmu a5 a4 a7
+zrd a1 14641 612 610 1
+zrd a2 14641 610 612 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztc a4 > junk
+zpr a4 > junk
+zcv a4 < junk
+zrd a1 15625 632 630 1
+zrd a2 15625 630 632 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+ztr a3 a4
+ztc a4 > junk
+zrd a1 16384 672 670 1
+zrd a2 16384 670 672 2
+zmu a1 a2 a3
+zrn a3 > junk
+ztc a3 > junk
+ztr a1 a4
+zrd a1 17161 612 610 1
+zrd a2 17161 610 612 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+zpr a4 > junk
+zcv a4 < junk
+zrd a1 50653 602 600 1
+zrd a2 50653 600 602 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+ztc a3 > junk
+ztr a4 a5
+zpr a5 > junk
+zcv a5 < junk
+ztr a3 a4
+zad a3 a4 a5
+ztr a5 a6
+zrd a1 100019 632 630 1
+zch a1 4
+zas a1 4
+zrd a2 100019 630 632 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+ztr a3 a4
+ztr a4 a5
+zad a3 a4 a5
+ztr a5 a6
+zrd a1 100019 700 400 1
+zrd a2 100019 400 800 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a1 117649 92 90 1
+zrd a2 117649 90 92 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+ztr a3 a4
+zad a3 a4 a5
+ztr a5 a6
+ztc a6 > junk
+zrd a1 524288 42 40 1
+zrd a2 524288 40 42 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+ztr a3 a4
+zad a3 a4 a5
+ztr a5 a6
+ztc a3 > junk
+ztc a4 > junk
+ztc a5 > junk
+zrd a1 1953125 72 70 1
+zrd a2 1953125 70 72 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztc a5 > junk
+zrd a1 1953125 69 69 1
+zrd a2 1953125 69 69 2
+ztc a1 > junk
+ztc a2 > junk
+zad a1 a2 a3
+ztc a3 > junk
+zmu a1 a2 a3
+ztr a1 a4
+ztr a2 a5
+zmu a5 a4 a6
+ztr a6 a7
+zpr a1 > junk
+zcv a6 < junk
+zrd a1 1953125 100 60 1
+zrd a2 1953125 60 90 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a1 2476099 102 100 1
+zrd a2 2476099 100 102 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+zrd a4 2476099 102 102 3
+ztc a3 > junk
+ztc a4 > junk
+zad a3 a4 a5
+ztc a5 > junk
+ztr a3 a4
+zad a3 a4 a5
+ztr a5 a6
+zpr a5 > junk
+zcv a5 < junk
+zrd a1 3798601 192 190 1
+zrd a2 3798601 190 192 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+zmu a4 a3 a5
+zpe a5 x y > junk
+ztc a3 > junk
+zad a3 a3 a4
+ztc a4 > junk
+zpr a4 > junk
+zcv a4 < junk
+zrd a1 4782969 62 60 1
+zrd a2 4782969 60 62 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+zrd a1 4782969 58 58 1
+zrd a2 4782969 58 58 2
+ztr a1 a3
+ztr a2 a4
+zmu a1 a2 a5
+zmu a4 a3 a6
+ztr a6 a7
+ztc a1 > junk
+ztc a2 > junk
+zad a1 a2 a3
+ztc a3 > junk
+zpr a1 > junk
+zcv a1 < junk
+zrd a1 10000079 462 460 1
+zrd a2 10000079 460 462 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zrd a1 10000079 360 360 1
+zrd a2 10000079 360 360 2
+ztc a1 > junk
+ztc a2 > junk
+zad a1 a2 a3
+ztc a3 > junk
+ztr a3 a4
+zad a3 a4 a5
+ztc a5 > junk
+ztr a5 a6
+zrd a1 1234564627 402 400 1
+zrd a2 1234564627 400 402 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+zmu a4 a3 a5
+zpe a5 x y > junk
+zrd a1 2073071593 112 110 1
+zrd a2 2073071593 110 112 2
+zmu a1 a2 a3
+zrn a3 > junk
+zrd a1 2073071593 110 110 1
+zrd a2 2073071593 110 110 2
+ztr a1 a3
+ztr a2 a4
+zmu a1 a2 a5
+zmu a4 a3 a6
+ztr a6 a7
+zrd a1 5000000029 342 340 1
+zrd a2 5000000029 340 342 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zpr a1 > junk
+zcv a3 < junk
+zrd a1 10003800361 172 170 1
+zrd a2 10003800361 170 172 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+ztr a3 a4
+zad a3 a4 a5
+ztr a5 a6 > junk
+zrd a1 10604499373 62 60 1
+zch a1 7
+zas a1 7
+zrd a2 10604499373 60 62 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztc a5 > junk
+zrd a1 10604499373 82 50 1
+zrd a2 10604499373 50 72 2
+zmu a1 a2 a3
+zrn a3 > junk
+zpr a1 > junk
+zcv a4 < junk
+zrd a1 646541456023 132 130 1
+zrd a2 646541456023 130 132 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztc a5 > junk
+ztr a5 a6
+zrd a1 678223072849 52 50 1
+zrd a2 678223072849 50 52 2
+zmu a1 a2 a3
+zrn a3 > junk
+zpr a1 > junk
+zcv a4 < junk
+zrd a1 1000000000039 332 330 1
+zrd a2 1000000000039 330 332 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zrd a1 1000000000039 270 270 1
+zrd a2 1000000000039 270 270 2
+ztr a1 a3
+ztr a2 a4
+zmu a1 a2 a5
+zmu a4 a3 a6
+ztr a6 a7
+zrd a1 3142742836021 72 70 1
+zrd a2 3142742836021 70 72 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+zrd a1 476837158203125 42 40 1
+zrd a2 476837158203125 40 42 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztc a5 > junk
+ztr a5 a6
+zrd a1 9007199254740992 22 20 1
+zrd a2 9007199254740992 20 22 2
+zmu a1 a2 a3
+zrn a3 > junk
+zpr a1 > junk
+zcv a3 < junk
+ztr a3 a4
+znu a4 a5 > junk
+zrd a1 450283905890997363 27 25 1
+zrd a2 450283905890997363 25 27 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+zmu a4 a3 a5
+zrn a5 > junk
+zrd a1 1000009000027000027 142 140 1
+zrd a2 1000009000027000027 140 142 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+znu a3 a4 > junk
+ztr a3 a4
+zad a3 a4 a5
+ztr a5 a6
+zrd a1 1942312202861343769 82 80 1
+zrd a2 1942312202861343769 80 82 2
+zmu a1 a2 a3
+zrn a3 > junk
+zpr a1 > junk
+zcv a3 < junk
+zrd a1 6445601806155464899 102 100 1
+zrd a2 6445601806155464899 100 102 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+ztr a3 a4
+zmu a3 a4 a5
+zmu a4 a3 a6
+ztr a5 a7
+zrd a1 6445601806155464899 122 80 1
+zrd a2 6445601806155464899 80 112 2
+zmu a1 a2 a3
+zrn a3 > junk
+znu a3 a4 > junk
+zrd a1 11841258135073152241 112 110 1
+zrd a2 11841258135073152241 110 112 2
+zmu a1 a2 a3
+zpe a3 x y > junk
+zpr a1 > junk
+zcv a1 < junk
+ztc a3 > junk
+ztr a3 a4
+ztc a4 > junk
+zad a3 a4 a5
+ztr a5 a6
+check_log.sh logfile ../reg/val2log

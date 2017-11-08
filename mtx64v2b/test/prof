@@ -1,0 +1,32 @@
+makl HAS -pg
+compa -pg
+zrd a1 2 60000 60000 1
+zmu a1 a1 a2
+gprof ../bin/zmu > m2
+zec a1 a2 a3 a4 a5 a6
+gprof ../bin/zec > g2
+zrd a1 3 40000 40000 1
+zmu a1 a1 a2
+gprof ../bin/zmu > m3
+zec a1 a2 a3 a4 a5 a6
+gprof ../bin/zec > g3
+zrd a1 4 40000 40000 1
+zmu a1 a1 a2
+gprof ../bin/zmu > m4
+zec a1 a2 a3 a4 a5 a6
+gprof ../bin/zec > g4
+zrd a1 5 5000 5000 1
+zmu a1 a1 a2
+gprof ../bin/zmu > m5
+zec a1 a2 a3 a4 a5 a6
+gprof ../bin/zec > g5
+zrd a1 8 30000 30000 1
+zmu a1 a1 a2
+gprof ../bin/zmu > m8
+zec a1 a2 a3 a4 a5 a6
+gprof ../bin/zec > g8
+zrd a1 9 30000 30000 1
+zmu a1 a1 a2
+gprof ../bin/zmu > m9
+zec a1 a2 a3 a4 a5 a6
+gprof ../bin/zec > g9

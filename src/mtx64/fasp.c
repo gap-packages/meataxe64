@@ -27,7 +27,7 @@ void fasp(const char *fname, char ***tmpnames, unsigned int rchops, unsigned int
   nor = hdr[2];
   noc = hdr[3];
   f = malloc(FIELDLEN);
-  FieldSet(fdef, f);
+  FieldASet(fdef, f);
   DSSet(f, noc, &ds);
   /* Work out full nor and noc. Note we've already got the (0,0) value */
   for (i = 1; i < rchops; i++) {

@@ -43,7 +43,7 @@ int main(int argc,  char **argv)
     dim=hdr[3];
     dimvec=hdr[2];
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,dim,&ds);
     v1=malloc(ds.nob);            // work vector
     v2=malloc(ds.nob);            // another work vector

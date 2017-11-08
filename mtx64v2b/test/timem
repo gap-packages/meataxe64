@@ -1,0 +1,23 @@
+makl HAS
+compa
+echo 2
+zrd a1 2 60000 60000 1
+time zmu a1 a1 a2
+time zec a1 a2 a3 a4 a5 a6
+echo 3
+zrd a1 3 40000 40000 1
+time zmu a1 a1 a2
+time zec a1 a2 a3 a4 a5 a6
+echo 4
+zrd a1 4 40000 40000 1
+time zmu a1 a1 a2
+time zec a1 a2 a3 a4 a5 a6
+echo 8
+zrd a1 8 30000 30000 1
+time zmu a1 a1 a2
+time zec a1 a2 a3 a4 a5 a6
+echo 9
+zrd a1 9 30000 30000 1
+time zmu a1 a1 a2
+time zec a1 a2 a3 a4 a5 a6
+

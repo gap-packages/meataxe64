@@ -11,6 +11,7 @@
 #include "field.h"
 #include "io.h"
 #include "bitstring.h"
+#include "pcrit.h"
 
 int main(int argc,  char **argv)
 {
@@ -40,7 +41,7 @@ int main(int argc,  char **argv)
     nor=hdr[2];
     noc=hdr[3];
     f = malloc(FIELDLEN);           // create FIELD
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     piv=malloc(nor*sizeof(int));    // pivot array uses up to nor
     DSSet(f,noc,&dsm);              // SPACE with noc cols
     m=malloc(nor*dsm.nob);          // input (working) matrix

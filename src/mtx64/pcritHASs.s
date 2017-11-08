@@ -1,8 +1,274 @@
 /* pcrit2s.s assembler for AVX-2 version */
-/* R. A. Parker 28.1.2017  */
+/* R. A. Parker 10.10.2017  */
 // parms rdi rsi rdx rcx r8 r9 
 // scratch rax (RV) r10 r11
 // not scratch rbx rbp r12 r13 r14 r15
+
+// pccl32 parms scalar noc  d1  d2
+//         rdi   rsi   rdx rcx  r8
+
+	.text
+	.globl	pccl32
+	.type	pccl32, @function
+// initialization
+pccl32:
+       vpxor    %xmm0,%xmm0,%xmm0     /* %xmm0 just contains zero */
+       vpinsrq  $0,%rsi,%xmm0,%xmm2   /* scalar from %rsi */
+       vpinsrq  $0,0(%rdi),%xmm0,%xmm4 /* e left justified */
+       vpinsrq  $0,8(%rdi),%xmm0,%xmm6 /* p left justified*/
+       vpinsrq  $0,16(%rdi),%xmm0,%xmm8 /* shift left - right justified */
+pccl32p:
+        vpinsrd     $0,(%rcx),%xmm0,%xmm1    /* get 32-bit quantity */
+        vpclmulqdq  $0,%xmm1,%xmm2,%xmm3   /* multiply by scalar */
+        vpsllq      $1,%xmm3,%xmm7
+        vpclmulqdq  $16,%xmm7,%xmm4, %xmm5  /* multiply high part a by e */
+        vpsllq      $1,%xmm5,%xmm5
+        vpclmulqdq  $16,%xmm5,%xmm6,%xmm7   /* multiply high part s by p */
+        vpxor       %xmm3,%xmm7,%xmm7       /* xor left justified parts */
+        vpinsrd     $0,(%r8),%xmm0,%xmm1    /* get other 32-bit quantity */
+        vpsrlq      %xmm8,%xmm7,%xmm7    /* shift into registration */
+        vpxor       %xmm7,%xmm1,%xmm1    /* add that in too */
+        vpextrd     $0,%xmm1,(%r8)       /* store the result back */
+        addq        $4,%rcx
+        addq        $4,%r8
+        subq        $1,%rdx
+        jne         pccl32p
+        ret
+	.size	pccl32, .-pccl32
+
+// end of pccl32
+
+// pccl64 parms scalar noc  d1  d2
+//         rdi   rsi   rdx rcx  r8
+
+	.text
+	.globl	pccl64
+	.type	pccl64, @function
+// initialization
+pccl64:
+       vpxor    %xmm0,%xmm0,%xmm0     /* %xmm0 just contains zero */
+       vpinsrq  $0,%rsi,%xmm0,%xmm2   /* scalar from %rsi */
+       vpinsrq  $0,0(%rdi),%xmm0,%xmm4 /* e left justified */
+       vpinsrq  $0,8(%rdi),%xmm0,%xmm6 /* p left justified*/
+       vpinsrq  $0,16(%rdi),%xmm0,%xmm8 /* shift left - right justified */
+pccl64p:
+        vpinsrq     $0,(%rcx),%xmm0,%xmm1    /* get 64-bit quantity */
+        vpclmulqdq  $0,%xmm1,%xmm2,%xmm3   /* multiply by scalar */
+        vpsllq      $1,%xmm3,%xmm7
+        vpclmulqdq  $16,%xmm7,%xmm4, %xmm5  /* multiply high part a by e */
+        vpsllq      $1,%xmm5,%xmm5
+        vpclmulqdq  $16,%xmm5,%xmm6,%xmm7   /* multiply high part s by p */
+        vpxor       %xmm3,%xmm7,%xmm7       /* xor left justified parts */
+        vpinsrq     $0,(%r8),%xmm0,%xmm1    /* get other 64-bit quantity */
+        vpsrlq      %xmm8,%xmm7,%xmm7    /* shift into registration */
+        vpxor       %xmm7,%xmm1,%xmm1    /* add that in too */
+        vpextrq     $0,%xmm1,(%r8)       /* store the result back */
+        addq        $8,%rcx
+        addq        $8,%r8
+        subq        $1,%rdx
+        jne         pccl64p
+        ret
+	.size	pccl64, .-pccl64
+
+// end of pccl64
+
+// pcchain rdi=prog rsi=bwa rdx=parms
+// rax=program byte, r8=prog ptr  r9=place to store
+// r10 slices left rcx slice stride
+
+// unused r11
+// untouched rbx rbp r12 r13 r14 r15
+
+	.text
+	.globl	pcchain
+	.type	pcchain, @function
+pcchain:                   /* initialization */
+        vpbroadcastq 16(%rdx),%ymm9    /* mask     */
+        vmovq         8(%rdx),%xmm10   /* shift S  */
+        vpbroadcastq 24(%rdx),%ymm8    /* 2^S - p  */
+        vpbroadcastq  0(%rdx),%ymm11   /* p  */
+        movq         48(%rdx),%r10     /* number of slices */
+        movq         32(%rdx),%rcx     /* size of one slot */
+        imul         40(%rdx),%rcx     /* times slots = slice stride */
+// %rdx is actually spare from here on
+pcchain1:                  /* next slice */
+        movq    %rdi,%r8   /* start at the program beginning */             
+        movq    %rsi,%r9   /* set up place to store */
+        addq    $256,%r9      /* destination starts at slot 2 */
+        vmovdqa -128(%r9),%ymm0  /* load accumulator from slot 1 */
+        vmovdqa -96(%r9),%ymm1
+        vmovdqa -64(%r9),%ymm2
+        vmovdqa -32(%r9),%ymm3
+pcchain2:
+        movzbq  0(%r8),%rax   /* get first/next program byte */
+        addq    $1,%r8        /* move on to next program byte */
+        cmpq    $79,%rax      /* is it a star-move */
+        ja      pcchain4      /* no - go see what it is */
+pcchain3:
+        shlq    $7,%rax       /* convert to displacement */
+        vpaddq   0(%rax,%rsi),%ymm0,%ymm0  /* add in cauldron */
+        vpaddq  32(%rax,%rsi),%ymm1,%ymm1
+        vpaddq  64(%rax,%rsi),%ymm2,%ymm2
+        vpaddq  96(%rax,%rsi),%ymm3,%ymm3
+        vpaddq  %ymm8,%ymm0,%ymm4          /* add 2^N - p */
+        vpaddq  %ymm8,%ymm1,%ymm5
+        vpaddq  %ymm8,%ymm2,%ymm6
+        vpaddq  %ymm8,%ymm3,%ymm7
+        vpand   %ymm9,%ymm4,%ymm4          /* and with mask */
+        vpand   %ymm9,%ymm5,%ymm5
+        vpand   %ymm9,%ymm6,%ymm6
+        vpand   %ymm9,%ymm7,%ymm7
+        vpsrld  %xmm10,%ymm4,%ymm12        /* subtract 1 if set */
+        vpsrld  %xmm10,%ymm5,%ymm13 
+        vpsrld  %xmm10,%ymm6,%ymm14     /* think this should be quadword */
+        vpsrld  %xmm10,%ymm7,%ymm15 
+        vpsubq  %ymm12,%ymm4,%ymm4
+        vpsubq  %ymm13,%ymm5,%ymm5
+        vpsubq  %ymm14,%ymm6,%ymm6
+        vpsubq  %ymm15,%ymm7,%ymm7
+        vpand   %ymm11,%ymm4,%ymm4         /* and with p */
+        vpand   %ymm11,%ymm5,%ymm5
+        vpand   %ymm11,%ymm6,%ymm6
+        vpand   %ymm11,%ymm7,%ymm7
+        vpsubq  %ymm4,%ymm0,%ymm0          /* subtract p if need be */
+        vpsubq  %ymm5,%ymm1,%ymm1
+        vpsubq  %ymm6,%ymm2,%ymm2
+        vpsubq  %ymm7,%ymm3,%ymm3
+        vmovdqa %ymm0,0(%r9)   /* Store result in BWA */
+        vmovdqa %ymm1,32(%r9)
+        vmovdqa %ymm2,64(%r9)
+        vmovdqa %ymm3,96(%r9)
+        addq    $128,%r9      /* increment destination slot */
+        movzbq  0(%r8),%rax   /* get next program byte */
+        addq    $1,%r8        /* move on to next program byte */
+        cmpq    $79,%rax      /* is it a star-move */
+        jbe     pcchain3      /* yes - go straight round again */
+pcchain4:
+        cmpq    $159,%rax
+        ja      pcchain5      /* not a load of accumulator either */
+        subq    $80,%rax
+        shlq    $7,%rax        /* multiply by slot size */
+        vmovdqa 0(%rax,%rsi),%ymm0
+        vmovdqa 32(%rax,%rsi),%ymm1
+        vmovdqa 64(%rax,%rsi),%ymm2
+        vmovdqa 96(%rax,%rsi),%ymm3
+        jmp     pcchain2
+pcchain5:
+        cmpq    $239,%rax
+        ja      pcchain6       /* not a set destination either */
+        subq    $160,%rax
+        shlq    $7,%rax        /* multiply by slot size */
+        movq    %rax,%r9
+        addq    %rsi,%r9
+        jmp     pcchain2
+pcchain6:                      /* anything 240+ is stop at the moment */
+        addq    %rcx,%rsi      /* add in slice stride */
+        subq    $1,%r10        /* subtract 1 from slice count */
+        jne     pcchain1
+        ret
+
+	.size	pcchain, .-pcchain
+
+// end of pcchain
+
+// pcbmas Afmt bwa Cfmt parms
+
+/* %rdi -> Afmt     %rsi bwa     %rdx -> Cfmt  %rcx parms */
+/* %rax Afmt        %r8 slice in bwa  %r11 constant bwa stride */
+/* %rbx counter for slices  */ 
+/* %r9 used for skip terminate then %r9,%r10 add/subtract displacement */
+
+// untouchted rbp r12 r13 r14 r15
+	.text
+	.globl	pcbmas
+	.type	pcbmas, @function
+pcbmas:
+        pushq         %rbx
+        vpbroadcastq 16(%rcx),%ymm8    /* mask     */
+        vmovq         8(%rcx),%xmm9    /* shift S  */
+        vpbroadcastq 56(%rcx),%ymm10   /* 2^S % p  */
+        vpbroadcastq 64(%rcx),%ymm11   /* bias     */
+        movq         32(%rcx),%r11     /* size of one slot */
+        imul         40(%rcx),%r11     /* times slots = slice stride */
+
+        movq    0(%rdi),%rax  /* first word of Afmt   */
+        movzbq  %al,%r9       /* get skip/terminate   */
+        shrq    $1,%rax
+        cmpq    $255,%r9      /* is it terminate?     */
+        je      getoutas      /* yes get straight out */
+//  Start of secondary loop
+pcas1:
+        shlq    $7,%r9        /* multiply by 128      */
+        addq    %r9,%rdx      /* add into Cfmt addr   */
+        movq    %rsi,%r8      /* copy BWA addr to %r8 */
+        addq    $8,%rdi       /* point to next alcove */
+        movq    $7,%rbx        /* number of slices  */
+        vmovdqa  0(%rdx),%ymm0   /* get cauldron of Cfmt */
+        vmovdqa 32(%rdx),%ymm1
+        vmovdqa 64(%rdx),%ymm2
+        vmovdqa 96(%rdx),%ymm3
+
+//  Start of primary loop
+pcas2:
+   
+        movq    %rax,%r9      /* copy Afmt to add index */
+        shrq    $4,%r9        /* top nybble to bottom   */
+        andq    $0x780,%r9     /* the nybble            */
+        movq    %rax,%r10     /* copy Afmt to sub index */
+        andq    $0x780,%r10     /* get bottom nybble      */
+        shrq    $8,%rax       /* next byte of Afmt      */ 
+        vpaddq   0(%r8,%r9),%ymm0,%ymm0  /* add in cauldron */
+        vpaddq  32(%r8,%r9),%ymm1,%ymm1
+        vpaddq  64(%r8,%r9),%ymm2,%ymm2
+        vpaddq  96(%r8,%r9),%ymm3,%ymm3
+        vpsubq   0(%r8,%r10),%ymm0,%ymm0  /* subtract cauldron */
+        vpsubq  32(%r8,%r10),%ymm1,%ymm1
+        vpsubq  64(%r8,%r10),%ymm2,%ymm2
+        vpsubq  96(%r8,%r10),%ymm3,%ymm3
+        addq    %r11,%r8                 /* move on to next slice */
+        subq    $1,%rbx
+        jne     pcas2
+//  End of primary loop
+        vpand   %ymm8,%ymm0,%ymm4   /* get top bits of each */
+        vpand   %ymm8,%ymm1,%ymm5
+        vpand   %ymm8,%ymm2,%ymm6
+        vpand   %ymm8,%ymm3,%ymm7
+        vpxor   %ymm4,%ymm0,%ymm0   /* xor them back in     */
+        vpxor   %ymm5,%ymm1,%ymm1
+        vpxor   %ymm6,%ymm2,%ymm2
+        vpxor   %ymm7,%ymm3,%ymm3
+        vpsrld  %xmm9,%ymm4,%ymm4     /* divide by 2^S     */
+        vpsrld  %xmm9,%ymm5,%ymm5
+        vpsrld  %xmm9,%ymm6,%ymm6
+        vpsrld  %xmm9,%ymm7,%ymm7
+        vpmulld %ymm10,%ymm4,%ymm4   /* multiply by (2^S)%p   */
+        vpmulld %ymm10,%ymm5,%ymm5
+        vpmulld %ymm10,%ymm6,%ymm6
+        vpmulld %ymm10,%ymm7,%ymm7
+        vpaddq  %ymm4,%ymm0,%ymm0         /* and add that in      */
+        vpaddq  %ymm5,%ymm1,%ymm1
+        vpaddq  %ymm6,%ymm2,%ymm2
+        vpaddq  %ymm7,%ymm3,%ymm3
+        vpaddq  %ymm11,%ymm0,%ymm0        /* add in bias          */
+        vpaddq  %ymm11,%ymm1,%ymm1
+        vpaddq  %ymm11,%ymm2,%ymm2
+        vpaddq  %ymm11,%ymm3,%ymm3
+        vmovdqa %ymm0,0(%rdx)   /* Put Cfmt cauldron back */
+        vmovdqa %ymm1,32(%rdx)
+        vmovdqa %ymm2,64(%rdx)
+        vmovdqa %ymm3,96(%rdx)
+        movq    0(%rdi),%rax  /* next word of Afmt    */
+        movzbq  %al,%r9       /* get skip/terminate   */
+        shrq    $1,%rax
+        cmpq    $255,%r9      /* is it terminate?     */
+        jne     pcas1         /* no - round again     */
+//  End of secondary loop
+getoutas:
+        popq    %rbx
+        ret      
+	.size	pcbmas, .-pcbmas
+
+// end of pcbmas
 
 // void pcbunf(Dfmt * d, const Dfmt * s, uint64_t nob,
 //               %rdi            %rsi         %rdx

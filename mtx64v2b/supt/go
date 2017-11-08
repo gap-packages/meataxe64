@@ -1,0 +1,5 @@
+export JIF=../jif
+export BIN=../bin
+export SRC=../src
+export REG=../reg
+export PATH=.:$BIN:$JIF:$PATH

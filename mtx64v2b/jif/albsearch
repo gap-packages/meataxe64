@@ -1,0 +1,9 @@
+cp alb.c $SRC
+gcc -O3 -Wall -pthread $SRC/alb.c -L$BIN -lmtx -o $BIN/alb
+CT=1
+LIM=200000
+while [ $CT -lt $LIM ] ; do
+  zrd a1 $1 $2 $3 $CT
+  alb a1 a1
+  let CT=CT+1
+done

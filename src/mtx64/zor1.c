@@ -44,7 +44,7 @@ int main(int argc,  char **argv)
         exit(15);
     }
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,dim,&ds);
     piv=malloc(dim*sizeof(int));
     m1=malloc(ds.nob*dim);        // input matrix

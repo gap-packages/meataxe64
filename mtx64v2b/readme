@@ -1,0 +1,43 @@
+This is the "Guy Fawkes" release dated 5.11.2017.
+
+It has no known bugs (but see "determinant" below), passes all regression tests, and from here on I propose to keep a log of all bugs and changes (at summary level, anyway).
+
+Important interface changes in this version.
+1. The slab echelize interface changes.  The determinant is not, however, computed yet.
+2. A new "functions" layer is added to do things to matrices in files.
+
+In particular it fixes the following bugs . . .
+1. the Afmt allocation bug found by JGT early November
+2. includes CLogCmd that JGT prefers for logging.
+3. all technologies (including GEN) now do large fields of characteristic 2.
+4. a serious memory leak found several weeks ago.
+5. the DCut "bug", where matrices were not preferentially chopped at a byte boundary.
+
+It includes (new)
+1. Fast arithmetic (HPMI) for characteristics 5-181
+2. Linear forms for all cubic extensions and {32,64,128,256,512,81,243,625},
+    Including speedups for conversion between extension and prime fields
+3. Fast Dfmt arithmetic (~1,000 x faster) for large fields of characteristic 2.
+
+It passes, for all four of GEN, NEH, PIL and HAS technologies
+1. the Conway polynomial is correctly computed for all fields on Luebeck's list up to 2^64
+2. JGT's field regression test for a broad range of selected fields
+3. val2 - a comparison of the log (i.e. file checksums) after a long sequence of operations.
+
+Looking further back in my notes, it also includes
+1. Chopped-up Gaussian, so it can now invert at the largest scales
+2. A re-organized HPMI to ease implementation (leading to 5-181)
+
+Looking forward now, it does not include . . .
+1. Slab echelise needs to compute the determinant.
+2. Thackray's implementations (work in progress) of "split" and "standard basis".
+3. A faster way to echelize a slab using the HPMI (thinking about that)
+4. Any chopping of matrices on disk - it is all still memory-based.
+5. Any intelligent chopping for multi-core work.  Current methods work but only just.
+6. Ryzen version and AVX512 version (anyone got an i9?) (use HAS for now on both)
+
+(Markus, Steve) Except for bug-fixes I do not expect any significant changes at the "slab" level for a while now.  The non-computation of the determinant in slab echelize I propose to treat as a bug!  My ideal solution is to deal with point 3. (including a determinant) and trash the current slab echelize in its entirety.
+
+There will probably be another release "Nikolaus" in a few weeks time including some of the above.  I am not expecting changes at the slab level, but I am expecting quite a few new functions and programs.
+
+Richard Parker

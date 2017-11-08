@@ -1,0 +1,28 @@
+rm logfile
+zrd a1 4 100 100
+zmu a1 a1 a2
+zrd a1 8 100 100
+zmu a1 a1 a2
+zrd a1 9 100 100
+zmu a1 a1 a2
+zrd a1 16 100 100
+zmu a1 a1 a2
+zrd a1 25 100 100
+zmu a1 a1 a2
+zrd a1 27 100 100
+zmu a1 a1 a2
+zrd a1 32 100 100
+zmu a1 a1 a2
+zrd a1 49 100 100
+zmu a1 a1 a2
+zrd a1 64 100 100
+zmu a1 a1 a2
+zrd a1 81 100 100
+zmu a1 a1 a2
+zrd a1 121 100 100
+zmu a1 a1 a2
+zrd a1 125 100 100
+zmu a1 a1 a2
+zrd a1 128 100 100
+zmu a1 a1 a2
+

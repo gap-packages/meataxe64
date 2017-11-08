@@ -46,7 +46,7 @@ int main(int argc,  char **argv)
         LogString(81,"Can't malloc field structure");
         exit(22);
     }
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,noc,&ds);
     m=malloc(ds.nob*maxnor);
     for(i=1;i<=nof;i++)

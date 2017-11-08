@@ -21,12 +21,10 @@ typedef struct
 } M3S;
 typedef M3S * M3;
 
- M3  M3Cons(const char * fn); // construct and set filename
-void M3Peek(M3 a);            // get field nor noc by peeking
-void M3Same(M3 a, M3 b);      // copy fdef, fmoj, nor, noc from b
+ M3  M3Cons(const char * fn, int sil); // construct and set filename
+void M3Peek(M3 a);            // get fdef nor noc by peeking
 MOJ  M3FieldMOJ (uint64_t fdef);  // make field moj
-void M3EvenChop (M3 a);       // Chop into nearly equal chunks
-void M3CopyChop (M3 a, M3 b); // Copy chopping from b to a
+void M3EvenChop (M3 a, uint64_t divr, uint64_t divc);  // even sized chunks
 void M3MOJs  (M3 a);          // allocate MOJs
 void M3MOJArray (M3 a);       // allocate MOJ array but not MOJs
 void M3Read (M3 a);           // kick off read thread
@@ -35,7 +33,7 @@ void M3Dest(M3 a);            // destroy M3 struct
 
 #define MULPROG 1
 #define MADPROG 2
-#define TRAPROG 3
+// 3 spare - used to be transpose
 #define CEXPROG 4
 #define REXPROG 5
 #define RRFPROG 6
@@ -44,13 +42,15 @@ void M3Dest(M3 a);            // destroy M3 struct
 #define ECHPROG 9
 #define MCPPROG 10
 #define FMVPROG 11
+#define CRZPROG 12
+#define ADIPROG 13
+#define MKRPROG 14
+#define PC0PROG 15
 
 #define MUL(pri, fmoj, a, b, c) \
   TFSubmit(pri, MULPROG, fmoj, a, b, -2l, &c, -1l)
 #define MAD(pri, fmoj, a, b, c, s)               \
   TFSubmit(pri, MADPROG, fmoj, a, b, c, -2l, &s, -1l)
-#define TRA(pri, fmoj, a, b) \
-  TFSubmit(pri, TRAPROG, fmoj, a, -2l, &b, -1l)
 #define CEX(pri, fmoj, a, b, c, d) \
   TFSubmit(pri, CEXPROG, fmoj, a, b, -2l, &c, -2l, &d, -1l)
 #define REX(pri, fmoj, a, b, c, d) \
@@ -67,5 +67,14 @@ void M3Dest(M3 a);            // destroy M3 struct
   TFSubmit(pri, MCPPROG, fmoj, a, -2l, &b, -1l)
 #define FMV(pri, a, flow, b) \
   TFSubmit(pri, FMVPROG, a, flow, -2l, &b, -1l)
+#define CRZ(pri, fmoj, a, b, c) \
+  TFSubmit(pri, CRZPROG, fmoj, a, b, -2l, &c, -1l)
+#define ADI(pri, fmoj, a, b, c) \
+  TFSubmit(pri, ADIPROG, fmoj, a, b, -2l, &c, -1l)
+#define MKR(pri, a, b, c) \
+  TFSubmit(pri, MKRPROG, a, b, -2l, &c, -1l)
+#define PC0(pri, a, b, c) \
+  TFSubmit(pri, PC0PROG, a, -2l, &b, -2l, &c, -1l)
+
 
 /******  end of proggies.h    ******/

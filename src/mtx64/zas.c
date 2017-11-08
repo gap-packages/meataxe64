@@ -49,7 +49,7 @@ int main(int argc,  char **argv)
     nor=hdr[2];
     noc=hdr[3];
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
 
     for(r1=1;r1<chops;r1++)
     {

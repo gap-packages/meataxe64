@@ -1,0 +1,263 @@
+zrd a1 5 40 40 9
+zrd a2 5 40 40 1
+zrd a3 5 15 15 2
+zrd a4 5 4 4 1
+zcv a5 < ../lib/co3pa
+zsv a1 1 vec
+zut 1 a6 < ../reg/valgbs
+zut 1 a7 < ../reg/valgbs1
+
+echo
+echo zrd
+echo ===
+echo
+valgrind zrd x 5 15 15 2
+sleep $1
+echo
+echo ztc
+echo ===
+echo
+valgrind ztc a1
+sleep $1
+echo
+echo ztr1
+echo ====
+echo
+valgrind ztr1 a1 x
+sleep $1
+echo
+echo ztr2
+echo ====
+echo
+valgrind ztr2 a1 x
+sleep $1
+echo
+echo ztr3
+echo ====
+echo
+valgrind ztr3 a1 x
+sleep $1
+echo
+echo zte
+echo ===
+echo
+valgrind zte a1 a3 x
+sleep $1
+echo
+echo zsv
+echo ===
+echo
+valgrind zsv a1 11 x
+sleep $1
+echo
+echo zss
+echo ===
+echo
+valgrind zss a1 3 x
+sleep $1
+echo
+echo zmu1
+echo ====
+echo
+valgrind zmu1 a1 a2 x
+sleep $1
+echo
+echo zmu2
+echo ====
+echo
+valgrind zmu2 a1 a2 x
+sleep $1
+echo
+echo zmu3
+echo ====
+echo
+valgrind zmu3 a1 a2 x
+sleep $1
+echo
+echo zpr
+echo ===
+echo
+valgrind zpr a1 > text
+sleep $1
+echo
+echo zcv
+echo ===
+echo
+valgrind zcv a1 < text
+sleep $1
+echo
+echo zad
+echo ===
+echo
+valgrind zad a1 a2 x
+sleep $1
+echo
+echo zch
+echo ===
+echo
+valgrind zch a1 2
+sleep $1
+echo
+echo zas
+echo ===
+echo
+valgrind zas a1 2
+sleep $1
+echo
+echo zpe1
+echo ====
+echo
+valgrind zpe1 a1 bs rm
+sleep $1
+echo
+echo zbc
+echo ===
+echo
+valgrind zbc bs cs
+sleep $1
+echo
+echo zde
+echo ===
+echo
+valgrind zde a2
+sleep $1
+echo
+echo zpe3
+echo ====
+echo
+valgrind zpe3 a1 bs x
+sleep $1
+echo
+echo ze2
+echo ===
+echo
+valgrind ze2 a1 x
+sleep $1
+echo
+echo ze3
+echo ===
+echo
+valgrind ze3 a3 x
+sleep $1
+echo
+echo zcn
+echo ===
+echo
+valgrind zcn a1 a2 x
+sleep $1
+echo
+echo zec1
+echo ====
+echo
+valgrind zec a1 rs bs x y z
+sleep $1
+echo
+echo zor
+echo ===
+echo
+valgrind zor a4
+sleep $1
+echo
+echo znu
+echo ===
+echo
+valgrind znu a1 x
+sleep $1
+echo
+echo zrn1
+echo ====
+echo
+valgrind zrn1 a1
+sleep $1
+echo
+echo zrn3
+echo ====
+echo
+valgrind zrn3 a1
+sleep $1
+echo
+echo zpor
+echo ====
+echo
+valgrind zpor a5
+sleep $1
+echo
+echo zpiv
+echo ====
+echo
+valgrind zpiv a5 x
+sleep $1
+echo
+echo zpmu
+echo ====
+echo
+valgrind zpmu a5 a5 x
+sleep $1
+echo
+echo zga
+echo ===
+echo
+valgrind zga a 2 5 x
+sleep $1
+echo
+echo ziv
+echo ===
+echo
+valgrind ziv a2 x
+sleep $1
+echo
+echo zsb
+echo ===
+echo
+valgrind zsb vec a 2 x
+sleep $1
+echo
+echo zsp
+echo ===
+echo
+valgrind zsp vec a 2 x y
+sleep $1
+echo
+echo zng
+echo ===
+echo
+valgrind zng a1 x
+sleep $1
+echo
+echo zrx 
+echo ===
+echo
+valgrind zrx a6 a1 x y
+sleep $1
+echo
+echo zrr
+echo ===
+echo
+valgrind zrr a6 x y z
+sleep $1
+echo
+echo zcx
+echo ===
+echo
+valgrind zcx a6 a1 x y
+sleep $1
+sleep $1
+echo
+echo zpc
+echo ===
+echo
+valgrind zpc a6 a7 x y
+sleep $1
+echo
+echo zut
+echo ===
+echo
+valgrind zut 1 a7 < ../reg/valgbs1
+sleep $1
+
+
+
+
+
+
+

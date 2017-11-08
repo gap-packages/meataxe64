@@ -1,5 +1,5 @@
 /*   hpmi.c                       */
-/*   R. A. Parker 20.7.2015       */
+/*   R. A. Parker 10.9.2017        */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,525 +9,514 @@
 #include "hpmi.h"
 #include "pcrit.h"
 
-// DtoBfmt will be needed for other characteristics
-
-void AllocWA(HPMI * hp)
-{
-    const FIELD * f;
-
-    f=hp->f;
-    hp->alen=1+hp->nz0*f->alcovebytes;
-    if((hp->f)->hpmischeme!=4)
-        hp->a=malloc(hp->alen*hp->nz1+8);     // to allow for extra long Afmt loads
-    else
-        hp->a64=malloc(8*hp->nz0*hp->nz1+8);
-// possibly ought to memset hp->a/a64 for valgrind
-    hp->ix=malloc(hp->nz1*sizeof(uint64));
-    hp->bwa=AlignMalloc(f->brickslots*f->cauldbytes);
-    if(((hp->f)->charc)==3)
-    {
-        memset(hp->bwa,0xff,f->brickslots*f->cauldbytes);
-        return;
-    }
-    memset(hp->bwa,0,f->brickslots*f->cauldbytes);
-}
-
-void FreeWA(HPMI * hp)
-{
-    free(hp->a);
-    free(hp->ix);
-    AlignFree(hp->bwa);
-}
-
-void hpmitab(FIELD * f)
-{
-    f->hpmischeme=0;
-    f->cauldron=0;
-    if(f->charc==2)
-    {
-        f->hpmischeme=2;
-        if(f->pcgen==0) f->cauldron=512;
-            else        f->cauldron=1024;
-        f->cauldbytes=f->cauldron/8;
-        f->dfmtcauld=f->cauldbytes;
-        f->alcove=32;
-        f->alcovebytes=5;
-        f->idealnz0=1024;
-        if(f->pcgen==1)
-          if(f->pcsubgen==2) f->idealnz0=6000;
-        f->maxawa=500000;
-        f->brickslots=128;
-        f->minslab=8192;
-        f->bfmt=0;
-    }
-    if((f->charc==3) && (f->pcgen!=0) ) // no char 3 in GEN
-    {
-        f->hpmischeme=3;
-        f->cauldron=510;
-        f->cauldbytes=128;
-        f->dfmtcauld=f->cauldron/5;
-        f->alcove=12;
-        f->alcovebytes=4;
-        f->idealnz0=1024;
-        f->maxawa=500000;
-        f->brickslots=123;
-        f->minslab=5100;
-        f->bfmt=1;
-    }
-#ifdef SOON
-    if( (f->charc>16) && (f->charc<256) && (f->pcgen==2) )
-    {
-        f->hpmischeme=4;
-        f->cauldron=128;
-        f->cauldbytes=256;
-        f->dfmtcauld=256;
-        f->alcove=4;
-        f->alcovebytes=8;
-        f->idealnz0=512;
-        f->maxawa=50000;
-        f->brickslots=64;
-        f->minslab=1024;
-        f->phs[0]=f->charc;
-        f->phs[1]=(100*f->charc-8192)%f->charc;
-        f->phs[2]=4*f->charc;
-// make Afmt conversion table
-// make BrickPop addition chain table
-    }
-#endif
-    return;
-}
-
-void DtoA(HPMI * hp, const Dfmt * a, uint64 z4, uint64 z3)
+void DtoA(DSPACE * ds1, uint64_t * ix, const Dfmt * d, Afmt * a,
+            uint64_t nora, uint64_t noca)
 {
     int i,j,k;
+    uint64_t nz1;
     uint8 orc,byte,byte1;
     const uint8 *pt1,*pt2;
-    int startrow;
-    int startbyte,s;
+    int s;
     int bits,nbits;
+    int copybytes;
     uint8  * Thpa;
     uint16 * Thpv;
+    uint64_t alen;
+    DSPACE ds;
     const FIELD * f;
-    uint8_t * f8;
-    f=hp->f;
-    f8=(uint8_t *)f;
 
-    startrow=z4*hp->nz0;
-    startbyte=z3*hp->bytesnz1;
-    pt1=a+startrow*hp->noba+startbyte;
-    if(f->hpmischeme==2)
+    uint8_t * f8;
+    f=ds1->f;
+    PSSet(f,noca,&ds);
+    f8=(uint8_t *)f;
+    alen=1+nora*f->alcovebytes;
+    copybytes=f->alcovebytes-1;
+    pt1=d;
+    nz1=(noca+f->alcove-1)/f->alcove;
+    for(j=0;j<nz1;j++)
     {
-        for(j=0;j<hp->nz1;j++)
+        ix[j]=j*alen;
+        a[j*alen]=0;  // skip no rows at the start.
+    }
+    Thpa=f8+f->Thpa;
+    if( (f->AfmtMagic==1)||(f->AfmtMagic==2) )
+    {
+        for(i=0;i<nora;i++)  // for each row of the matrix
         {
-            hp->ix[j]=j*hp->alen;
-            hp->a[j*hp->alen]=0;  // skip no rows at the start.
-        }
-        for(i=0;i<hp->nz0;i++)  // for each row of the matrix
-        {
-            if(i+startrow>=hp->nora) break;
-            for(j=0;j<hp->nz1;j++)   // j indexes the alcove
+            for(j=0;j<nz1;j++)   // j indexes the alcove
             {
                 orc=0;               // OR of the bytes
-                pt2=pt1+4*j;         // point to block of 4 bytes
-                for(k=1;k<=4;k++)    // for each byte of block
+                pt2=pt1+copybytes*j;         // point to block of bytes
+                for(k=1;k<=copybytes;k++)    // for each byte of block
                 {
-                    if( (startbyte+4*j+k) > hp->noba) byte=0;
-                                  else               byte=*pt2;
+                    if( (copybytes*j+k) > ds.nob) byte=0;
+                                  else            byte=*pt2;
                     orc|=byte;      // OR in the byte for sparsity
-                    hp->a[hp->ix[j]+k]=byte;  // and move it into Afmt
+                    if(f->AfmtMagic==2) byte=Thpa[byte];
+                    a[ix[j]+k]=byte;  // and move it into Afmt
                     pt2++;
                 }
 // Afmt up to 250 (251-254 spare) 255 is terminator
-                if( (orc==0) && (hp->a[hp->ix[j]]<250) )  // sparsity
-                    hp->a[hp->ix[j]]++;                   // skip one more row
+                if( (orc==0) && (a[ix[j]]<250) )  // sparsity
+                    a[ix[j]]++;                   // skip one more row
                 else
                 {
-                    hp->ix[j]+=5;               // keep that block
-                    hp->a[hp->ix[j]]=1;         // advance pointer
+                    ix[j]+=f->alcovebytes;  // keep that block
+                    a[ix[j]]=1;             // advance pointer
                 }
             }
-            pt1+=hp->noba;
+            pt1+=ds1->nob;
         }
-        for(j=0;j<hp->nz1;j++)
-            hp->a[hp->ix[j]]=255;  // Put in all the terminators
+
     }
-    if(f->hpmischeme==3)
+    if(f->AfmtMagic==3)
     {
-        for(j=0;j<hp->nz1;j++)
-        {
-            hp->ix[j]=j*hp->alen;
-            hp->a[j*hp->alen]=0;  // skip no rows at the start.
-        }
-        Thpa=f8+f->Thpa;
+
         Thpv=(uint16 *)(f8+f->Thpv);
         bits=0;
-        for(i=0;i<hp->nz0;i++)  // for each row of matrix A
+        for(i=0;i<nora;i++)  // for each row of matrix A
         {
-            if(i+startrow>=hp->nora) break;
             nbits=0;
             s=0;
-            for(j=0;j<hp->nz1;j++)   // j indexes the alcove
+            for(j=0;j<nz1;j++)   // j indexes the alcove
             {
                 orc=0;
                 for(k=1;k<=3;k++)     // k indexes slice within alcove
                 {
                     if(nbits<8)
                     {
-                        if( (startbyte+s) >= hp->noba) byte=0;
-                                  else                 byte=pt1[s];
+                        if( s >= ds.nob) byte=0;
+                        else             byte=pt1[s];
                         bits=bits+(Thpv[byte]<<nbits);
                         nbits+=10;
                         s++;
                     }
                     byte1=bits&255;
                     orc|=byte1;
-                    hp->a[hp->ix[j]+k]=Thpa[byte1];  // compute and output Afmt
+                    a[ix[j]+k]=Thpa[byte1];  // compute and output Afmt
                     bits=(bits>>8);
                     nbits-=8;
                 }
 // Afmt up to 250 (251-254 spare) 255 is terminator
-                if( (orc==0) && (hp->a[hp->ix[j]]<250) )  // sparsity
-                    hp->a[hp->ix[j]]++;                   // skip one more row
+                if( (orc==0) && (a[ix[j]]<250) )  // sparsity
+                    a[ix[j]]++;                   // skip one more row
                 else
                 {
-                    hp->ix[j]+=4;               // keep that block
-                    hp->a[hp->ix[j]]=1;         // advance pointer
+                    ix[j]+=4;               // keep that block
+                    a[ix[j]]=1;         // advance pointer
                 }
             }
-            pt1+=hp->noba;
+            pt1+=ds1->nob;
         }
-        for(j=0;j<hp->nz1;j++)
-            hp->a[hp->ix[j]]=255;  // Put in the terminators
+
     }
+    for(j=0;j<nz1;j++)
+        a[ix[j]]=255;  // Put in the terminators
 }
 
-void DtoB(HPMI * hp, const Dfmt * a, uint8 * b)
+uint64_t DtoB(DSPACE * ds1, const Dfmt * d, Bfmt * b, 
+              uint64_t nor, uint64_t noc)
 {
-    int i,j,k,nob;
-    uint8 d;
-    uint64 m,mu,mt;
-    uint64 * Thpb;
+    uint64_t i,k;
+    const Dfmt *pt0, *pt1, *ad;
+    Dfmt xd;
+    Bfmt *pt2;
+    Bfmt sp;
+    DSPACE ds;
+    uint64_t * Thpb;
     int ubits,tbits,nbits;
-    uint8 *bu,*bt,*zbu,*zbt;
-    const uint8 * ad;
+    uint8_t *bu,*bt;
+    uint64_t m,mu,mt;
     const FIELD * f;
 
-    f=hp->f;
-    if(((hp->f)->charc)==3)
+    f=ds1->f;
+    pt0=d;
+    PSSet(f,noc,&ds);
+    if(f->BfmtMagic==1)
     {
-        Thpb=(uint64 *)(((uint8 *)hp->f)+(hp->f)->Thpb);
-        for(j=0;j<hp->nz2;j++)      // ready for fastpath
+        sp=0;
+        for(i=0;i<f->alcove;i++)
         {
-            for(i=0;i<hp->noca;i++)
+            pt1=pt0;
+            pt2=b+i*f->bfmtcauld+1;
+            if(i<nor)
             {
-                bu=b+(j*hp->noca+i)*f->cauldbytes;
-                bt=bu+(f->cauldbytes/2);
-                zbu=bu+31;
-                zbt=bt+31;
-                nbits=0;
-                ubits=0;
-                tbits=0;
-                nob=hp->nobbc-(j*f->dfmtcauld);
-                if(nob>f->dfmtcauld) nob=f->dfmtcauld;
-                ad=a+i*hp->nobbc+j*f->dfmtcauld;
-                for(k=0;k<f->dfmtcauld;k++)
+                for(k=0;k<ds.nob;k++)
                 {
-                    if(k>=nob) d=0;
-                    else d=*(ad+k);
-                    m=Thpb[d];
-                    mu=(m>>32)&0x1f;
-                    mt=m&0x1f;
-                    ubits=ubits+(mu<<nbits);
-                    tbits=tbits+(mt<<nbits);
-                    nbits+=5;
-                    if((nbits>=8)||((k%51)==50))
-                    {
-                        *(bu++)=ubits&0xff;
-                        *(bt++)=tbits&0xff;
-                        ubits=(ubits>>8);
-                        tbits=(tbits>>8);
-                        nbits-=8;
-                        if(nbits<0) nbits=0;
-                    }
+                    sp|=*(pt1);
+                    *(pt2++) = *(pt1++);
                 }
-                for(k=31;k<f->cauldbytes;k+=32)
-                {
-                    *zbu |= 0x80;
-                    *zbt |= 0x80;
-                    zbu+=32;
-                    zbt+=32;
-                }
+                for(k=ds.nob;k<f->bfmtcauld;k++)   *(pt2++)=0;
             }
+            else memset(pt2,0,f->bfmtcauld);
+            pt0+=ds1->nob;
+        }
+        if(sp==0)
+        {
+            *b=0;
+            return 1;
+        }
+        else
+        {
+            *b=1;
+            return f->alcove*f->bfmtcauld+1;
         }
     }
-}
-
-// Seed from a Dfmt input
-void DSeed(HPMI * hp, const Dfmt * b, uint64 z3, uint64 z2, uint64 z1)
-{
-    int zlen,dlen;
-    int i,j,k;
-    uint64 rix;
-    Dfmt sp;
-    const Dfmt *pt0,*pt1;
-    Dfmt *pt2;
-    const FIELD * f;
-    
-    f=hp->f;
-
-    if(f->hpmischeme==2)
+    if(f->BfmtMagic==3)
     {
-        zlen=((z2+1)*f->cauldron);
-        zlen-=hp->nocb;
-        if(zlen<0) zlen=0;
-        if(zlen>f->cauldron) zlen=f->cauldron;
-        zlen=zlen/8;    // convert into bytes to zeroize
-        dlen=f->cauldbytes-zlen;  // data length to move
-        rix=(z3*hp->nz1 + z1)*f->alcove;   // initialize row index
-        sp=0;   // sparsity check byte
-        pt0=b+rix*hp->nobbc+z2*f->cauldbytes;
-        if( ((rix+32)<hp->noca) && (dlen==f->cauldbytes) )
+        sp=0xff;
+        Thpb=(uint64_t *)(((uint8_t *)f)+f->Thpb);
+        for(i=0;i<12;i++)
         {
-            if( (*((uint64*)pt0)) != 0 )
+            bu=b+i*f->bfmtcauld+1;
+            bt=bu+(f->bfmtcauld/2);
+            if(i>=nor)
             {
-                for(i=0;i<8;i++)
+                memset(bu,0xff,f->bfmtcauld);
+                continue;
+            }
+            nbits=0;
+            ubits=0;
+            tbits=0;
+            ad=d+i*ds1->nob;
+            for(k=0;k<f->dfmtcauld;k++)
+            {
+                if(k>=ds.nob) xd=0;
+                else xd=*(ad+k);
+                m=Thpb[xd];
+                mu=(m>>32)&0x1f;
+                mt=m&0x1f;
+                ubits=ubits+(mu<<nbits);
+                tbits=tbits+(mt<<nbits);
+                nbits+=5;
+                if((k%51)==50)
                 {
-                    for(j=0;j<4;j++)
-                    {
-                        pt1=pt0;
-                        pt2=hp->bwa+(i*16+(1<<j))*f->cauldbytes;
-                        memcpy(pt2,pt1,dlen);
-                        pt0+=hp->nobbc;
-                        rix++;
-                    }
+                    ubits|=0x80;
+                    tbits|=0x80;
                 }
-                hp->sparsity=1;
-                return;
+                if((nbits>=8)||((k%51)==50))
+                {
+                    *(bu++)=ubits&0xff;
+                    *(bt++)=tbits&0xff;
+                    sp&=ubits&0xff;
+                    sp&=tbits&0xff;
+                    ubits=(ubits>>8);
+                    tbits=(tbits>>8);
+                    nbits-=8;
+                    if(nbits<0) nbits=0;
+                }
             }
         }
+        if(sp==0xff)
+        {
+            *b=0;
+            return 1;
+        }
+        else
+        {
+            *b=1;
+            return 12*f->bfmtcauld+1;
+        }
+    }
+    return 0;    // should never happen - compiler warning
+}
+
+int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
+{
+    int i,j,x;
+    uint64_t y,z;
+    Bfmt *pt1,*pt2;
+    uint16_t * pt3;
+    uint32_t * pt4;
+    if((*b)==0) return 0;
+    pt1=b+1;
+
+    if(f->SeedMagic==1)    // uint8_t Bfmt -> uint16_t BWA
+    {
+        pt3=(uint16_t *) bwa;
+        pt3+=f->cauldron;
+        for(i=0;i<f->parms[6];i++)
+        {
+            for(j=0;j<f->cauldron;j++)
+                *(pt3+j) = *(pt1++);   // convert uint8_t to uint16_t
+            pt3+=f->cauldron*f->parms[5];
+        }
+    }
+    if(f->SeedMagic==2)    // characteristic 2
+    {
         for(i=0;i<8;i++)
         {
             for(j=0;j<4;j++)
             {
-                pt1=pt0;
-                pt2=hp->bwa+(i*16+(1<<j))*f->cauldbytes;
-                if(rix<hp->noca)
-                {
-                    for(k=0;k<dlen;k++)
-                    {
-                        sp|=*(pt1);
-                        *(pt2++) = *(pt1++);
-                    }
-                    for(k=dlen;k<f->cauldbytes;k++)   *(pt2++)=0;
-                }
-                else memset(pt2,0,f->cauldbytes);
-                pt0+=hp->nobbc;
-                rix++;
+                pt2=bwa+(i*16+(1<<j))*f->bfmtcauld;
+                memcpy(pt2,pt1,f->bfmtcauld);
+                pt1+=f->bfmtcauld;
             }
         }
-        if(sp==0) hp->sparsity=0;
-         else     hp->sparsity=1;
-        return;
     }
-    printf("DSeed called with f->hpmischeme == %d\n",f->hpmischeme);
-    exit(13);
-}
-
-// Seed from a Bfmt input assumes characteristic 3
-
-uint64 cauldcpy(HPMI * hp, uint8 * a, const uint8 * b)
-{
-    uint64 *aa,*bb;
-    uint64 annd;
-    int i;
-    const FIELD * f;
-
-    f=hp->f;
-    annd=0xFFFFFFFFFFFFFFFF;
-    aa=(uint64 *)a;
-    bb=(uint64 *)b;
-    for(i=0;i<f->cauldbytes/8;i++)  annd &= (aa[i]=bb[i]);
-    return annd;
-}
-
-void BSeed(HPMI * hp, const uint8 * bb, uint64 z3, uint64 z2, uint64 z1)
-{
-    uint64 i,j;
-    uint64 annd;
-    const FIELD * f;
-
-    f=hp->f;
-    annd=0xFFFFFFFFFFFFFFFF;
-    for(i=0;i<3;i++)
-    {
-// memcpy dest src siz
-        j=(z3*hp->nz1+z1)*f->alcove+4*i;
-        if(j<hp->noca)
-            annd &= cauldcpy(hp,hp->bwa+(41*i+1)*f->cauldbytes,
-                bb+(z2*hp->noca+j)*f->cauldbytes);
-        else memset(hp->bwa+(41*i+1)*f->cauldbytes,0xff,f->cauldbytes);
-        j++;
-        if(j<hp->noca)
-            annd &= cauldcpy(hp,hp->bwa+(41*i+2)*f->cauldbytes,
-                bb+(z2*hp->noca+j)*f->cauldbytes);
-        else memset(hp->bwa+(41*i+2)*f->cauldbytes,0xff,f->cauldbytes);
-        j++;
-        if(j<hp->noca)
-            annd &= cauldcpy(hp,hp->bwa+(41*i+5)*f->cauldbytes,
-                bb+(z2*hp->noca+j)*f->cauldbytes);
-        else memset(hp->bwa+(41*i+5)*f->cauldbytes,0xff,f->cauldbytes);
-        j++;
-        if(j<hp->noca)
-            annd &= cauldcpy(hp,hp->bwa+(41*i+14)*f->cauldbytes,
-                bb+(z2*hp->noca+j)*f->cauldbytes);
-        else memset(hp->bwa+(41*i+14)*f->cauldbytes,0xff,f->cauldbytes);
-    }
-    if(annd==0xFFFFFFFFFFFFFFFF) hp->sparsity=0;
-    else hp->sparsity=1;
-}
-
-void BGrease(HPMI * hp)
-{
-    int i,r;
-    Dfmt * bw;
-    const FIELD * f;
-
-    f=hp->f;
-    if(hp->sparsity==0) return;
-    bw=hp->bwa;
-    r=f->cauldbytes;
-    if(((hp->f)->charc)==2)
-    {
-        for(i=0;i<8;i++)
-        {
-            pcxor(bw+ 3*r,bw+2*r,bw+1*r,r);
-            pcxor(bw+ 5*r,bw+4*r,bw+1*r,r);
-            pcxor(bw+ 6*r,bw+4*r,bw+2*r,r);
-            pcxor(bw+ 7*r,bw+4*r,bw+3*r,r);
-            pcxor(bw+ 9*r,bw+8*r,bw+1*r,r);
-            pcxor(bw+10*r,bw+8*r,bw+2*r,r);
-            pcxor(bw+11*r,bw+8*r,bw+3*r,r);
-            pcxor(bw+12*r,bw+8*r,bw+4*r,r);
-            pcxor(bw+13*r,bw+8*r,bw+5*r,r);
-            pcxor(bw+14*r,bw+8*r,bw+6*r,r);
-            pcxor(bw+15*r,bw+8*r,bw+7*r,r);
-            bw+=16*r;
-        }
-        return;
-    }
-    if(((hp->f)->charc)==3)
+    if(f->SeedMagic==3)      // characteristic 3
     {
         for(i=0;i<3;i++)
         {
-            pcad3(bw+ 1*r,bw+ 2*r,bw+ 3*r);
-            pcad3(bw+ 1*r,bw+ 3*r,bw+ 4*r);
-            pcad3(bw+ 1*r,bw+ 5*r,bw+ 6*r);
-            pcad3(bw+ 1*r,bw+ 6*r,bw+ 7*r);
-            pcad3(bw+ 2*r,bw+ 5*r,bw+ 8*r);
-            pcad3(bw+ 1*r,bw+ 8*r,bw+ 9*r);
-            pcad3(bw+ 1*r,bw+ 9*r,bw+10*r);
-            pcad3(bw+ 2*r,bw+ 8*r,bw+11*r);
-            pcad3(bw+ 1*r,bw+11*r,bw+12*r);
-            pcad3(bw+ 1*r,bw+12*r,bw+13*r);
-            pcad3(bw+ 1*r,bw+14*r,bw+15*r);
-            pcad3(bw+ 1*r,bw+15*r,bw+16*r);
-            pcad3(bw+ 2*r,bw+14*r,bw+17*r);
-            pcad3(bw+ 1*r,bw+17*r,bw+18*r);
-            pcad3(bw+ 1*r,bw+18*r,bw+19*r);
-            pcad3(bw+ 2*r,bw+17*r,bw+20*r);
-            pcad3(bw+ 1*r,bw+20*r,bw+21*r);
-            pcad3(bw+ 1*r,bw+21*r,bw+22*r);
-            pcad3(bw+ 5*r,bw+14*r,bw+23*r);
-            pcad3(bw+ 1*r,bw+23*r,bw+24*r);
-            pcad3(bw+ 1*r,bw+24*r,bw+25*r);
-            pcad3(bw+ 2*r,bw+23*r,bw+26*r);
-            pcad3(bw+ 1*r,bw+26*r,bw+27*r);
-            pcad3(bw+ 1*r,bw+27*r,bw+28*r);
-            pcad3(bw+ 2*r,bw+26*r,bw+29*r);
-            pcad3(bw+ 1*r,bw+29*r,bw+30*r);
-            pcad3(bw+ 1*r,bw+30*r,bw+31*r);
-            pcad3(bw+ 5*r,bw+23*r,bw+32*r);
-            pcad3(bw+ 1*r,bw+32*r,bw+33*r);
-            pcad3(bw+ 1*r,bw+33*r,bw+34*r);
-            pcad3(bw+ 2*r,bw+32*r,bw+35*r);
-            pcad3(bw+ 1*r,bw+35*r,bw+36*r);
-            pcad3(bw+ 1*r,bw+36*r,bw+37*r);
-            pcad3(bw+ 2*r,bw+35*r,bw+38*r);
-            pcad3(bw+ 1*r,bw+38*r,bw+39*r);
-            pcad3(bw+ 1*r,bw+39*r,bw+40*r);
-            bw+=41*r;
+            memcpy(bwa+(41*i+1)*f->bfmtcauld,pt1,f->bfmtcauld);
+            pt1+=f->bfmtcauld;
+            memcpy(bwa+(41*i+2)*f->bfmtcauld,pt1,f->bfmtcauld);
+            pt1+=f->bfmtcauld;
+            memcpy(bwa+(41*i+5)*f->bfmtcauld,pt1,f->bfmtcauld);
+            pt1+=f->bfmtcauld;
+            memcpy(bwa+(41*i+14)*f->bfmtcauld,pt1,f->bfmtcauld);
+            pt1+=f->bfmtcauld;
+        }
+    }
+    if(f->SeedMagic==4)      // 1-byte Dfmt to 10 bit field.
+    {
+        x=f->cauldron;
+        x=x/3;
+        pt4=(uint32_t *) bwa;
+        pt4+=x;
+        for(i=0;i<f->parms[6];i++)
+        {
+            for(j=0;j<x;j++)
+            {
+                *(pt4+j)=(*pt1)+((*(pt1+1))<<10)+((*(pt1+2))<<20);
+                pt1+=3;
+            }
+            pt4+=x*f->parms[5];
+        }
+    }
+    if(f->SeedMagic==5)    // characteristic 7,11,13
+    {
+        x=f->bfmtcauld;
+        for(i=0;i<f->parms[6];i++)
+        {
+            pt2=bwa+(i*f->parms[5]+1)*f->cfmtcauld;
+            for(j=0;j<x;j++)
+            {
+                y=*(pt1++);
+                z=(y*f->bar48)>>48;    // maybe better with lookup table
+                pt2[1]=z;
+                pt2[0]=y-z*f->charc;
+                pt2+=2;
+            }
+            pt2=bwa+(i*f->parms[5]+2)*f->cfmtcauld;
+            for(j=0;j<x;j++)
+            {
+                y=*(pt1++);
+                z=(y*f->bar48)>>48;
+                pt2[1]=z;
+                pt2[0]=y-z*f->charc;
+                pt2+=2;
+            }
+        }
+    }
+    if(f->SeedMagic==6)    // characteristic 5
+    {
+        for(i=0;i<f->parms[6];i++)
+        {
+            pt2=bwa+(i*f->parms[5]+1)*f->cfmtcauld;
+            for(j=0;j<f->bfmtcauld;j++)
+            {
+                y=*(pt1++);
+                z=(y*f->bar48)>>48;   // z=y/5
+                x=(z*f->bar48)>>48;   // x=y/25
+                pt2[2]=x;
+                pt2[1]=z-x*f->charc;
+                pt2[0]=y-z*f->charc;
+                pt2+=3;
+            }
+            pt2=bwa+(i*f->parms[5]+2)*f->cfmtcauld;
+            for(j=0;j<f->bfmtcauld;j++)
+            {
+                y=*(pt1++);
+                z=(y*f->bar48)>>48;   // z=y/5
+                x=(z*f->bar48)>>48;   // x=y/25
+                pt2[2]=x;
+                pt2[1]=z-x*f->charc;
+                pt2[0]=y-z*f->charc;
+                pt2+=3;
+            }
+            pt2=bwa+(i*f->parms[5]+3)*f->cfmtcauld;
+            for(j=0;j<f->bfmtcauld;j++)
+            {
+                y=*(pt1++);
+                z=(y*f->bar48)>>48;   // z=y/5
+                x=(z*f->bar48)>>48;   // x=y/25
+                pt2[2]=x;
+                pt2[1]=z-x*f->charc;
+                pt2[0]=y-z*f->charc;
+                pt2+=3;
+            }
+        }
+    }
+    return *b;
+}
+
+void BGrease(const FIELD * f, uint8_t * bwa, int sparsity)
+{
+    int i,r;
+    if(sparsity==0) return;
+    r=f->cfmtcauld;
+    if((f->GreaseMagic)==1)
+    {
+        pcchain(f->prog,bwa,f->parms);
+        return;
+    }
+    if((f->GreaseMagic)==2)
+    {
+        for(i=0;i<8;i++)
+        {
+            pcxor(bwa+ 3*r,bwa+2*r,bwa+1*r,r);
+            pcxor(bwa+ 5*r,bwa+4*r,bwa+1*r,r);
+            pcxor(bwa+ 6*r,bwa+4*r,bwa+2*r,r);
+            pcxor(bwa+ 7*r,bwa+4*r,bwa+3*r,r);
+            pcxor(bwa+ 9*r,bwa+8*r,bwa+1*r,r);
+            pcxor(bwa+10*r,bwa+8*r,bwa+2*r,r);
+            pcxor(bwa+11*r,bwa+8*r,bwa+3*r,r);
+            pcxor(bwa+12*r,bwa+8*r,bwa+4*r,r);
+            pcxor(bwa+13*r,bwa+8*r,bwa+5*r,r);
+            pcxor(bwa+14*r,bwa+8*r,bwa+6*r,r);
+            pcxor(bwa+15*r,bwa+8*r,bwa+7*r,r);
+            bwa+=16*r;
+        }
+        return;
+    }
+    if((f->GreaseMagic)==3)
+    {
+        for(i=0;i<3;i++)
+        {
+            pcad3(bwa+ 1*r,bwa+ 2*r,bwa+ 3*r);
+            pcad3(bwa+ 1*r,bwa+ 3*r,bwa+ 4*r);
+            pcad3(bwa+ 1*r,bwa+ 5*r,bwa+ 6*r);
+            pcad3(bwa+ 1*r,bwa+ 6*r,bwa+ 7*r);
+            pcad3(bwa+ 2*r,bwa+ 5*r,bwa+ 8*r);
+            pcad3(bwa+ 1*r,bwa+ 8*r,bwa+ 9*r);
+            pcad3(bwa+ 1*r,bwa+ 9*r,bwa+10*r);
+            pcad3(bwa+ 2*r,bwa+ 8*r,bwa+11*r);
+            pcad3(bwa+ 1*r,bwa+11*r,bwa+12*r);
+            pcad3(bwa+ 1*r,bwa+12*r,bwa+13*r);
+            pcad3(bwa+ 1*r,bwa+14*r,bwa+15*r);
+            pcad3(bwa+ 1*r,bwa+15*r,bwa+16*r);
+            pcad3(bwa+ 2*r,bwa+14*r,bwa+17*r);
+            pcad3(bwa+ 1*r,bwa+17*r,bwa+18*r);
+            pcad3(bwa+ 1*r,bwa+18*r,bwa+19*r);
+            pcad3(bwa+ 2*r,bwa+17*r,bwa+20*r);
+            pcad3(bwa+ 1*r,bwa+20*r,bwa+21*r);
+            pcad3(bwa+ 1*r,bwa+21*r,bwa+22*r);
+            pcad3(bwa+ 5*r,bwa+14*r,bwa+23*r);
+            pcad3(bwa+ 1*r,bwa+23*r,bwa+24*r);
+            pcad3(bwa+ 1*r,bwa+24*r,bwa+25*r);
+            pcad3(bwa+ 2*r,bwa+23*r,bwa+26*r);
+            pcad3(bwa+ 1*r,bwa+26*r,bwa+27*r);
+            pcad3(bwa+ 1*r,bwa+27*r,bwa+28*r);
+            pcad3(bwa+ 2*r,bwa+26*r,bwa+29*r);
+            pcad3(bwa+ 1*r,bwa+29*r,bwa+30*r);
+            pcad3(bwa+ 1*r,bwa+30*r,bwa+31*r);
+            pcad3(bwa+ 5*r,bwa+23*r,bwa+32*r);
+            pcad3(bwa+ 1*r,bwa+32*r,bwa+33*r);
+            pcad3(bwa+ 1*r,bwa+33*r,bwa+34*r);
+            pcad3(bwa+ 2*r,bwa+32*r,bwa+35*r);
+            pcad3(bwa+ 1*r,bwa+35*r,bwa+36*r);
+            pcad3(bwa+ 1*r,bwa+36*r,bwa+37*r);
+            pcad3(bwa+ 2*r,bwa+35*r,bwa+38*r);
+            pcad3(bwa+ 1*r,bwa+38*r,bwa+39*r);
+            pcad3(bwa+ 1*r,bwa+39*r,bwa+40*r);
+            bwa+=41*r;
         }
         return;
     }
 }
-void BrickMad(HPMI * hp, uint8 * c, uint64 z1)
+
+void BwaMad(const FIELD *f, uint8_t * bwa, int sparsity, Afmt *af, Cfmt *c)
 {
-    if(hp->sparsity==0) return;
-    if(((hp->f)->charc)==2) pcbm2(hp->a+z1*hp->alen,hp->bwa,c);
-    if(((hp->f)->charc)==3) pcbm3(hp->a+z1*hp->alen,hp->bwa,c);
+    if(sparsity==0) return;
+    if(f->BwaMagic==1) pcbmas(af,bwa,c,f->parms);
+    if(f->BwaMagic==2) pcbm2(af,bwa,c);
+    if(f->BwaMagic==3) pcbm3(af,bwa,c);
 }
 
-
-void CZer(HPMI * hp, uint8 * c)
+void BrickMad(const FIELD *f, uint8_t *bwa,
+              Afmt *a, Bfmt *b, Cfmt *c)
 {
-    uint64 i;
+    int sparsity;
+    sparsity = BSeed(f,bwa,b);
+    BGrease(f,bwa,sparsity);
+    BwaMad(f,bwa,sparsity,a,c);
+}
+
+void BwaInit(const FIELD *f, uint8_t *bwa)
+{
+    uint64_t *bwa64;
+    uint64_t i;
+    bwa64=(uint64_t *)bwa;
+    for(i=0;i<(f->bwasize/8);i++)
+        bwa64[i]=f->bzer;
+}
+
+void CZer(DSPACE * ds, Cfmt * c, uint64_t nor)
+{
+    uint64_t i,nowords;
+    uint64_t * c64;
     const FIELD * f;
-    uint16_t * c16;
 
-    f=hp->f;
-    if(f->hpmischeme==2)
-    {
-        memset(c,0,f->cauldbytes*hp->nz2*hp->nora);
-        return;
-    }
-    if(f->hpmischeme==3)
-    {
-        for(i=0;i<f->cauldbytes*hp->nz2*hp->nora;i++) c[i]=0xff;
-        return;
-    }
-    if(f->hpmischeme==4)
-    {
-        c16=(uint16_t *)c;
-        for(i=0;i<f->cauldron*hp->nz2*hp->nora;i++) c16[i]=f->phs[2];
-    }
+    f=ds->f;
+    c64=(uint64_t *)c;
+    nowords=((ds->noc+f->cauldron-1)/f->cauldron)*nor*f->cfmtcauld/8;
+    for(i=0;i<nowords;i++) c64[i]=f->czer;
 }
 
-void CtoD(HPMI * hp, uint8 * cc, Dfmt * c)
+void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor)
 {
-    int zlen,cpylen,z2,z0,bits,ix,i;
+    long zlen,cpylen,z2,z0,bits,ix,i;
     uint8 * sp;
+    uint16_t * sp16;
+    uint32_t * sp32;
     Dfmt * dp;
     Dfmt dbyte;
     uint64 bu,bt;
     uint8 * Thpc;
+    uint64_t nz2;
+    uint64_t x,y,z;
     const FIELD * f;
 
-    f=hp->f;
-
+    f=ds->f;
+    nz2=(ds->noc+f->cauldron-1)/f->cauldron;
+    
     bu=0;    // stop compiler
     bits=0;
     bt=0;    // warnings
-    Thpc=(uint8 *)(hp->f) + ((hp->f)->Thpc);
-    for(z2=0;z2<hp->nz2;z2++)
+    Thpc=(uint8 *)f + (f->Thpc);
+    for(z2=0;z2<nz2;z2++)
     {
         zlen=((z2+1)*f->cauldron);
-        zlen-=hp->nocb;
+        zlen-=ds->noc;
         if(zlen<0) zlen=0;
-        if(zlen>f->cauldron) zlen=f->cauldron;
-        if((hp->f)->charc==2) zlen=zlen/8;    // convert into bytes to ignore
-        if((hp->f)->charc==3) zlen=zlen/5;  
+        if(zlen>f->cauldron) zlen=f->cauldron;  
+        zlen=zlen*f->pbytesper/f->pentbyte;
+
         cpylen=f->dfmtcauld-zlen;
-        for(z0=0;z0<hp->nora;z0++)
+        for(z0=0;z0<nor;z0++)
         {
-            dp=c+z0*hp->nobbc+z2*f->dfmtcauld;
-            sp=cc+z0*f->cauldbytes+z2*hp->nora*f->cauldbytes;
-            bu=0;
-            bits=0;
-            bt=0;
-            if(((hp->f)->charc)==2)
+            dp=d+z0*ds->nob+z2*f->dfmtcauld;
+            sp=c+z0*f->cfmtcauld+z2*nor*f->cfmtcauld;
+
+            if((f->CfmtMagic)==1)
                    memcpy(dp,sp,cpylen);
-            if(((hp->f)->charc)==3)
+            if(f->CfmtMagic==2)
             {
+                sp16=(uint16_t *)sp;
+                for(i=0;i<cpylen;i++)
+                {
+                    x=*(sp16++);
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                }
+            }
+            if((f->CfmtMagic)==3)
+            {
+                bu=0;
+                bits=0;
+                bt=0;
                 for(i=0;i<cpylen;i++)
                 {
                     if((i%51)==0)
@@ -539,7 +528,7 @@ void CtoD(HPMI * hp, uint8 * cc, Dfmt * c)
                     if(bits<5)
                     {
                         bu=bu+((*sp)<<bits);
-                        bt=bt+((*(sp+(f->cauldbytes/2)))<<bits);
+                        bt=bt+((*(sp+(f->cfmtcauld/2)))<<bits);
                         sp++;
                         bits+=8;
                     }
@@ -549,6 +538,76 @@ void CtoD(HPMI * hp, uint8 * cc, Dfmt * c)
                     bt=bt>>5;
                     dbyte=Thpc[ix];
                     dp[i]=dbyte;
+                }
+            }
+            if(f->CfmtMagic==4)
+            {
+                sp32=(uint32_t *)sp;
+                for(i=0;i<cpylen-2;i+=3)
+                {
+                    z=*(sp32++);
+                    x=z&0x3ff;
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                    x=(z>>10)&0x3ff;
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                    x=(z>>20)&0x3ff;
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                }
+                if(i==cpylen-1)
+                {
+                    z=*(sp32++);
+                    x=z&0x3ff;
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                }
+                if(i==cpylen-2)
+                {
+                    z=*(sp32++);
+                    x=z&0x3ff;
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                    x=(z>>10)&0x3ff;
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    *(dp++)=x;
+                }
+            }
+            if(f->CfmtMagic==5)
+            {
+                for(i=0;i<cpylen;i++)
+                {
+                    x=*(sp++);
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    z=*(sp++);
+                    y=(z*f->bar48)>>48;
+                    z-=y*f->charc;
+                    *(dp++)=x+z*f->charc;
+                }
+            }
+            if(f->CfmtMagic==6)
+            {
+                for(i=0;i<cpylen;i++)
+                {
+                    x=*(sp++);
+                    y=(x*f->bar48)>>48;
+                    x-=y*f->charc;
+                    z=*(sp++);
+                    y=(z*f->bar48)>>48;
+                    z-=y*f->charc;
+                    x+=z*f->charc;
+                    z=*(sp++);
+                    y=(z*f->bar48)>>48;
+                    z-=y*f->charc;
+                    *(dp++)=x+z*f->charc*f->charc;
                 }
             }
         }

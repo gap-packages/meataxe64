@@ -1,6 +1,6 @@
 /*
-      zfr.c     meataxe-64 Frobenius automorphism
-      =====     R. A. Parker    4.8.2016
+      zfr1.c     meataxe-64 Frobenius automorphism
+      ======     R. A. Parker    4.8.2016
 */
 
 #include <stdio.h>
@@ -40,7 +40,7 @@ int main(int argc,  char **argv)
         LogString(81,"Can't malloc field structure");
         exit(22);
     }
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     e2 = EWHdr(argv[2],hdr);
     DSSet(f,noc,&ds);
     v1=malloc(ds.nob);
@@ -69,4 +69,4 @@ int main(int argc,  char **argv)
     return 0;
 }
 
-/******  end of zfr.c    ******/
+/******  end of zfr1.c    ******/

@@ -1,0 +1,290 @@
+if [ $1 -eq 1 ]; then 
+zad a1 a2 a3
+zmu a3 a3 a4
+zss a4 1 a3
+zad a2 a3 af
+nu
+fi
+if [ $1 -eq 2 ]; then 
+zmu a2 a2 a3
+zad a1 a3 a4
+zad a2 a4 a3
+zss a3 1 af
+nu
+fi
+if [ $1 -eq 3 ]; then 
+zmu a1 a2 a3
+zmu a2 a1 a4
+zad a3 a4 a5
+zad a1 a2 a4
+zad a4 a5 a3
+zss a3 1 af
+nu
+fi
+if [ $1 -eq 4 ]; then
+zmu a1 a2 a3
+zmu a3 a3 a4
+zad a3 a4 a5
+zad a1 a5 a3
+zss a3 1 af
+nu
+fi
+if [ $1 -eq 5 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zss a5 1 a4
+zng a4 a6
+zad a6 a2 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zad a5 a6 a3
+zng a3 a5
+zad a5 a1 af
+nu
+fi
+if [ $1 -eq 6 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zss a5 1 a4
+zad a2 a4 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zad a2 a6 a3
+zad a5 a3 af
+nu
+fi
+if [ $1 -eq 7 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a5 a3 a4
+zad a2 a4 af
+nu
+fi
+if [ $1 -eq 8 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a2 a3 af
+nu
+fi
+if [ $1 -eq 9 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zad a5 a6 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 10 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a2 a3 a4
+zad a1 a4 af
+nu
+fi
+if [ $1 -eq 11 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a2 a4
+zmu a3 a4 a6
+zad a2 a6 a3
+zad a5 a3 af
+nu
+fi
+if [ $1 -eq 12 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a2 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 13 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a2 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a5 a3 a4
+zad a1 a4 af
+nu
+fi
+if [ $1 -eq 14 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a2 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a5 a3 a4
+zad a1 a4 a3
+zad a2 a3 af
+nu
+fi
+if [ $1 -eq 15 ]; then
+zad a1 a2 a3
+zss a3 1 a4
+zmu a3 a4 a5
+zad a1 a5 a4
+zad a2 a4 a3
+zad a3 a2 a4
+zmu a3 a4 a6
+zss a6 1 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 16 ]; then
+zss a1 1 a5
+zmu a5 a2 a6
+zad a1 a2 a5
+zmu a6 a5 a3
+zss a3 1 a4
+zad a2 a4 af
+nu
+fi
+if [ $1 -eq 17 ]; then 
+zad a1 a2 a3
+zmu a3 a2 a4
+zmu a4 a3 a5
+zad a5 a1 af
+nu
+fi
+if [ $1 -eq 18 ]; then 
+zad a1 a2 a4
+zmu a1 a4 a5
+zmu a5 a4 a3
+zad a1 a3 a4
+zad a5 a4 af
+nu
+fi
+if [ $1 -eq 19 ]; then 
+zad a1 a2 a4
+zmu a4 a4 a5
+zmu a4 a5 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 20 ]; then
+zad a1 a2 a4
+zmu a4 a4 a5
+zmu a4 a5 a3
+zad a2 a3 af
+nu
+fi
+if [ $1 -eq 21 ]; then
+zad a1 a2 a4
+zmu a4 a4 a5
+zmu a4 a5 a3
+zad a1 a3 a4
+zad a5 a4 af
+nu
+fi
+if [ $1 -eq 22 ]; then
+zad a1 a2 a4
+zmu a4 a4 a5
+zmu a4 a5 a3
+zad a2 a3 a4
+zad a5 a4 af
+nu
+fi
+if [ $1 -eq 23 ]; then
+zad a1 a2 a4
+zmu a4 a4 a5
+zss a2 1 a3
+zmu a3 a5 a6
+zss a6 1 a5
+zad a4 a5 af
+nu
+fi
+if [ $1 -eq 24 ]; then
+zad a1 a2 a4
+zss a2 1 a3
+zmu a3 a4 a5
+zmu a5 a4 a3
+zad a2 a3 a4
+zad a5 a4 af
+nu
+fi
+if [ $1 -eq 25 ]; then
+zmu a2 a1 a5
+zss a5 1 a3
+zad a1 a2 a4
+zmu a3 a4 a6
+zad a5 a6 af
+nu
+fi
+if [ $1 -eq 26 ]; then
+zad a1 a2 a4
+zmu a2 a4 a5
+zss a5 1 a3
+zmu a3 a4 a6
+zad a5 a6 a3
+zad a2 a3 af
+nu
+fi
+if [ $1 -eq 27 ]; then
+zad a1 a2 a4
+zmu a1 a4 a5
+zss a5 1 a3
+zmu a3 a4 a6
+zad a5 a6 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 28 ]; then
+zmu a1 a2 a3
+zmu a3 a3 a4
+zss a4 1 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 29 ]; then
+zad a1 a2 a3
+zmu a3 a3 a4
+zmu a4 a4 a3
+zad a1 a3 af
+nu
+fi
+if [ $1 -eq 30 ]; then
+zad a1 a2 a3
+zmu a3 a3 a4
+zad a1 a4 a5
+zmu a5 a3 a4
+zad a4 a1 af
+nu
+fi

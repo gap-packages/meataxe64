@@ -38,7 +38,7 @@ char ***fchp(const char *fname, const char *tmp, unsigned int rchops, unsigned i
     LogString(82,"Can't chop too small");
     exit(23);
   }
-  FieldSet(fdef , f);
+  FieldASet(fdef , f);
   DSSet(f, noc, &ds1);
   /* Set up the row and column sizes */
   sub_nor = nor / rchops;

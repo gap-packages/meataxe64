@@ -1,0 +1,34 @@
+cd $SRC
+gcc -c $2 -pthread -Wall -O3 field.c -o $BIN/field.o
+gcc -c $2 -pthread -Wall -O3 conex.c -o $BIN/conex.o
+gcc -c $2 -pthread -Wall -O3 pcrit$1c.c -o $BIN/pcritc.o
+gcc -c $2 -pthread -Wall     pcrit$1s.s -o $BIN/pcrits.o
+gcc -c $2 -pthread -Wall     tfarm0.s -o $BIN/tfarm0.o
+gcc -c $2 -pthread -Wall -O3 tfarm1.c -o $BIN/tfarm1.o
+gcc -c $2 -pthread -Wall -O3 tfarm2.c -o $BIN/tfarm2.o
+gcc -c $2 -pthread -Wall -O3 io.c -o $BIN/io.o
+gcc -c $2 -pthread -Wall -O3 proggies.c -o $BIN/proggies.o
+gcc -c $2 -pthread -Wall -O3 bitstring.c -o $BIN/bitstring.o
+gcc -c $2 -pthread -Wall -O3 slab.c -o $BIN/slab.o
+gcc -c $2 -pthread -Wall -O3 pmul.c -o $BIN/pmul.o
+gcc -c $2 -pthread -Wall -O3 tabmake.c -o $BIN/tabmake.o
+gcc -c $2 -pthread -Wall -O3 hpmi.c -o $BIN/hpmi.o
+gcc -c $2 -pthread -Wall -O3 mtra.c -o $BIN/mtra.o
+gcc -c $2 -pthread -Wall -O3 mmul.c -o $BIN/mmul.o
+gcc -c $2 -pthread -Wall -O3 mpef.c -o $BIN/mpef.o
+gcc -c $2 -pthread -Wall -O3 mech.c -o $BIN/mech.o
+gcc -c $2 -pthread -Wall -O3 linf.c -o $BIN/linf.o
+gcc -c $2 -pthread -Wall -O3 util.c -o $BIN/util.o
+gcc -c $2 -pthread -Wall -O3 fasp.c -o $BIN/fasp.o
+gcc -c $2 -pthread -Wall -O3 fchp.c -o $BIN/fchp.o
+gcc -c $2 -pthread -Wall -O3 fech.c -o $BIN/fech.o
+gcc -c $2 -pthread -Wall -O3 fmul.c -o $BIN/fmul.o
+gcc -c $2 -pthread -Wall -O3 fsmu.c -o $BIN/fsmu.o
+gcc -c $2 -pthread -Wall -O3 ftra.c -o $BIN/ftra.o
+gcc -c $2 -pthread -Wall -O3 fpef.c -o $BIN/fpef.o
+gcc -c $2 -pthread -Wall -O3 funs1.c -o $BIN/funs1.o
+gcc -c $2 -pthread -Wall -O3 funs2.c -o $BIN/funs2.o
+gcc -c $2 -pthread -Wall -O3 funs3.c -o $BIN/funs3.o
+gcc -c $2 -pthread -Wall -O3 funs4.c -o $BIN/funs4.o
+gcc -c $2 -pthread -Wall -O3 funs5.c -o $BIN/funs5.o
+ar rc $BIN/libmtx.a $BIN/tfarm0.o $BIN/tfarm1.o $BIN/tfarm2.o $BIN/field.o $BIN/io.o $BIN/pmul.o $BIN/slab.o $BIN/proggies.o $BIN/pcritc.o $BIN/pcrits.o $BIN/bitstring.o $BIN/hpmi.o $BIN/tabmake.o $BIN/linf.o $BIN/conex.o $BIN/fasp.o $BIN/fchp.o $BIN/fech.o $BIN/fmul.o $BIN/funs1.o $BIN/funs2.o $BIN/funs3.o $BIN/funs4.o $BIN/funs5.o $BIN/mmul.o $BIN/mpef.o $BIN/ftra.o $BIN/mtra.o $BIN/mech.o $BIN/util.o $BIN/fpef.o $BIN/fsmu.o

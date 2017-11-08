@@ -5,21 +5,19 @@
 
 #define ENDGPC 0xffffffff
 
+extern int  BSBitRead (const uint64_t *bs, uint64_t bitno);
+extern void BSBitSet (uint64_t * bs, uint64_t bitno);
 extern uint32_t * BSGpc(const uint64_t * bs); // caller must free result
-extern uint32_t * BSLix(const uint64_t * bs, int flag); // caller frees
-extern void BSColSelect (const FIELD * f, const uint64 * bs, uint64 nor,
+extern uint32_t * BSLixUn(const uint64_t * bs); // caller frees
+extern void BSColSelect (const FIELD * f, const uint64_t * bs, uint64_t nor,
                   const Dfmt * d, Dfmt * sel, Dfmt * nonsel);
 extern void BSColRifZ (const FIELD * f, const uint64_t * bs, uint64 nor,
                   const Dfmt * mtxin, Dfmt * mtxout);
-extern void BSColRifS (const FIELD * f, const uint64_t * bs, uint64 nor,
-             int flag, FELT scalar, const Dfmt * mtxin, Dfmt * mtxout);
-extern void BSCombine (const uint64 * bs1, const uint64 * bs2,
-                  uint64 * comb, uint64 * rif);
-extern void BSShiftOr (const uint64 * bs1, uint64 shift, uint64 * bs2);
-extern void BSBitSet (uint64 * bs, uint64 bitno);
-extern int  BSBitRead (const uint64 *bs, uint64 bitno);
-/* to be obsoleted */
-extern void BSColRiffle (const FIELD * f, const uint64 * bs, uint64 nor,
-                  const Dfmt * set,  const Dfmt * unset, Dfmt * rif);
+extern void BSColPutS (const FIELD * f, const uint64_t * bs, uint64 nor,
+                       FELT scalar, Dfmt * dfmt);   // in situ
+extern void BSCombine (const uint64_t * bs1, const uint64_t * bs2,
+                  uint64_t * comb, uint64_t * rif);
+extern void BSShiftOr (const uint64_t * bs1, uint64_t shift, uint64_t * bs2);
+extern void BSMkr(const uint64_t * lit, const uint64_t * big, uint64_t * rif);
 
 /* end of bitstring.h */

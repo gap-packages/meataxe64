@@ -69,43 +69,4 @@ void TFFlowDest(MOJ moj)
     return;
 }
 
-void TFSetElt(MOJ moj,uint64_t i, uint64_t j, MOJ entry)
-{
-    uint64_t * pt;
-    uint64_t noc;
-    pt=TFPointer(moj);
-    noc=pt[1];
-    pt[2+i*noc+j]=(uint64_t) entry;
-}
-
-MOJ TFMkMOJAry(uint64_t nor, uint64_t noc,int flag)
-{
-    MOJ moj,nmoj;
-    MOJ * pt;
-    uint64_t i,j;
-    moj=TFNewMOJ();
-    TFGetReadRef(moj);
-    pt=TFAllocate(moj,(8*(2+nor*noc)));
-    pt[0]=(MOJ)nor;
-    pt[1]=(MOJ)noc;
-    if(flag==0) return moj;
-    for(i=0;i<nor;i++)
-        for(j=0;j<noc;j++)
-        {
-            nmoj=TFNewMOJ();
-            TFSetElt(moj,i,j,nmoj);
-            TFGetReadRef(nmoj);
-        }
-    return moj;
-}
-
-MOJ TFAryElt(MOJ moj,uint64_t i, uint64_t j)
-{
-    uint64_t * pt;
-    uint64_t noc;
-    pt=TFPointer(moj);
-    noc=pt[1];
-    return (MOJ) pt[2+i*noc+j];
-}
-
 /* end of tfarm2.c  */

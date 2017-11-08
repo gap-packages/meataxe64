@@ -1,0 +1,5 @@
+zsv an ${1-0} av
+if [ $? -ne 0 ]
+  then exit 1
+  fi
+zsp av a 2 s q

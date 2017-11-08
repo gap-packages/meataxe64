@@ -41,7 +41,7 @@ int main(int argc,  char **argv)
         LogString(81,"Can't malloc field structure");
         exit(22);
     }
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
 
     nor2=((nor1*(nor1-1)/2)*(nor1-2))/3;
     noc2=((noc1*(noc1-1)/2)*(noc1-2))/3;

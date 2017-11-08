@@ -10,22 +10,39 @@
 #include "io.h"
 #include "pcrit.h"
 #include "bitstring.h"
-
+#define SIZ 5000
+#define LOOPS 40
+#define FDEF 16974593
 int main(int argc,  char **argv)
 {
-    uint64_t bs[6];
-    uint32_t *gpc;
-    int tct;
-    bs[0]=9;
-    bs[1]=3;
-    bs[2]=0x6c;
-    gpc=BSGpc(bs);
-    tct=0;
-    while(tct<3)
+    int i,j,k,lp,x;
+    Dfmt * m;
+    uint8_t * r;
+    DSPACE ds;
+    FIELD * f;
+    m=malloc(10000);
+    r=malloc(SIZ);
+    f = malloc(FIELDLEN);
+    FieldASet1(FDEF,f,NOMUL);
+    DSSet(f,600,&ds);
+    for(i=0;i<SIZ;i++)
+        r[i]=rand();
+    for(i=0;i<10000;i++)
+        m[i]=47;
+    k=0;
+    for(lp=0;lp<LOOPS;lp++)
     {
-        if((*gpc)==ENDGPC) tct++;
-        printf("%8x ",(int)(*gpc++));
+        for(i=0;i<SIZ;i++)
+        {
+            x=r[i];
+            for(j=0;j<SIZ;j++)
+                k+=FieldAdd(f,1,1);
+//                DPak(&ds,r[j]+x,m,1);
+//                k+=DUnpak(&ds,r[j]+x,m);
+//          k+=r[j]+x;
+        }
     }
+    printf("%d %d %d\n",f->addtyp,k,x);
     return 0;
 }
 

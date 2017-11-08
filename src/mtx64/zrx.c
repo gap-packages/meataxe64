@@ -9,6 +9,7 @@
 #include "field.h"
 #include "io.h"
 #include "bitstring.h"
+#include "pcrit.h"
  
 int main(int argc,  char **argv)
 {
@@ -42,7 +43,7 @@ int main(int argc,  char **argv)
     nor1=hdr1[3];
     nor2=nor-nor1;
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,noc,&ds);
     hdr1[0]=1;
     hdr1[1]=fdef;

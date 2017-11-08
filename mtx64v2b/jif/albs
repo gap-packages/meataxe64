@@ -1,0 +1,4 @@
+cp alb.c $SRC
+gcc -O3 -Wall -pthread $SRC/alb.c -L$BIN -lmtx -o $BIN/alb
+zcv a1 < ../supt/$1
+alb a1 a1

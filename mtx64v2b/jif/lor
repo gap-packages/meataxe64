@@ -1,0 +1,92 @@
+zor a1
+zor a2
+zmu a1 a2 a3
+zor a3
+zmu a3 a2 a4
+zor a4
+# a3 and a4 used from here
+zmu a3 a4 a5
+# 5=34
+zor a5
+zmu a3 a5 a6
+# 6=334
+zor a6
+zmu a6 a4 a7
+# 7=3344
+zor a7
+zmu a3 a6 a8
+# 8=3334
+zor a8
+zmu a3 a8 a9
+# 9=33334
+zor a9
+zmu a8 a4 a10
+# 10=33344
+zor a10
+
+echo 11 coming
+
+zmu a6 a5 a11
+# 11=33434
+zor a11
+zmu a3 a9 a12
+# 12=333 334
+zor a12
+
+zmu a3 a12 a13
+# 13=333 3334
+zor a13
+zmu a12 a5 a13
+# 14=333 334 34
+zor a13
+zmu a12 a6 a13
+# 15=333 334 334
+zor a13
+zmu a12 a8 a13
+# 16=333 334 3334
+zor a13
+zmu a12 a7 a13
+# 17=333 334 3344
+zor a13
+zmu a12 a9 a13
+# 18=333 334 333 34
+zor a13
+zmu a12 a10 a13
+# 19=333 334 333 44
+zor a13
+zmu a12 a11 a13
+# 20=333 334 334 34
+zor a13
+
+echo 21 coming
+
+zmu a3 a10 a12
+# 21 333 344
+zor a12
+zmu a3 a12 a13
+# 22 333 3344
+zor a13
+zmu a12 a5 a13
+# 23 333 344 34
+zor a13
+zmu a12 a6 a13
+# 24 333 344 334
+zor a13
+zmu a12 a7 a13
+# 25 333 344 3344
+zor a13
+zmu a12 a8 a13
+# 26 333 344 3334
+zor a13
+zmu a12 a9 a13
+# 27 333 344 333 34
+zor a13
+zmu a12 a10 a13
+# 28 333 344 333 44
+zor a13
+zmu a12 a11 a13
+# 29 333 344 334 34
+zor a13
+zmu a8 a5 a12
+#30 333 434
+zor a12

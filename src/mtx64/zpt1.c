@@ -39,7 +39,7 @@ int main(int argc,  char **argv)
     noc=hdr[3];
     tvec=0;
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,noc,&ds);
     morb=malloc(MAXSPACE*ds.nob);   // invariant subspace orbital
     mgau=malloc(MAXSPACE*ds.nob);   // Gaussian invariant subspace

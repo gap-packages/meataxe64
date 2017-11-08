@@ -39,7 +39,7 @@ int main(int argc,  char **argv)
         LogString(81,"Can't malloc field structure");
         exit(22);
     }
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     min1=FieldNeg(f,1);
     e2 = EWHdr(argv[2],hdr);
     DSSet(f,noc,&ds);

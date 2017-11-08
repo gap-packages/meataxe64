@@ -39,7 +39,7 @@ int main(int argc,  char **argv)
         LogString(81,"Can't malloc field structure");
         exit(15);
     }
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,noc,&ds);
     piv=malloc(nor*sizeof(int));
     if(piv==NULL)

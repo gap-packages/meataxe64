@@ -1,0 +1,5 @@
+sha256sum $SRC/field.h > shas
+sha256sum $SRC/field.c >> shas
+sha256sum $SRC/io.c >> shas
+sha256sum $SRC/bitstring.c >> shas
+

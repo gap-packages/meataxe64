@@ -1,6 +1,6 @@
 /*
       proggies.c     All the proggies
-      ==========     R. A. Parker    10.8.2016
+      ==========     R. A. Parker    16.5.2017
 */
 
 #include <stdio.h>
@@ -10,21 +10,24 @@
 #include <stdint.h>
 #include "field.h"
 #include "tfarm.h"
-#include "psn1.h"
 #include "io.h"
 #include "proggies.h"
 #include "slab.h"
 #include "bitstring.h"
 #include "tuning.h"
+#include "pcrit.h"
 
-M3  M3Cons(const char * fn)         // construct and set filename
+// #define DEBUG 1
+// #define DEBUG1 1
+
+M3  M3Cons(const char * fn, int sil)  // construct and set filename
 {
     M3 a;
     a = malloc(sizeof(M3S));
     a->fn=malloc(strlen(fn)+1);
     strcpy(a->fn,fn);
     a->fl=NULL;
-    a->silent=0;
+    a->silent=sil;
     return a;
 }
 
@@ -35,14 +38,6 @@ void M3Peek (M3 a)            // peek, get fdef nor,noc
     a->fdef = hdr[1];
     a->nor = hdr[2];
     a->noc = hdr[3];
-}
-
-void M3Same (M3 a, M3 b)            // get field fmoj nor noc
-{
-    a->fmoj=b->fmoj;
-    a->fdef = b->fdef;
-    a->nor = b->nor;
-    a->noc = b->noc;
 }
 
 MOJ M3FieldMOJ (uint64_t fdef)          // make field moj
@@ -57,7 +52,7 @@ MOJ M3FieldMOJ (uint64_t fdef)          // make field moj
     return mj;
 }
 
-void M3EvenChop (M3 a)            // Implement chopping strategy
+void M3EvenChop (M3 a, uint64_t divr, uint64_t divc)   
 {
     uint64_t def,rem,i;
 /*  Then allocate the sizes lists  */
@@ -65,34 +60,33 @@ void M3EvenChop (M3 a)            // Implement chopping strategy
     a->cnoc=malloc(a->c*sizeof(uint64_t));
 /*  Then share out nor equally  */
     def=a->nor/a->r;
+    def=(def/divr)*divr;
     rem=a->nor-(def*a->r);
     for(i=0;i<a->r;i++)
     {
         a->rnor[i]=def;
-        if(rem==0) continue;
-        rem--;
-        a->rnor[i]++;
+        if(rem>=divr)
+        {
+            a->rnor[i]+=divr;
+            rem-=divr;
+        }
     }
+    a->rnor[a->r-1]+=rem;
+/*  similarly noc  */
     def=a->noc/a->c;
+    def=(def/divc)*divc;
     rem=a->noc-(def*a->c);
+
     for(i=0;i<a->c;i++)
     {
         a->cnoc[i]=def;
-        if(rem==0) continue;
-        rem--;
-        a->cnoc[i]++;
-    } 
-}
-
-void M3CopyChop (M3 a, M3 b)  // copy chopping from b to a
-{
-    uint64_t i;
-    a->r=b->r;
-    a->c=b->c;
-    a->rnor=malloc(a->r*sizeof(uint64_t));
-    a->cnoc=malloc(a->c*sizeof(uint64_t));
-    for(i=0;i<a->r;i++) a->rnor[i]=b->rnor[i];
-    for(i=0;i<a->c;i++) a->cnoc[i]=b->cnoc[i];
+        if(rem>=divc)
+        {
+            a->cnoc[i]+=divc;
+            rem-=divc;
+        }
+    }
+    a->cnoc[a->c-1]+=rem;
 }
 
 void M3MOJs  (M3 a)            // allocate MOJs
@@ -277,6 +271,9 @@ void pgadd(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ, MOJ CMOJ)
     }
     nor=a[0];
     noc=a[1];
+#ifdef DEBUG
+printf("ADD %lu x %lu\n",nor,noc);
+#endif
     DSSet(f,noc,&ds);
     c=TFAllocate(CMOJ,(nor*ds.nob)+16);
     c[0]=a[0];
@@ -312,6 +309,9 @@ void genmul(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ, MOJ CMOJ)
     nor1=a[0];
     noc1=a[1];
     noc2=b[1];
+#ifdef DEBUG
+printf(" %lu x %lu  X  %lu x %lu",nor1,noc1,noc1,noc2);
+#endif
     da=(Dfmt *) a;
     db=(Dfmt *) b;
     DSSet(f,b[1],&ds);
@@ -349,6 +349,9 @@ void genadd(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
     }
     nor=a[0];
     noc=a[1];
+#ifdef DEBUG
+printf(" add %lu x %lu\n",nor,noc);
+#endif
     da=(Dfmt *) a;
     dc=(Dfmt *) c;
     DSSet(f,noc,&ds);
@@ -368,6 +371,9 @@ void gencpy(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
     a=(uint64 *) TFPointer(AMOJ);
     nor=a[0];
     noc=a[1];
+#ifdef DEBUG
+printf(" %lu x %lu\n",nor,noc);
+#endif
     DSSet(f,noc,&ds);
     c=TFAllocate(CMOJ,nor*ds.nob+16);
     memcpy(c,a,16+nor*ds.nob);
@@ -375,214 +381,252 @@ void gencpy(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
 
 void pgmul(MOJ FMOJ, MOJ AMOJ, MOJ BMOJ, MOJ CMOJ)
 {
+#ifdef DEBUG
+printf("MUL ");
+#endif
     genmul(FMOJ,AMOJ,BMOJ,CMOJ);
+#ifdef DEBUG
+printf("\n");
+#endif
     TFStable(CMOJ);
 }
 
-
-
 void pgmad(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ, MOJ CMOJ, MOJ SMOJ)
 {
+#ifdef DEBUG
+printf("MAD ");
+#endif
     genmul(FMOJ,AMOJ,BMOJ,SMOJ);
     genadd(FMOJ,CMOJ,SMOJ);
     TFStable(SMOJ);
 }
 
-static void gentra(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ)
+static void pgcex(MOJ FMOJ, MOJ BSMOJ, MOJ MATMOJ,
+                  MOJ SELMOJ, MOJ NONSELMOJ)
 {
-    FIELD * f;
-    uint64 *a,*b;
-    Dfmt *da, *db;
-    uint64 nor,noc;
-
-    f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64 *) TFPointer(AMOJ);
-    b=(uint64 *) TFPointer(BMOJ);
-    if( (a[0]!=b[1]) || (a[1]!=b[0]) )
+    FIELD *f;
+    uint64 *sel, *nonsel;
+    const uint64 *bs, *mat;
+    DSPACE ds_mat, ds_sel, ds_nonsel;
+    uint64 nor, noc;
+    Dfmt *d_mat, *d_sel, *d_nonsel;
+ 
+    f = (FIELD *)TFPointer(FMOJ);
+    bs = (uint64 *)TFPointer(BSMOJ);
+    mat = (uint64 *)TFPointer(MATMOJ);
+    nor = mat[0];
+    noc = mat[1];
+    if(noc!=bs[0])
     {
-        printf("Tra with incompatible matrices %lu %lu %lu %lu\n",
-               a[0],a[1],b[0],b[1]);
-        exit(22);
+        printf("Invalid column extract - cols not equal\n");
+        exit(14);
     }
-    nor=a[0];
-    noc=a[1];
-    da=(Dfmt *) a;
-    db=(Dfmt *) b;
-    da+=16;
-    db+=16;
-
-    SLTra(f, da, db, nor, noc); /* Transpose a slab */
-    TFStable(BMOJ);
+    DSSet(f, noc, &ds_mat);
+    DSSet(f, bs[1], &ds_sel); /* Number of set bits */
+    DSSet(f, bs[0] - bs[1], &ds_nonsel); /* Number of unset bits */
+    sel = TFAllocate(SELMOJ, nor * ds_sel.nob+16);
+    nonsel = TFAllocate(NONSELMOJ, nor * ds_nonsel.nob+16);
+    /* Set output parameters */
+    sel[0] = nor;
+    sel[1] = bs[1];
+    nonsel[0] = nor;
+    nonsel[1] = bs[0] - bs[1];
+    d_mat = (Dfmt *)(mat + 2);
+    d_sel = (Dfmt *)(sel + 2);
+    d_nonsel = (Dfmt *)(nonsel + 2);
+#ifdef DEBUG
+printf("CEX %lu x %lu -> %lu %lu\n",nor,noc,sel[1],nonsel[1]);
+#endif
+    BSColSelect(f, bs, nor, d_mat, d_sel, d_nonsel);
+    TFStable(SELMOJ);
+    TFStable(NONSELMOJ);
 }
 
-static void pgtra(MOJ FMOJ, MOJ AMOJ, MOJ BMOJ)
+static void pgrex(MOJ FMOJ, MOJ BSMOJ, MOJ MATMOJ,
+                  MOJ SELMOJ, MOJ NONSELMOJ)
 {
-    FIELD * f;
-    uint64 *a,*b;
-    DSPACE ds;
+    FIELD *f;
+    uint64 *sel, *nonsel;
+    const uint64 *bs, *mat;
+    DSPACE ds_mat;
+    uint64 nor, noc, nor1, nor2, r;
+    Dfmt *d_mat, *d_sel, *d_nonsel;
+    int set;
 
-    f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64 *) TFPointer(AMOJ);
-    DSSet(f,a[0],&ds); /* a[0] == b[1] columns */
-    b=TFAllocate(BMOJ,a[1]*ds.nob+16); /* nor(b)*nob(b)+header */
-    b[0]=a[1]; /* nor(b) = noc(a) */
-    b[1]=a[0]; /* noc(b) = nor(a) */
-    memset(b+2,0,a[1]*ds.nob); /* Clear the matrix of a[1] = b[0] rows */
-    gentra(FMOJ,AMOJ,BMOJ);
-}
-
-static void pgcex(MOJ FMOJ, MOJ BSMOJ, MOJ MATMOJ, MOJ SELMOJ, MOJ NONSELMOJ)
-{
-  FIELD *f;
-  uint64 *sel, *nonsel;
-  const uint64 *bs, *mat;
-  DSPACE ds_mat, ds_sel, ds_nonsel;
-  uint64 nor, noc;
-  Dfmt *d_mat, *d_sel, *d_nonsel;
-
-  f = (FIELD *)TFPointer(FMOJ);
-  bs = (uint64 *)TFPointer(BSMOJ);
-  mat = (uint64 *)TFPointer(MATMOJ);
-  nor = mat[0];
-  noc = mat[1];
-  DSSet(f, noc, &ds_mat);
-  DSSet(f, bs[1], &ds_sel); /* Number of set bits */
-  DSSet(f, bs[0] - bs[1], &ds_nonsel); /* Number of unset bits */
-  sel = TFAllocate(SELMOJ, nor * ds_sel.nob+16);
-  nonsel = TFAllocate(NONSELMOJ, nor * ds_nonsel.nob+16);
-  /* Set output parameters */
-  sel[0] = nor;
-  sel[1] = bs[1];
-  nonsel[0] = nor;
-  nonsel[1] = bs[0] - bs[1];
-  memset(sel + 2, 0, nor * ds_sel.nob);
-  memset(nonsel + 2, 0, nor * ds_nonsel.nob);
-  d_mat = (Dfmt *)(mat + 2);
-  d_sel = (Dfmt *)(sel + 2);
-  d_nonsel = (Dfmt *)(nonsel + 2);
-  BSColSelect(f, bs, nor, d_mat, d_sel, d_nonsel);
-  TFStable(SELMOJ);
-  TFStable(NONSELMOJ);
-}
-
-static void pgrex(MOJ FMOJ, MOJ BSMOJ, MOJ MATMOJ, MOJ SELMOJ, MOJ NONSELMOJ)
-{
-  FIELD *f;
-  uint64 *sel, *nonsel;
-  const uint64 *bs, *mat;
-  DSPACE ds_mat;
-  uint64 nor, noc, nor1, nor2, r;
-  Dfmt *d_mat, *d_sel, *d_nonsel;
-
-  f = (FIELD *)TFPointer(FMOJ);
-  bs = (uint64 *)TFPointer(BSMOJ);
-  mat = (uint64 *)TFPointer(MATMOJ);
-  nor = mat[0];
-  noc = mat[1];
-  DSSet(f, noc, &ds_mat);
-  /* Set output parameters */
-  nor1 = bs[1];
-  nor2 = nor - bs[1];
-  /* Both outputs have full set of columns */
-  sel = TFAllocate(SELMOJ, nor1 * ds_mat.nob+16);
-  nonsel = TFAllocate(NONSELMOJ, nor2 * ds_mat.nob+16);
-  sel[0] = nor1;
-  sel[1] = noc;
-  nonsel[0] = nor2;
-  nonsel[1] = noc;
-  memset(sel + 2, 0, nor1 * ds_mat.nob);
-  memset(nonsel + 2, 0, nor2 * ds_mat.nob);
-  d_mat = (Dfmt *)(mat + 2);
-  d_sel = (Dfmt *)(sel + 2);
-  d_nonsel = (Dfmt *)(nonsel + 2);
-  for (r = 0; r < nor; r++) {
-    int set = BSBitRead (bs, r);
-    if (set) {
-      /* Copy row r to sel */
-      memcpy(d_sel, d_mat, ds_mat.nob);
-      d_sel += ds_mat.nob;
-    } else {
-      /* Copy row r to nonsel */
-      memcpy(d_nonsel, d_mat, ds_mat.nob);
-      d_nonsel += ds_mat.nob;
+    f = (FIELD *)TFPointer(FMOJ);
+    bs = (uint64 *)TFPointer(BSMOJ);
+    mat = (uint64 *)TFPointer(MATMOJ);
+    nor = mat[0];
+    noc = mat[1];
+    DSSet(f, noc, &ds_mat);
+    if(nor!=bs[0])
+    {
+        printf("row extract with wrong number of rows\n");
+        exit(14);
     }
-    d_mat += ds_mat.nob;
-  }
-  TFStable(SELMOJ);
-  TFStable(NONSELMOJ);
-}
-
-/* Like REX, but combine rather than separate */
-static void pgrrf(MOJ FMOJ, MOJ BSMOJ, MOJ SELMOJ, MOJ UMOJ, MOJ MATMOJ)
-{
-  FIELD *f;
-  const uint64  *bs, *sel, *u;
-  uint64 *mat;
-  DSPACE ds_mat;
-  uint64 nor, noc, nor1, nor2, r;
-  Dfmt *d_mat, *d_sel, *d_u;
-
-  f = (FIELD *)TFPointer(FMOJ);
-  bs = (uint64 *)TFPointer(BSMOJ);
-  sel = (uint64 *)TFPointer(SELMOJ);
-  u = (uint64 *)TFPointer(UMOJ);
-  nor1 = sel[0];
-  nor2 = u[0];
-  nor = nor1 + nor2;
-  noc = sel[1];
-  DSSet(f, noc, &ds_mat);
-  /* Output has full set of columns */
-  mat = TFAllocate(MATMOJ, nor * ds_mat.nob+16);
-  mat[0] = nor;
-  mat[1] = noc;
-  memset(mat + 2, 0, nor * ds_mat.nob);
-  d_mat = (Dfmt *)(mat + 2);
-  d_sel = (Dfmt *)(sel + 2);
-  d_u = (Dfmt *)(u + 2);
-  for (r = 0; r < nor; r++) {
-    int set = BSBitRead(bs, r);
-    if (set) {
-      /* Copy row r from sel */
-      memcpy(d_mat, d_sel, ds_mat.nob);
-      d_sel += ds_mat.nob;
-    } else {
-      /* Copy row r from u */
-      memcpy(d_mat, d_u, ds_mat.nob);
-      d_u += ds_mat.nob;
+    /* Set output parameters */
+    nor1 = bs[1];
+    nor2 = nor - bs[1];
+    /* Both outputs have full set of columns */
+    sel = TFAllocate(SELMOJ, nor1 * ds_mat.nob+16);
+    nonsel = TFAllocate(NONSELMOJ, nor2 * ds_mat.nob+16);
+    sel[0] = nor1;
+    sel[1] = noc;
+    nonsel[0] = nor2;
+    nonsel[1] = noc;
+#ifdef DEBUG
+printf("REX %lu -> %lu %lu X %lu\n",nor,nor1,nor2,noc);
+#endif
+    d_mat = (Dfmt *)(mat + 2);
+    d_sel = (Dfmt *)(sel + 2);
+    d_nonsel = (Dfmt *)(nonsel + 2);
+    for (r = 0; r < nor; r++)
+    {
+        set = BSBitRead (bs, r);
+        if (set)
+        {
+            /* Copy row r to sel */
+            memcpy(d_sel, d_mat, ds_mat.nob);
+            d_sel += ds_mat.nob;
+        }
+        else
+        {
+            /* Copy row r to nonsel */
+            memcpy(d_nonsel, d_mat, ds_mat.nob);
+            d_nonsel += ds_mat.nob;
+        }
+        d_mat += ds_mat.nob;
     }
-    d_mat += ds_mat.nob;
-  }
-  TFStable(MATMOJ);
+    TFStable(SELMOJ);
+    TFStable(NONSELMOJ);
 }
 
-/* PVC, a bit of an oddball */
-static void pgpvc(MOJ BSPMOJ, MOJ BSQMOJ, MOJ BSP1MOJ, MOJ BSUMOJ)
+/* RRF.  Like rex, but combine rather than separate */
+static void pgrrf(MOJ FMOJ, MOJ BSMOJ, MOJ SELMOJ, MOJ UMOJ,
+                  MOJ MATMOJ)
 {
-  const uint64 *bsp, *bsq;
-  uint64 *bsp1, *bsu;
-  uint64 nor, noc, noc1, noc2;
-  uint64 bsp1_size, bsu_size;
+    FIELD *f;
+    const uint64  *bs, *sel, *u;
+    uint64 *mat;
+    DSPACE ds_mat;
+    uint64 nor, noc, nor1, nor2, r;
+    Dfmt *d_mat, *d_sel, *d_u;
+    int set;
+
+    f = (FIELD *)TFPointer(FMOJ);
+    bs = (uint64 *)TFPointer(BSMOJ);
+    sel = (uint64 *)TFPointer(SELMOJ);
+    u = (uint64 *)TFPointer(UMOJ);
+    nor1 = sel[0];
+    nor2 = u[0];
+    nor = nor1 + nor2;
+    noc = sel[1];
+    if( (nor1!=bs[1]) || (nor2!=(bs[0]-bs[1])) )
+    {
+        printf("Wrong number of rows in row extract\n");
+        exit(14);
+    }
+    if(noc!=u[1])
+    {
+        printf("Incompatible matrices in row extract\n");
+        exit(14);
+    }
+#ifdef DEBUG
+printf("RRF %lu + %lu -> %lu X %lu\n",nor1,nor2,nor,noc);
+#endif
+    DSSet(f, noc, &ds_mat);
+    /* Output has full set of columns */
+    mat = TFAllocate(MATMOJ, nor * ds_mat.nob+16);
+    mat[0] = nor;
+    mat[1] = noc;
+    memset(mat + 2, 0, nor * ds_mat.nob);
+    d_mat = (Dfmt *)(mat + 2);
+    d_sel = (Dfmt *)(sel + 2);
+    d_u = (Dfmt *)(u + 2);
+    for (r = 0; r < nor; r++)
+    {
+        set = BSBitRead(bs, r);
+        if (set)
+        {
+            /* Copy row r from sel */
+            memcpy(d_mat, d_sel, ds_mat.nob);
+            d_sel += ds_mat.nob;
+        }
+        else
+        {
+            /* Copy row r from u */
+            memcpy(d_mat, d_u, ds_mat.nob);
+            d_u += ds_mat.nob;
+        }
+        d_mat += ds_mat.nob;
+    }
+    TFStable(MATMOJ);
+}
+
+/* Pivot combine P1,P2->P3,  riffle RF */
+static void pgpvc(MOJ P1, MOJ P2, MOJ P3, MOJ RF)
+{
+    const uint64 *p1, *p2;
+    uint64 *p3, *rf;
+    uint64 nor, noc1, noc2, noc3;
+    uint64 p3siz, rfsiz;
 
   /* Get pointers to the inputs */
-  bsp = (uint64 *)TFPointer(BSPMOJ);
-  bsq = (uint64 *)TFPointer(BSQMOJ);
+    p1 = (uint64 *)TFPointer(P1);
+    p2 = (uint64 *)TFPointer(P2);
   /* Compute the parameters */
-  nor = bsp[0]; /* Total bits in p */
-  noc1 = bsp[1]; /* Bits set in p */
-  noc2 = bsq[1]; /* Bits set in q */
-  noc = noc1 + noc2; /* Bits set in p1, also total bits in u */
+    nor = p1[0]; /* Total bits in p1 */
+    noc1 = p1[1]; /* Bits set in p1 */
+    noc2 = p2[1]; /* Bits set in p2 */
+    noc3 = noc1 + noc2; /* Bits set in p3, also total bits in rf */
+    if(p2[0]!=(nor-noc1))
+    {
+        printf("Incompatible bit strings in PVC\n");
+        exit(14);
+    }
+#ifdef DEBUG
+printf("PVC %lu  %lu + %lu -> %lu\n",nor,noc1,noc2,noc3);
+#endif
   /* Compute sizes */
-  bsp1_size = (sizeof(uint64)) * (2 + (nor + 63) / 64);
-  bsu_size = (sizeof(uint64)) * (2 + (noc + 63) / 64);
-  /* Allocate p1 and u */
-  bsp1 = TFAllocate(BSP1MOJ, bsp1_size);
-  bsu = TFAllocate(BSUMOJ, bsu_size);
-  memset(bsp1, 0, bsp1_size);
-  memset(bsu, 0, bsu_size);
+    p3siz = (sizeof(uint64)) * (2 + (nor + 63) / 64);
+    rfsiz = (sizeof(uint64)) * (2 + (noc3 + 63) / 64);
+  /* Allocate p3 and rf */
+    p3 = TFAllocate(P3, p3siz);
+    rf = TFAllocate(RF, rfsiz);
   /* Now combine the pivots */
-  BSCombine(bsp, bsq, bsp1, bsu);
-  TFStable(BSP1MOJ);
-  TFStable(BSUMOJ);
+    BSCombine(p1, p2, p3, rf);
+    TFStable(P3);
+    TFStable(RF);
+}
+
+/* Pivot combine P2->P3,  riffle RF with no P1 start */
+static void pgpc0(MOJ P2, MOJ P3, MOJ RF)
+{
+    const uint64 *p2;
+    uint64 *p3, *rf;
+    uint64 nor, noc;
+    uint64 p3siz, rfsiz;
+
+  /* Get pointers to the input */
+    p2 = (uint64 *)TFPointer(P2);
+  /* Compute the parameters */
+    nor = p2[0]; /* Total bits in p1=p2 */
+    noc = p2[1]; /* Bits set in p2 */
+#ifdef DEBUG
+printf("PC0 %lu  %lu\n",nor,noc);
+#endif
+  /* Compute sizes */
+    p3siz = (sizeof(uint64)) * (2 + (nor + 63) / 64);
+    rfsiz = (sizeof(uint64)) * (2 + (noc + 63) / 64);
+  /* Allocate p3 and rf */
+    p3 = TFAllocate(P3, p3siz);
+    rf = TFAllocate(RF, rfsiz);
+    memcpy(p3, p2, p3siz);
+    memset(rf, 0, rfsiz);
+    rf[0]=noc;
+    rf[1]=0;
+    TFStable(P3);
+    TFStable(RF);
 }
 
 static void pgech(MOJ FMOJ, MOJ AMOJ, MOJ RSMOJ, MOJ CSMOJ,
@@ -594,6 +638,7 @@ static void pgech(MOJ FMOJ, MOJ AMOJ, MOJ RSMOJ, MOJ CSMOJ,
     Dfmt *am,*mm,*cm,*rm;
     DSPACE dsa;
     size_t z;
+    uint64_t det;
 
     f  = (FIELD *) TFPointer(FMOJ);
     am = (Dfmt *)  TFPointer(AMOJ);
@@ -606,10 +651,13 @@ static void pgech(MOJ FMOJ, MOJ AMOJ, MOJ RSMOJ, MOJ CSMOJ,
     z=16+8*((noc+63)/64);
     csp=TFAllocate(CSMOJ,z);
     mm=TFAllocate(MMOJ,16+nor*dsa.nob);   // don't need all this
-    cm=TFAllocate(CMOJ,16+nor*dsa.nob);   // don't need all this either
+    cm=TFAllocate(CMOJ,16+nor*dsa.nob);   // nor all this either
     rm=TFAllocate(RMOJ,16+nor*dsa.nob);
     
-    rank=SLEch(f,am+16,rsp,csp,mm+16,cm+16,rm+16,nor,noc);
+    rank=SLEch(&dsa,am+16,rsp,csp,&det,mm+16,cm+16,rm+16,nor);
+#ifdef DEBUG
+printf("ECH %lu x %lu rank %lu\n",nor,noc,rank);
+#endif
 
     mh=(uint64 *) mm;
     ch=(uint64 *) cm;
@@ -639,55 +687,200 @@ void pgfmv(MOJ AMOJ, MOJ FMOJ, MOJ BMOJ)
 
 void pgcpy(MOJ FMOJ, MOJ AMOJ, MOJ BMOJ)
 {
+#ifdef DEBUG
+printf("MCP ");
+#endif
   gencpy(FMOJ, AMOJ, BMOJ);
   TFStable(BMOJ);
+}
+
+void pgcrz(MOJ FMOJ, MOJ BS, MOJ IN, MOJ OUT)
+{
+    uint64_t * bs;
+    uint64_t nor,nocin,nocout;
+    FIELD * f;
+    DSPACE dsout;
+    uint64_t *mxin,*mxout;
+
+    f  = (FIELD *) TFPointer(FMOJ);
+    bs   = (uint64_t *)TFPointer(BS);   // bit string in
+    mxin = (uint64_t *)TFPointer(IN);   // matrix in
+    nor=mxin[0];
+    nocin=mxin[1];
+    if(nocin!=bs[1])
+    {
+        printf("CRZ with with incompatible bitstring %lu %lu\n",
+               nocin,bs[1]);
+        exit(22);
+    }
+    nocout=bs[0];
+    DSSet(f, nocout, &dsout);
+    mxout = TFAllocate(OUT, (nor*dsout.nob)+16);
+    mxout[0]=nor;
+    mxout[1]=nocout;
+#ifdef DEBUG
+printf("CRZ %lu x %lu -> %lu\n",nor,nocin,nocout);
+#endif
+    BSColRifZ(f,bs,nor,(Dfmt *)(mxin+2),(Dfmt *)(mxout+2));
+    TFStable(OUT);
+}
+
+void pgadi(MOJ FMOJ, MOJ RF, MOJ IN, MOJ OUT)
+{
+    uint64_t *rf;
+    FIELD * f;
+    DSPACE dsout;
+    uint64_t nor,nocout;
+    uint64_t *mxin,*mxout;
+
+    f    = (FIELD *)   TFPointer(FMOJ);
+    rf   = (uint64_t *)TFPointer(RF);   // Col Select bit string in
+    mxin = (uint64_t *)TFPointer(IN);   // matrix in
+    nor=mxin[0];
+    nocout=rf[0];
+    DSSet(f, nocout, &dsout);
+    mxout = TFAllocate(OUT, (nor*dsout.nob)+16);
+    mxout[0]=nor;    // not needed
+    mxout[1]=nocout; // not needed
+    memcpy(mxout,mxin,16+nor*dsout.nob);
+#ifdef DEBUG
+printf("ADI %lu x %lu, + %lu identity\n",nor,nocout,rf[0]-rf[1]);
+#endif
+    BSColPutS(f,rf,nor,1,(Dfmt *)(mxout+2));
+
+    TFStable(OUT);
+}
+
+void pgmkr(MOJ LIT, MOJ BIG, MOJ RES)
+{
+    uint64_t *lit,*big,*res;
+
+    lit=(uint64_t *)TFPointer(LIT);
+    big=(uint64_t *)TFPointer(BIG);
+    if( lit[0] != big[0] )
+    {
+        printf("MKR with bitstrings of different lengths %lu %lu\n",
+                                                   lit[0],big[0]);
+        exit(22);
+    }
+    res=TFAllocate(RES, ((((big[1]+63)/64)+2)*8) );
+#ifdef DEBUG
+printf("MKR %lu x %lu -> %lu\n",lit[0],lit[1],big[1]);
+#endif
+    BSMkr(lit,big,res);
+    TFStable(RES);
+}
+
+void dump(MOJ *p, int ct)
+{
+    int i;
+    printf("\n");
+    for(i=0;i<=ct;i++)
+    {
+        printf("%3ld ",(((long)p[i])/8)&511);
+    }
+    printf("\n");
 }
 
 void tfdo(int proggyno, MOJ *p)
 {
   switch (proggyno) {
   case MULPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
     pgmul(p[0],p[1],p[2],p[3]);        // multiply
     break;
 
   case MADPROG:
+#ifdef DEBUG1
+    dump(p,4);
+#endif
     pgmad(p[0],p[1],p[2],p[3],p[4]);   // multiply and add
     break;
 
-  case TRAPROG:
-    pgtra(p[0],p[1],p[2]);   // transpose
-    break;
-
   case CEXPROG:
+#ifdef DEBUG1
+    dump(p,4);
+#endif
     pgcex(p[0], p[1], p[2], p[3], p[4]);   /* pivot extract */
     break;
 
   case REXPROG:
+#ifdef DEBUG1
+    dump(p,4);
+#endif
     pgrex(p[0], p[1], p[2], p[3], p[4]);   /* row extract */
     break;
 
   case RRFPROG:
+#ifdef DEBUG1
+    dump(p,4);
+#endif
     pgrrf(p[0], p[1], p[2], p[3], p[4]);   /* row riffle */
     break;
 
   case PVCPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
     pgpvc(p[0], p[1], p[2], p[3]);   /* pivot combine */
     break;
 
   case ADDPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
     pgadd(p[0], p[1], p[2], p[3]);   /* matrix add */
     break;
 
   case ECHPROG:
+#ifdef DEBUG1
+    dump(p,6);
+#endif
     pgech(p[0], p[1], p[2], p[3], p[4], p[5], p[6]);   /* echelise */
     break;
 
   case MCPPROG:
+#ifdef DEBUG1
+    dump(p,2);
+#endif
     pgcpy(p[0], p[1], p[2]);   /* copy */
     break;
 
   case FMVPROG:
+#ifdef DEBUG1
+    dump(p,2);
+#endif
     pgfmv(p[0], p[1], p[2]);   /* flow controlled "copy" */
+    break;
+
+  case CRZPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
+    pgcrz(p[0], p[1], p[2], p[3]);   /* Column Riffle with zero */
+    break;
+
+  case ADIPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
+    pgadi(p[0], p[1], p[2], p[3]);   /* Plonk in identity under zeros */
+    break;
+
+  case MKRPROG:
+#ifdef DEBUG1
+    dump(p,2);
+#endif
+    pgmkr(p[0], p[1], p[2]);   /* Make Riffle little big riffle */
+    break;
+
+  case PC0PROG:
+#ifdef DEBUG1
+    dump(p,2);
+#endif
+    pgpc0(p[0], p[1], p[2]);   /* pivot combine with nothing */
     break;
 
   default:

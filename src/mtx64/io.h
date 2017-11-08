@@ -14,8 +14,8 @@ typedef struct
     uint64_t Q2;
     uint64_t Q3;
     uint64_t Q4;
-    FILE * f;
     uint8_t * bk;    //64 bytes long
+    FILE * f;
     uint64_t bck[2];
     int null;
     char * fn;     // filename
@@ -31,7 +31,8 @@ extern void ERClose(EFIL * e);
 extern int  ERClose1(EFIL * e, int flag);
 extern void EWClose(EFIL * e);
 extern int  EWClose1(EFIL * e, int flag);
-extern void LogCmd(int argv, char ** argc);
-extern void LogString(int type, char * string);
+extern void LogCmd(int argc, char ** argv);
+extern void LogString(int type, const char *string);
+extern void CLogCmd(int argc, const char *argv[]);
 
 /* end of io.h  */

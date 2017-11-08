@@ -1,0 +1,70 @@
+zsv an ${1-0} an1
+if [ $? -ne 0 ]
+  then exit 1
+  fi
+cp an1 an2
+COUNTER=1
+while [ $COUNTER -lt ${2-15} ] ; do
+  zmu an1 a1 ax1
+  zmu an1 a2 ax2
+  zcn an1 an2 an3
+  cp an3 an2
+  zcn ax1 ax2 an1
+  let COUNTER=COUNTER+1
+done
+# an1 new, an2 old
+
+zpe an2 ax1 ax2
+zrx ax1 a1 junk ay1
+zrx ax1 a2 junk ay2
+zcx ax1 an1 ax4 ax5
+zmu ax4 ax2 ax6
+zad ax6 ax5 ax7
+zpe ax7 ax8 ax9
+
+while zut 4 ax8; do
+zcx ax8 ax2 axa axb
+zmu axa ax9 axc
+zad axc axb axd
+zpc ax1 ax8 ax2 axf
+cp ax2 ax1
+zrr axf axd ax9 ax2
+zrx ax8 ay1 ax3 ay3
+zrx ax8 ay2 ax4 ay4
+cp ay3 ay1
+cp ay4 ay2
+zng ax3 ax5
+zng ax4 ax6
+zmu ax9 ay1 ax7
+zmu ax9 ay2 ax8
+zad ax5 ax7 ax9
+zad ax6 ax8 axa
+zcn ax9 axa ax3
+zcx ax1 ax3 ax4 ax5
+zmu ax4 ax2 ax6
+zad ax6 ax5 ax7
+zpe ax7 ax8 ax9
+done
+
+zut 5 ax1
+if [ $? -ne 0 ]
+  then exit 1
+  fi
+zcx ax1 a1 ax3 junk
+zcx ax1 a2 ax4 junk
+zrx ax1 ax3 ax5 ax6
+zrx ax1 ax4 ax7 ax8
+zmu ax2 ax6 axc
+zmu ax2 ax8 axd
+zng axc axa
+zng axd axb
+zad ax5 axa s1
+zad ax7 axb s2
+
+zcx ax1 ay1 ax3 ax4
+zcx ax1 ay2 ax5 ax6
+zmu ax3 ax2 ax7
+zmu ax5 ax2 ax8
+zad ax7 ax4 q1
+zad ax8 ax6 q2
+

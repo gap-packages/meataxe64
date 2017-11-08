@@ -47,6 +47,7 @@ typedef struct
     uint64 pbytesper;
     uint16 spaczero;
     uint16 spacneg;
+    uint64_t clpm[3];
 
      int   addtyp;
      int   multyp;
@@ -72,36 +73,49 @@ typedef struct
      int   Tadd8;
      int   Tsub8;
 
-     int   hwm;
+     int   hwm;     // high water mark - any new tables start here.
 
-     int   hpmischeme;    // 0 none, 2 2, 3 3, 4 A4S4
-     int   bfmt;
+/*   HPMI private variables  */
+
+    uint64_t AfmtMagic;   // 
+    uint64_t BfmtMagic;   // 
+    uint64_t CfmtMagic;
+    uint64_t SeedMagic;
+    uint64_t GreaseMagic;
+    uint64_t BwaMagic;
+    uint64_t czer;        // 64-bit value for zero in Cfmt
+    uint64_t bzer;        // 64-bit value to initialize the BWA
+    uint64_t bfmtcauld;   // bytes in a cauldron in Bfmt
+     int   Thpv;
+     int   Thpa;
+     int   Thpb;
+     int   Thpc;
+    uint64_t parms[9];    // AS-code parms
+    uint8_t  prog[32];    // AS-code addition chain
+
+/*   HPMI public variables   */
+
+    uint64_t alcovebytes; // bytes in an alcove in Afmt inc. skip/term
     uint64_t cauldron;    // in columns
-    uint64_t cauldbytes;  // bytes in a cauldron Bfmt/Cfmt
+    uint64_t cfmtcauld;   // bytes in a cauldron in Cfmt
     uint64_t dfmtcauld;   // bytes in a cauldron in Dfmt
     uint64_t alcove;      // cols/rows in an alcove
-    uint64_t alcovebytes; // bytes in an alcove in Afmt including skip/terminate
-    uint64_t idealnz0;    // target rows of C done by a brick
-    uint64_t maxawa;      // target size of an Afmt chunk
-    uint64_t brickslots;  // slots in brick in all
-    uint64_t minslab;     // recommended minimum slab
+    uint64_t recbox;      // target rows of C done by a brick
+    uint64_t bbrickbytes; // number of bytes for brick in Bfmt
+    uint64_t bwasize;     // size of the brick work area
 
-    uint16_t phs[3];      // prime, rem (-8192%p), bias (4*prime)
-     int   pcgen;
-     int   pcsubgen;
+/* other non-FIELD variables  */
 
      int   linfscheme;
      int   pextype;
+     int   pastype;
 
      int   Tlfx;
      int   Tlfa;
 
      int   Ttra;
 
-     int   Thpv;
-     int   Thpa;
-     int   Thpb;
-     int   Thpc;
+
 
 }   FIELD;
 
@@ -113,12 +127,11 @@ typedef struct
   int ground;       /* 0 = extension, 1=ground */
 }   DSPACE;
 
-/* First to set the field */  
+/* First to set the field */
+/* FieldSet is in slab.h  */ 
 
-extern void FieldSet (uint64 fdef, FIELD * f);
-extern int  FieldSet1(uint64 fdef, FIELD * f, int flags);
-extern void FieldASet (uint64 fdef, FIELD * f);
-extern int  FieldASet1(uint64 fdef, FIELD * f, int flags);
+extern void FieldASet (uint64_t fdef, FIELD * f);
+extern int  FieldASet1(uint64_t fdef, FIELD * f, int flags);
 
 
 /* four-functions field element stuff */
@@ -143,13 +156,6 @@ extern void DSub(const DSPACE * ds, uint64 nor,
 extern void DSMad(const DSPACE * ds, FELT scalar, uint64 nor,
                                      const Dfmt * d1, Dfmt * d2);
 extern void DSMul(const DSPACE * ds, FELT a, uint64 nor, Dfmt * d);
-extern void DPAdd(const DSPACE * ds, uint64 nor,
-                  const Dfmt * d1, const Dfmt * d2, Dfmt * d);
-extern void DPSub(const DSPACE * ds, uint64 nor,
-                  const Dfmt * d1, const Dfmt * d2, Dfmt * d);
-extern void DPMad(const DSPACE * ds, FELT scalar, uint64 nor,
-                                     const Dfmt * d1, Dfmt * d2);
-extern void DPMul(const DSPACE * ds, FELT a, uint64 nor, Dfmt * d);
 #define ZEROROW 0xffffffffffffffffull
 extern uint64 DNzl(const DSPACE * ds, const Dfmt * d);
 extern void DCpy(const DSPACE * ds, const Dfmt * d1, uint64 nor, Dfmt * d2);

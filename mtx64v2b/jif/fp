@@ -1,0 +1,219 @@
+zad a1 a2 a7
+zmu a7 a7 a8
+zss a8 1 a3
+zad a2 a3 af
+zpe af x y > junk
+zut 3 x
+
+zmu a2 a2 a3
+zad a1 a3 a4
+zad a2 a4 a3
+zss a3 1 af
+zpe af x y > junk
+zut 3 x
+
+zmu a1 a2 a9
+zmu a2 a1 a4
+zad a9 a4 a5
+zad a1 a2 a4
+zad a4 a5 a3
+zss a3 1 af
+zpe af x y > junk
+zut 3 x
+
+zmu a9 a9 a4
+zad a9 a4 a5
+zad a1 a5 a3
+zss a3 1 af
+zpe af x y > junk
+zut 3 x
+
+zss a7 1 a3
+zmu a7 a3 a10
+zss a10 1 a4
+zng a4 a6
+zad a6 a2 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zad a10 a6 a3
+zng a3 a5
+zad a5 a1 af
+zpe af x y > junk
+zut 3 x
+
+zss a10 1 a4
+zad a2 a4 a3
+zad a3 a1 a4
+zmu a3 a4 a6
+zad a2 a6 a3
+zad a10 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a1 a10 a11
+zad a2 a11 a12
+zad a12 a1 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a10 a3 a4
+zad a2 a4 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a1 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a2 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a1 a4
+zmu a12 a4 a6
+zad a10 a6 a3
+zad a1 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a1 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a2 a3 a4
+zad a1 a4 af
+zpe af x y > junk
+zut 3 x
+
+echo 11 coming next
+
+zad a12 a2 a4
+zmu a12 a4 a6
+zad a2 a6 a3
+zad a10 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a2 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a1 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a2 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a10 a3 a4
+zad a1 a4 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a2 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a10 a3 a4
+zad a1 a4 a3
+zad a2 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a12 a2 a4
+zmu a12 a4 a6
+zss a6 1 a3
+zad a1 a3 af
+zpe af x y > junk
+zut 3 x
+
+zss a1 1 a5
+zmu a5 a2 a6
+zmu a6 a7 a3
+zss a3 1 a4
+zad a2 a4 af
+zpe af x y > junk
+zut 3 x
+
+zmu a7 a2 a4
+zmu a4 a7 a5
+zad a5 a1 af
+zpe af x y > junk
+zut 3 x
+
+zmu a1 a7 a5
+zmu a5 a7 a3
+zad a1 a3 a4
+zad a5 a4 af
+zpe af x y > junk
+zut 3 x
+
+zmu a7 a8 a11
+zad a1 a11 af
+zpe af x y > junk
+zut 3 x
+
+zad a2 a11 af
+zpe af x y > junk
+zut 3 x
+
+echo 21 coming next
+
+zad a1 a11 a4
+zad a8 a4 af
+zpe af x y > junk
+zut 3 x
+
+zad a2 a11 a4
+zad a8 a4 af
+zpe af x y > junk
+zut 3 x
+
+zss a2 1 a11
+zmu a11 a8 a6
+zss a6 1 a5
+zad a7 a5 af
+zpe af x y > junk
+zut 3 x
+
+zmu a11 a7 a5
+zmu a5 a7 a3
+zad a2 a3 a4
+zad a5 a4 af
+zpe af x y > junk
+zut 3 x
+
+zmu a2 a1 a5
+zss a5 1 a3
+zmu a3 a7 a6
+zad a5 a6 af
+zpe af x y > junk
+zut 3 x
+
+zmu a2 a7 a5
+zss a5 1 a3
+zmu a3 a7 a6
+zad a5 a6 a3
+zad a2 a3 af
+zpe af x y > junk
+zut 3 x
+
+zmu a1 a7 a5
+zss a5 1 a3
+zmu a3 a7 a6
+zad a5 a6 a3
+zad a1 a3 af
+zpe af x y > junk
+zut 3 x
+
+zmu a9 a9 a4
+zss a4 1 a3
+zad a1 a3 af
+zpe af x y > junk
+zut 3 x
+
+zmu a8 a8 a3
+zad a1 a3 af
+zpe af x y > junk
+zut 3 x
+
+zad a1 a8 a5
+zmu a5 a7 a4
+zad a4 a1 af
+zpe af x y > junk
+zut 3 x

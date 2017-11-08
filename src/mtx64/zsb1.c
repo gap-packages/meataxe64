@@ -45,7 +45,7 @@ int main(int argc,  char **argv)
         exit(15);
     }
     f = malloc(FIELDLEN);
-    FieldSet(fdef,f);
+    FieldASet(fdef,f);
     DSSet(f,dim,&ds);
     v1=malloc(ds.nob);            // work vector
     v2=malloc(ds.nob);            // cleaned work vector

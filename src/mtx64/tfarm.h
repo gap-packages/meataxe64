@@ -71,8 +71,4 @@ extern void TFFlowUp(MOJ moj);
 extern void TFFlowWait(MOJ moj);
 extern void TFFlowDest(MOJ moj);
 
-extern MOJ  TFAryElt(MOJ moj,uint64_t i, uint64_t j);
-extern void TFSetElt(MOJ moj,uint64_t i, uint64_t j, MOJ entry);
-extern MOJ  TFMkMOJAry(uint64_t nor, uint64_t noc,int flag);
-
 /* end of tfarm.h  */
