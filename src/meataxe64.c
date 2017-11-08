@@ -7,220 +7,320 @@
 #include <assert.h>
 #include "mtx64/field.h"
 
-static Obj TYPE_MTX64_Field;
-static Obj TYPE_MTX64_DSpace;
+/* The slab level interface with meataxe 64 works uses mainly
+   interfaces defined in mtx64/field.h and mtx64/slab.h.  
+   This defines four types of
+   object of interest, a FIELD (a large structure), a FELT (a 64 bit
+   value representing a field element, a DSpace (a small structure
+   that gathers some information about a bunch of vectors) and a a
+   DFmt object, which is a char pointer to a block of bytes which
+   contain vectors. We create the DSpace on the fly when we need if
+   we store the number of columns with the Dfmt data and also 
+   an int for the number of rowns. We call this a MTX64_Matrix in GAP.
 
-static inline void MTX64_Field_ElementFamily_Set(Obj f, Obj fam)
-{ *((Obj *)(&ADDR_OBJ(f)[1])) = fam; }
-static inline Obj MTX64_Field_ElementFamily_Get(Obj f)
-{ return (Obj)(ADDR_OBJ(f)[1]); }
+   We wrap FELTS (slightly inefficient, but we dont expect working
+   with them to be performance critical), FIELDS, and blocks
+   of Dfmt data in T_DATOBJ objects. We store a FIELD in the family of each MTX64_Matrix
+   and FELT. 
 
-static inline void MTX64_Field_ElementType_Set(Obj f, Obj type)
-{ *((Obj *)(&ADDR_OBJ(f)[2])) = type; }
-static inline Obj MTX64_Field_ElementType_Get(Obj f)
-{ return (Obj)(ADDR_OBJ(f)[2]); }
+   For the time being, we make no attempt to unite these objects with
+   FFE and List types in GAP. They are entirely separate objects
+   accessed only by their own functions (and maybe a few OtherMethods
+   for convenience).
 
-static inline FIELD *MTX64_Obj_Field(Obj f)
-{ return (FIELD *)(&ADDR_OBJ(f)[3]); }
-static inline DSPACE *MTX64_Obj_DSpace(Obj ds)
-{ return (DSPACE *)(&ADDR_OBJ(ds)[2]); }
 
-static inline void MTX64_FieldElt_Set(Obj o, UInt8 elt)
-{ *((UInt8 *)(&ADDR_OBJ(o)[2])) = elt; }
-static inline UInt8 MTX64_FieldElt_Get(Obj o)
-{ return (UInt8)(ADDR_OBJ(o)[2]); }
+   We might want to change this later and unite these with the
+   MatrixObj development, or pay for another layer of wrapping.
 
-/* Creates a meataxe finite field of size q = p^d */
-/* TODO: Consider subbag for field object? */
-Obj MTX64_CreateField(Obj self, Obj q, Obj etype)
-{
-    Obj result;
-    UInt8 fdef;
+   TODO -- consts and asserts in appropriate places.
+   
 
-    // TODO: Sufficient checking
-    fdef = INT_INTOBJ(q);
+   API for SLEch isn't documentred.
+   SLEch  a input mx, rs, cs pre-allocated to size (2x 64 + space for bits)
+          det for return of determinant (not used), m, c get multiplier and cleaner
+          r remnant, nor number of rows of a
 
-    result = NewBag(T_DATOBJ, FIELDLEN + 3);
-    SetTypeDatObj(result, TYPE_MTX64_Field);
-    MTX64_Field_ElementType_Set(result, etype);
-    FieldSet(fdef, MTX64_Obj_Field(result));
-    CHANGED_BAG(result);
+   SLEchS required to produce standard row select
+ */
 
-    return result;
+static Obj TYPE_MTX64_Field;     // global variable. All FIELDS have same type 
+static Obj TYPE_MTX64_Felt;      // function, takes field
+static Obj TYPE_MTX64_Matrix;    // function takes field
+
+static inline FIELD * DataOfFieldObject( Obj f) {
+    return (FIELD *)(ADDR_OBJ(f)+1);
 }
+
+static inline FELT GetFELTFromFELTObject (Obj f) {
+    return *(FELT *) (ADDR_OBJ(f)+1);
+}
+
+static inline void SetFELTOfFELTObject (Obj f, FELT x) {
+    *(FELT *)(ADDR_OBJ(f)+1) = x;
+}
+
+typedef struct {
+    UInt noc;
+    UInt nor;
+} MTX64_Matrix_Header;
+
+static inline MTX64_Matrix_Header *HeaderOfMTX64_Matrix (Obj mx) {
+    return (MTX64_Matrix_Header *)(ADDR_OBJ(mx)+1);
+}
+
+
+static inline Obj NEW_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
+    DSPACE ds;
+    Obj m;
+    DSSet(DataOfFieldObject(f), noc, &ds);
+    m = NewBag(T_DATOBJ, sizeof(MTX64_Matrix_Header) + ds.nob*nor);
+    SET_TYPE_DATOBJ(m, CALL_1ARGS(TYPE_MTX64_Matrix,f));
+    HeaderOfMTX64_Matrix(m)->noc = noc;
+    HeaderOfMTX64_Matrix(m)->nor = nor;
+    return m;
+}
+
+static inline Dfmt * DataOfMTX64_Matrix ( Obj m) {
+    return (Dfmt *)(HeaderOfMTX64_Matrix(m) + 1);
+}
+
+static Obj MakeMtx64Field(UInt field_order) {
+    Obj field = NewBag(T_DATOBJ, FIELDLEN + sizeof(Obj));
+    SET_TYPE_DATOBJ(field, TYPE_MTX64_Field);
+    FieldSet(field_order, DataOfFieldObject(field));
+    return field;
+}
+
+
+static Obj MTX64_CreateField(Obj self, Obj field_order) {
+    return MakeMtx64Field(INT_INTOBJ(field_order));
+}
+
+static Obj MakeMtx64Felt(Obj field, FELT x) {
+    Obj f = NewBag(T_DATOBJ, sizeof(FELT)+sizeof(Obj));
+    SET_TYPE_DATOBJ(f, CALL_1ARGS(TYPE_MTX64_Felt, f));
+    SetFELTOfFELTObject(f, x);
+    return f;
+}
+
+static Obj FieldOfMTX64Matrix;
+
+static inline void SetDSpaceOfMTX64_Matrix( Obj m, DSPACE *ds) {
+    /* Only safe until next garbage collection */
+    Obj field = CALL_1ARGS(FieldOfMTX64Matrix, m);
+    DSSet(DataOfFieldObject(field), HeaderOfMTX64_Matrix(m)->noc, ds);
+}
+
 
 Obj MTX64_FieldOrder(Obj self, Obj field)
 {
-    FIELD * _f = MTX64_Obj_Field(field);
+    FIELD * _f = DataOfFieldObject(field);
     return INTOBJ_INT(_f->fdef);
 }
 
 Obj MTX64_FieldCharacteristic(Obj self, Obj field)
 {
-    FIELD * _f = MTX64_Obj_Field(field);
+    FIELD * _f = DataOfFieldObject(field);
     return INTOBJ_INT(_f->charc);
 }
 
 Obj MTX64_FieldDegree(Obj self, Obj field)
 {
-    FIELD * _f = MTX64_Obj_Field(field);
+    FIELD * _f = DataOfFieldObject(field);
     return INTOBJ_INT(_f->pow);
 }
 
-Obj MTX64_BoxFieldElement(Obj self, Obj field, FELT elt)
-{
-    Obj result;
-
-    result = NewBag(T_DATOBJ, sizeof(Obj) + 2 * sizeof(UInt8)); // Yeah, I know, it's a waste of space
-    SetTypeDatObj(result, MTX64_Field_ElementType_Get(field));
-    MTX64_FieldElt_Set(result, elt);
-    CHANGED_BAG(result);
-
-    return result;
-}
 
 Obj MTX64_CreateFieldElement(Obj self, Obj field, Obj elt)
 {
-    return MTX64_BoxFieldElement(self, field, INT_INTOBJ(elt));
+    return MakeMtx64Felt(field, INT_INTOBJ(elt));
 }
 
 Obj MTX64_ExtractFieldElement(Obj self, Obj elt)
 {
-    return INTOBJ_INT(MTX64_FieldElt_Get(elt));
+    return INTOBJ_INT(GetFELTFromFELTObject(elt));
 }
 
-Obj MTX64_FieldAdd(Obj self, Obj field, Obj a, Obj b)
+Obj MTX64_FieldAdd(Obj self, Obj f, Obj a, Obj b)
 {
-    FIELD *_f = MTX64_Obj_Field(field);
-    FELT _a = MTX64_FieldElt_Get(a);
-    FELT _b = MTX64_FieldElt_Get(b);
+    FIELD *_f = DataOfFieldObject(f);
+    FELT _a = GetFELTFromFELTObject(a);
+    FELT _b = GetFELTFromFELTObject(b);
 
-    return MTX64_BoxFieldElement(self, field, FieldAdd(_f, _a, _b));
+    return MakeMtx64Felt(f, FieldAdd(_f, _a, _b));
 }
 
 Obj MTX64_FieldNeg(Obj self, Obj field, Obj a)
 {
-    FIELD *_f = MTX64_Obj_Field(field);
-    FELT _a = MTX64_FieldElt_Get(a);
+    FIELD *_f = DataOfFieldObject(field);
+    FELT _a = GetFELTFromFELTObject(a);
 
-    return MTX64_BoxFieldElement(self, field, FieldNeg(_f, _a));
+    return MakeMtx64Felt(field, FieldNeg(_f, _a));
 }
 
 Obj MTX64_FieldSub(Obj self, Obj field, Obj a, Obj b)
 {
-    FIELD *_f = MTX64_Obj_Field(field);
-    FELT _a = MTX64_FieldElt_Get(a);
-    FELT _b = MTX64_FieldElt_Get(b);
+    FIELD *_f = DataOfFieldObject(field);
+    FELT _a = GetFELTFromFELTObject(a);
+    FELT _b = GetFELTFromFELTObject(b);
 
-    return MTX64_BoxFieldElement(self, field, FieldSub(_f, _a, _b));
+    return MakeMtx64Felt(field, FieldSub(_f, _a, _b));
 }
 
 Obj MTX64_FieldMul(Obj self, Obj field, Obj a, Obj b)
 {
-    FIELD *_f = MTX64_Obj_Field(field);
-    FELT _a = MTX64_FieldElt_Get(a);
-    FELT _b = MTX64_FieldElt_Get(b);
+    FIELD *_f = DataOfFieldObject(field);
+    FELT _a = GetFELTFromFELTObject(a);
+    FELT _b = GetFELTFromFELTObject(b);
 
-    return MTX64_BoxFieldElement(self, field, FieldMul(_f, _a, _b));
+    return MakeMtx64Felt(field, FieldMul(_f, _a, _b));
 }
 
 Obj MTX64_FieldInv(Obj self, Obj field, Obj a)
 {
-    FIELD *_f = MTX64_Obj_Field(field);
-    FELT _a = MTX64_FieldElt_Get(a);
+    FIELD *_f = DataOfFieldObject(field);
+    FELT _a = GetFELTFromFELTObject(a);
 
-    return MTX64_BoxFieldElement(self, field, FieldInv(_f, _a));
+    return MakeMtx64Felt(field, FieldInv(_f, _a));
 }
 
 Obj MTX64_FieldDiv(Obj self, Obj field, Obj a, Obj b)
 {
-    FIELD *_f = MTX64_Obj_Field(field);
-    FELT _a = MTX64_FieldElt_Get(a);
-    FELT _b = MTX64_FieldElt_Get(b);
+    FIELD *_f = DataOfFieldObject(field);
+    FELT _a = GetFELTFromFELTObject(a);
+    FELT _b = GetFELTFromFELTObject(b);
 
-    return MTX64_BoxFieldElement(self, field, FieldDiv(_f, _a, _b));
+    return MakeMtx64Felt(field, FieldDiv(_f, _a, _b));
 }
 
-// DSpace
-Obj MTX64_CreateDSpace(Obj self, Obj field, Obj noc)
+// Add GAP callable matrix constructors and inspectors
+
+Obj MTX64_NewMatrix(Obj self, Obj field, Obj nor, Obj noc) {
+    // checks, or at least asserts
+    return NEW_MTX64_Matrix(field, INT_INTOBJ(nor), INT_INTOBJ(noc));
+}
+
+Obj MTX64_Matrix_NumRows(Obj self, Obj m) {
+    // checks, or at least asserts
+    return INTOBJ_INT(HeaderOfMTX64_Matrix(m)->nor);
+}
+
+Obj MTX64_Matrix_NumCols(Obj self, Obj m) {
+    // checks, or at least asserts
+    return INTOBJ_INT(HeaderOfMTX64_Matrix(m)->noc);
+}
+
+// 0 based adressing
+static FELT GetEntryMTX64(Obj m, UInt col, UInt row)
 {
-    Obj result;
-    UInt8 fnoc;
-
-    // Number of Columns
-    fnoc = INT_INTOBJ(noc);
-
-    result = NewBag(T_DATOBJ, sizeof(DSPACE) + sizeof(UInt8));
-    SetTypeDatObj(result, TYPE_MTX64_DSpace);
-    DSSet(MTX64_Obj_Field(field), fnoc, MTX64_Obj_DSpace(result));
-    CHANGED_BAG(result);
-
-    return result;
+    DSPACE ds;
+    Dfmt * d;
+    SetDSpaceOfMTX64_Matrix(m, &ds);
+    d = DataOfMTX64_Matrix(m);
+    d = DPAdv(&ds, row, d);
+    return DUnpak(&ds, col, d);
 }
 
-Obj MTX64_CreateDfmt(Obj self, Obj field, Obj size)
+Obj MTX64_GetEntry(Obj self, Obj m, Obj col, Obj row)
 {
-    Obj result;
-    UInt8 isize = INTOBJ_INT(size); //T Check
-
-    // Number of Columns
-    fnoc = INT_INTOBJ(noc);
-
-    result = NewBag(T_DATOBJ, sizeof(DSPACE) + sizeof(UInt8) + isize);
-    SetTypeDatObj(result, TYPE_MTX64_Dfmt);
-    memset(MTX64_Obj_Dfmt(result), 0, isize);
-    CHANGED_BAG(result);
-
-    return result;
+    Obj f = CALL_1ARGS(FieldOfMTX64Matrix,m);
+    return MakeMtx64Felt(f,GetEntryMTX64(m, INT_INTOBJ(col), INT_INTOBJ(row)));
 }
 
-Obj MTX64_DUnpak(Obj self, Obj col, Obj dfmt)
+void SetEntryMTX64(Obj m, UInt col, UInt row, FELT entry)
 {
+    DSPACE ds;
+    Dfmt * d;
+    SetDSpaceOfMTX64_Matrix(m, &ds);
+    d = DataOfMTX64_Matrix(m);
+    d = DPAdv(&ds, row, d);
+    DPak(&ds, col, d, entry);
 }
 
-Obj MTX64_DPak(Obj self, Obj col, Obj dfmt, Obj felt)
+Obj MTX64_SetEntry(Obj self, Obj m, Obj col, Obj row, Obj entry)
 {
+    SetEntryMTX64(m, INT_INTOBJ(col), INT_INTOBJ(row),GetFELTFromFELTObject(entry));
+    return 0;
 }
 
+#if 0
 Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj nrows)
 {
-    
+    Obj ds = DSpaceOfDfmt(src);
+    FixDSpace(ds);
+    DCpy(DataOfDSPaceObject(ds), DataOfDfmtObject(src), INT_INTOBJ(nrows),
+         DataOfDfmtObject(dst));
+    return 0;
 }
 
-Obj MTX64_DCut(Obj self, Obj  )
+Obj MTX64_DCut(Obj self, Obj m, Obj nrows, Obj startcol, Obj clip ) 
 {
-    
+    Obj ms = DSpaceOfDfmt(m);
+    Obj cbs = DSpaceOfDfmt(clip);
+    FixDSpace(ms);
+    FixDSpace(cbs);
+    DCut(DataOfDSPaceObject(ms), INT_INTOBJ(nrows), INT_INTOBJ(startcol),
+         DataOfDfmtObject(m), DataOfDSPaceObject(cbs), DataOfDfmtObject(cb));
+    return 0;
 }
 
-Obj MTX64_DPaste(Obj self)
+Obj MTX64_DPaste(Obj self, Obj clip, Obj nrows, Obj startcol, Obj m)
 {
+    Obj ms = DSpaceOfDfmt(m);
+    Obj cbs = DSpaceOfDfmt(cb);
+    FixDSpace(ms);
+    FixDSpace(cbs);
+    DPaste(DataOfDSPaceObject(cbs), DataOfDfmtObject(cb),
+           INT_INTOBJ(nrows), INT_INTOBJ(startcol),
+         DataOfSpaceObject(ms), DataOfDfmtObject(m), );
+    return 0;
     
 }
 
 Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2)
 {
-    // return d
+    Obj ds = DSpaceOfDfmt(d1);
+    Obj d = MTX64_MakeDfmt(ds, INT_INTOBJ(nrows));
+    FixDSpace(ds);
+    DAdd( DataOfDSpaceObject(ds), INT_INTOBJ(nrows), DataOfDfmtObject(d1),
+          DataOfDfmtObject(d2), DataOfDfmtObject(d));
+    return d;
 }
 
 Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2)
 {
-    // return d
+    Obj ds = DSpaceOfDfmt(d1);
+    Obj d = MTX64_MakeDfmt(ds, INT_INTOBJ(nrows));
+    FixDSpace(ds);
+    DSub( DataOfDSpaceObject(ds), INT_INTOBJ(nrows), DataOfDfmtObject(d1),
+          DataOfDfmtObject(d2), DataOfDfmtObject(d));
+    return d;
 }
 
 Obj MTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2)
 {
-    // return d
+    Obj ds = DSpaceOfDfmt(d1);
+    FixDSpace(ds);
+    DSMad( DataOfDSpaceObject(ds), GetFELTFromFELTObject(scalar),
+           INT_INTOBJ(nrows), DataOfDfmtObject(d1),
+          DataOfDfmtObject(d2));
+    return 0;
 }
 
 // In place?
 Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1)
 {
+    Obj ds = DSpaceOfDfmt(d1);
+    FixDSpace(ds);
+    DSMul( DataOfDSpaceObject(ds), GetFELTFromFELTObject(scalar),
+           INT_INTOBJ(nrows), DataOfDfmtObject(d1));
+    return 0;
     
 }
 
 
 // Higher level stuff
-Obj MTX64_SLEchelize(Obj self, Obj field, Obj a, Obj nrows, Obj ncols)
+Obj MTX64_SLEchelize(Obj self, Obj a, Obj nrows, Obj ncols)
 {
     Obj result;
     uint64_t rank;
@@ -254,6 +354,8 @@ Obj MTX64_SLTranspose(Obj self, Obj field, Obj mat)
 
 }
 
+#endif
+
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
   {#name, nparam, \
@@ -263,7 +365,7 @@ typedef Obj (* GVarFunc)(/*arguments*/);
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs [] = {
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateField, 2, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateField, 1, ""),
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldOrder, 1, ""),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldCharacteristic, 1, ""),
@@ -279,7 +381,11 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldInv, 2, ""),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDiv, 3, ""),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateDSpace, 2, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_NewMatrix, 3, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumRows, 1, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumCols, 1, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntry, 3, ""),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntry, 4, ""),
     { 0 } /* Finish with an empty entry */
 
 };
@@ -293,7 +399,9 @@ static Int InitKernel( StructInitInfo *module )
     InitHdlrFuncsFromTable( GVarFuncs );
 
     ImportGVarFromLibrary( "MTX64_FieldType", &TYPE_MTX64_Field);
-    ImportGVarFromLibrary( "MTX64_FieldEltType", &TYPE_MTX64_DSpace);
+    ImportFuncFromLibrary( "MTX64_FieldEltType", &TYPE_MTX64_Felt);
+    ImportFuncFromLibrary( "MTX64_DfmtType", &TYPE_MTX64_Matrix);
+    ImportFuncFromLibrary( "FieldOfMTX64Matrix", &FieldOfMTX64Matrix);
 
     /* return success */
     return 0;
