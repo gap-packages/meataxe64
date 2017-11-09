@@ -16,6 +16,10 @@ BindGlobal( "MTX64_FieldFamily", NewFamily("MTX64_FieldFamily"));
 BindGlobal( "MTX64_FieldType",
         NewType(MTX64_FieldFamily, IsMTX64FiniteField and IsDataObjectRep) );
 
+BindGlobal( "MTX64_BitStringFamily", NewFamily("MTX64_BitStringFamily"));
+BindGlobal( "MTX64_BitStringType",
+        NewType(MTX64_BitStringFamily, IsMTX64BitString and IsDataObjectRep) );
+
 
 InstallMethod( MTX64_FiniteField, "for a size",
                [ IsPosInt ],

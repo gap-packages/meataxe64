@@ -10,6 +10,9 @@
 DeclareCategory( "IsMTX64FiniteField",
                  IsObject );
 
+DeclareCategory( "IsMTX64BitString",
+                 IsObject );
+
 DeclareCategory( "IsMTX64FiniteFieldElement",
                  IsObject );
 

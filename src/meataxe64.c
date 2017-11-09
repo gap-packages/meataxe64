@@ -80,12 +80,15 @@ static inline MTX64_Matrix_Header *HeaderOfMTX64_Matrix (Obj mx) {
     return (MTX64_Matrix_Header *)(ADDR_OBJ(mx)+1);
 }
 
+static inline UInt Size_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
+    DSPACE ds;
+    DSSet(DataOfFieldObject(f), noc, &ds);
+    return sizeof(Obj) + sizeof(MTX64_Matrix_Header) + ds.nob*nor;
+}
 
 static inline Obj NEW_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
-    DSPACE ds;
     Obj m;
-    DSSet(DataOfFieldObject(f), noc, &ds);
-    m = NewBag(T_DATOBJ, sizeof(Obj) + sizeof(MTX64_Matrix_Header) + ds.nob*nor);
+    m = NewBag(T_DATOBJ,Size_MTX64_Matrix(f, noc, nor) );
     SET_TYPE_DATOBJ(m, CALL_1ARGS(TYPE_MTX64_Matrix,INTOBJ_INT(DataOfFieldObject(f)->fdef)));
     HeaderOfMTX64_Matrix(m)->noc = noc;
     HeaderOfMTX64_Matrix(m)->nor = nor;
@@ -354,46 +357,55 @@ Obj MTX64_DNzl(Obj self, Obj m)
     mp = DataOfMTX64_Matrix(m);
     return INTOBJ_INT(DNzl(&ds,mp));
 }
-    
-#if 0    
 
-// Higher level stuff
-Obj MTX64_SLEchelize(Obj self, Obj a, Obj nrows)
+void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
+    MTX64_Matrix_Header *h = HeaderOfMTX64_Matrix(mat);
+    Obj f = CALL_1ARGS(FieldOfMTX64Matrix,mat);
+    h->nor = nor;
+    h->noc = noc;
+    ResizeBag(mat, Size_MTX64_Matrix(f, noc, nor));    
+}
+
+
+Obj MTX64_SLEchelize(Obj self, Obj a)
 {
     MTX64_Matrix_Header * h = HeaderOfMTX64_Matrix(a);
     UInt nrows = h->nor;
     UInt ncols = h->noc;
     UInt rklimit = (nrows > ncols) ? ncols: nrows; // minimum
     Obj rs = MTX64_MakeBitString(nrows);
-    Obj cs = MTX64_MakeBitString(nrows);
+    Obj cs = MTX64_MakeBitString(ncols);
     FELT det;
     Obj field = CALL_1ARGS(FieldOfMTX64Matrix,a);
-    FIELD *f = DataOfFieldObject(field);
-    Obj m = NEW_MTX64_Matrix(f, rklimit, rklimit);
-    Obj c = NEW_MTX64_Matrix(f, 
-    
-    Obj result;
+    Obj m = NEW_MTX64_Matrix(field, rklimit, rklimit);
+    Obj r = NEW_MTX64_Matrix(field, ncols, nrows); // this may be a bit too high
+    Obj c = NEW_MTX64_Matrix(field, rklimit, ncols); // this is a bit too high, as both bounds cannot be achieved at once
+    // Done with garbage collection here 
     uint64_t rank;
-    uint64_t *rs, *cs;
-    Dfmt *multiply, *remnant, *cleaner;
-
-    // NewBaggin?
-    rs = malloc((nrows >> 3) + 2);
-    cs = malloc((ncols >> 3) + 2);
-
-    multiply = malloc();
-    remnant = malloc();
-    cleaner = malloc();
-
-    rank = SLEch(f, a, rs, cs, multiply, cleaner, remnant, nrows, ncols);
-
-    result = NewPRec(4);
-
-
-
+    uint64_t *rsp = DataOfBitStringObject(rs),
+        *csp = DataOfBitStringObject(cs);
+    Dfmt *mat = DataOfMTX64_Matrix(a),
+        *multiply = DataOfMTX64_Matrix(m),
+        *remnant = DataOfMTX64_Matrix(r),
+        *cleaner = DataOfMTX64_Matrix(c);
+    DSPACE ds;
+    DSSet(DataOfFieldObject(field),ncols, &ds);
+    rank = SLEch(&ds, mat, rsp, csp, &det, multiply, cleaner, remnant, nrows);
+    // Garbage collection OK again here
+    // Resize all the output matrices
+    SetShapeAndResize(m, rank, rank);
+    SetShapeAndResize(c, ncols - rank, rank);
+    SetShapeAndResize(r, rank, ncols - rank);
+    Obj result =  NEW_PREC(7);
+    AssPRec(result, RNamName("rank"), INTOBJ_INT(rank));
+    AssPRec(result, RNamName("det"), MakeMtx64Felt(field,det));
+    AssPRec(result, RNamName("multiplier"), m);
+    AssPRec(result, RNamName("cleaner"), c);
+    AssPRec(result, RNamName("remnant"), r);
+    AssPRec(result, RNamName("rowSelect"), rs);
+    AssPRec(result, RNamName("colSelect"), cs);
     return result;
 }
-#endif
 
 Obj MTX64_SLMultiply(Obj self, Obj a, Obj b, Obj c)
 {
@@ -467,6 +479,7 @@ static StructGVarFunc GVarFuncs [] = {
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLMultiply, 3, "a, b, c"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLTranspose, 2, "m, t"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLEchelize, 1, "a"),
     
     { 0 } /* Finish with an empty entry */
 
