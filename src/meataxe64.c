@@ -7,6 +7,7 @@
 #include <assert.h>
 #include "mtx64/field.h"
 #include "mtx64/slab.h"
+#include "mtx64/bitstring.h"
 
 /* The slab level interface with meataxe 64 works uses mainly
    interfaces defined in mtx64/field.h and mtx64/slab.h.  
@@ -53,8 +54,12 @@ static inline uint64_t *DataOfBitStringObject(Obj bs) {
     return (uint64_t *)(ADDR_OBJ(bs)+1);
 }
 
+static inline UInt Size_MTX64_BitString(UInt len) {
+    return sizeof(Obj) + 2*sizeof(uint64_t) + 8*((len + 63)/64);
+}
+
 static inline Obj MTX64_MakeBitString(UInt len) {
-    Obj bs = NewBag(T_DATOBJ, sizeof(Obj) + 2*sizeof(uint64_t) + 8*((len + 63)/64));
+    Obj bs = NewBag(T_DATOBJ,Size_MTX64_BitString(len) );
     SET_TYPE_DATOBJ(bs, TYPE_MTX64_BitString);
     return bs;
 }
@@ -436,6 +441,47 @@ Obj MTX64_SLTranspose(Obj self, Obj mat, Obj tra)
     return 0;
 }
 
+Obj MTX64_LengthOfBitString(Obj self, Obj bs)
+{
+    return INTOBJ_INT(DataOfBitStringObject(bs)[0]);
+}
+
+Obj MTX64_WeightOfBitString(Obj self, Obj bs)
+{
+    return INTOBJ_INT(DataOfBitStringObject(bs)[1]);
+}
+
+Obj MTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos)
+{
+    return INTOBJ_INT(BSBitRead(DataOfBitStringObject(bs), INT_INTOBJ(pos)));
+}
+
+Obj MTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos)
+{
+    BSBitSet(DataOfBitStringObject(bs), INT_INTOBJ(pos));
+    return 0;
+}
+
+
+Obj MTX64_ShallowCopyMatrix(Obj self, Obj m)
+{
+    Obj f = CALL_1ARGS(FieldOfMTX64Matrix,m);
+    UInt noc = HeaderOfMTX64_Matrix(m)->noc;
+    UInt nor = HeaderOfMTX64_Matrix(m)->nor;
+    Obj copy = NEW_MTX64_Matrix(f, noc, nor);
+    memcpy(DataOfMTX64_Matrix(copy), DataOfMTX64_Matrix(m), Size_MTX64_Matrix(f,noc,nor));
+    return copy;
+}
+
+Obj MTX64_ShallowCopyBitString(Obj self, Obj bs)
+{
+    UInt len = DataOfBitStringObject(bs)[0];
+    Obj copy = MTX64_MakeBitString(len);
+    memcpy(DataOfBitStringObject(copy), DataOfBitStringObject(bs), Size_MTX64_BitString(len));
+    return copy;
+}
+
+
 
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
@@ -480,6 +526,15 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLMultiply, 3, "a, b, c"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLTranspose, 2, "m, t"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLEchelize, 1, "a"),
+
+
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_LengthOfBitString, 1, "bs"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_WeightOfBitString, 1, "bs"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntryOfBitString, 2, "bs, pos"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntryOfBitString, 2, "bs, pos"),
+    
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyMatrix, 1, "m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyBitString, 1, "bs"),
     
     { 0 } /* Finish with an empty entry */
 
