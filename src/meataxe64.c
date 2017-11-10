@@ -35,14 +35,9 @@
    MatrixObj development, or pay for another layer of wrapping.
 
    TODO -- consts and asserts in appropriate places.
+   TODO -- consistentise names
+   TODO -- more comments
    
-
-   API for SLEch isn't documentred.
-   SLEch  a input mx, rs, cs pre-allocated to size (2x 64 + space for bits)
-          det for return of determinant (not used), m, c get multiplier and cleaner
-          r remnant, nor number of rows of a
-
-   SLEchS required to produce standard row select
  */
 
 static Obj TYPE_MTX64_Field;     // global variable. All FIELDS have same type 
@@ -119,6 +114,7 @@ static Obj MakeMtx64Field(UInt field_order) {
     return field;
 }
 
+/* probably all these should be static */
 
 static Obj MTX64_CreateField(Obj self, Obj field_order) {
     return MakeMtx64Field(INT_INTOBJ(field_order));
@@ -161,15 +157,25 @@ Obj MTX64_FieldDegree(Obj self, Obj field)
     return INTOBJ_INT(_f->pow);
 }
 
-
 Obj MTX64_CreateFieldElement(Obj self, Obj field, Obj elt)
 {
-    return MakeMtx64Felt(field, INT_INTOBJ(elt));
+    UInt ielt;
+    if (TNUM_OBJ(elt) == T_INTPOS) {
+        Obj x = MOD(elt, INTOBJ_INT(1L << 32));
+        Obj y = QUO(elt, INTOBJ_INT(1L << 32));
+        GAP_ASSERT(IS_INTOBJ(x));
+        if (!IS_INTOBJ(y) || INT_INTOBJ(y) >= (1L << 32))
+            ErrorMayQuit("MTX64_CreateFieldElement: Element too large",0L,0L);
+        ielt = (INT_INTOBJ(y) << 32) + INT_INTOBJ(x);
+    } else
+        ielt = INT_INTOBJ(elt);
+    // TODO Should check against field size as well 
+    return MakeMtx64Felt(field, ielt);
 }
 
 Obj MTX64_ExtractFieldElement(Obj self, Obj elt)
 {
-    return INTOBJ_INT(GetFELTFromFELTObject(elt));
+    return ObjInt_UInt(GetFELTFromFELTObject(elt));
 }
 
 Obj MTX64_FieldAdd(Obj self, Obj f, Obj a, Obj b)

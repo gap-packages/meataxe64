@@ -141,7 +141,51 @@ end);
 InstallMethod(Inverse,  "meataxe64 field element",  
         [IsMTX64FiniteFieldElement],
     x ->  MTX64_FieldInv(MTX64_FieldOfElement(x), x));
-    
+
+
+#
+# TODO for Conway fields you could assemble the vector directly instead of using
+# field arithemetic and access it directly instead of making a basis
+#
+FFEfromFELT := function(felt)
+    local  fld, p, d, x, z, zp, y;
+    fld := MTX64_FieldOfElement(felt);    
+    p := MTX64_FieldCharacteristic(fld);
+    d := MTX64_FieldDegree(fld);
+    x := MTX64_ExtractFieldElement(felt);
+    z := Z(p,d);
+    zp := z^0;    
+    y := 0*z;    
+    while x <> 0 do
+        y := y+ zp*(x mod p);
+        zp := zp*z;  
+        x := QuoInt(x,p);        
+    od;
+    return y;    
+end;
+
+FELTfromFFE := function(ffe, d...)
+    local  p, cb, vec, x, pp, c;
+    if Length(d) = 0 then
+        d := DegreeFFE(ffe);
+    else
+        d := d[1];
+        if DegreeFFE(ffe) > d then
+            Error("element is too high degree");
+        fi;
+    fi;
+    p := Characteristic(ffe);
+    cb := CanonicalBasis(AsVectorSpace(GF(p),GF(p,d)));
+    vec := Coefficients(cb, ffe);
+    x := 0;
+    pp := 1;    
+    for c  in vec do        
+        x := x+IntFFE(c)*pp;
+        pp := pp*p;
+    od;
+    return MTX64_FiniteFieldElement(MTX64_FiniteField(p^d),x);
+end;
+
 
 InstallOtherMethod(Zero, "for a meataxe64 field",
         [IsMTX64FiniteField],
