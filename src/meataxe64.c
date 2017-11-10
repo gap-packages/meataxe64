@@ -54,12 +54,16 @@ static inline uint64_t *DataOfBitStringObject(Obj bs) {
     return (uint64_t *)(ADDR_OBJ(bs)+1);
 }
 
-static inline UInt Size_MTX64_BitString(UInt len) {
-    return sizeof(Obj) + 2*sizeof(uint64_t) + 8*((len + 63)/64);
+static inline UInt Size_Data_BitString(UInt len) {
+    return 2*sizeof(uint64_t) + 8*((len + 63)/64);
+}
+
+static inline UInt Size_Bag_BitString(UInt len) {
+    return sizeof(Obj) + Size_Data_BitString(len);
 }
 
 static inline Obj MTX64_MakeBitString(UInt len) {
-    Obj bs = NewBag(T_DATOBJ,Size_MTX64_BitString(len) );
+    Obj bs = NewBag(T_DATOBJ,Size_Bag_BitString(len) );
     SET_TYPE_DATOBJ(bs, TYPE_MTX64_BitString);
     return bs;
 }
@@ -85,15 +89,19 @@ static inline MTX64_Matrix_Header *HeaderOfMTX64_Matrix (Obj mx) {
     return (MTX64_Matrix_Header *)(ADDR_OBJ(mx)+1);
 }
 
-static inline UInt Size_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
+static inline UInt Size_Data_Matrix(Obj f, UInt noc, UInt nor) {
     DSPACE ds;
     DSSet(DataOfFieldObject(f), noc, &ds);
-    return sizeof(Obj) + sizeof(MTX64_Matrix_Header) + ds.nob*nor;
+    return ds.nob*nor;
+}
+
+static inline UInt Size_Bag_Matrix(Obj f, UInt noc, UInt nor) {
+    return sizeof(Obj) + sizeof(MTX64_Matrix_Header) + Size_Data_Matrix(f,noc,nor) ;    
 }
 
 static inline Obj NEW_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
     Obj m;
-    m = NewBag(T_DATOBJ,Size_MTX64_Matrix(f, noc, nor) );
+    m = NewBag(T_DATOBJ,Size_Bag_Matrix(f, noc, nor) );
     SET_TYPE_DATOBJ(m, CALL_1ARGS(TYPE_MTX64_Matrix,INTOBJ_INT(DataOfFieldObject(f)->fdef)));
     HeaderOfMTX64_Matrix(m)->noc = noc;
     HeaderOfMTX64_Matrix(m)->nor = nor;
@@ -368,7 +376,7 @@ void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
     Obj f = CALL_1ARGS(FieldOfMTX64Matrix,mat);
     h->nor = nor;
     h->noc = noc;
-    ResizeBag(mat, Size_MTX64_Matrix(f, noc, nor));    
+    ResizeBag(mat, Size_Bag_Matrix(f, noc, nor));    
 }
 
 
@@ -469,18 +477,35 @@ Obj MTX64_ShallowCopyMatrix(Obj self, Obj m)
     UInt noc = HeaderOfMTX64_Matrix(m)->noc;
     UInt nor = HeaderOfMTX64_Matrix(m)->nor;
     Obj copy = NEW_MTX64_Matrix(f, noc, nor);
-    memcpy(DataOfMTX64_Matrix(copy), DataOfMTX64_Matrix(m), Size_MTX64_Matrix(f,noc,nor));
+    memcpy(DataOfMTX64_Matrix(copy), DataOfMTX64_Matrix(m), Size_Data_Matrix(f,noc,nor));
     return copy;
+}
+
+// Assumes matrices are the same shape. Order may not be consistent with GAP lists
+Obj MTX64_compareMatrices(Obj self, Obj m1, Obj m2)
+{
+    Obj f = CALL_1ARGS(FieldOfMTX64Matrix,m1);
+    UInt noc = HeaderOfMTX64_Matrix(m1)->noc;
+    UInt nor = HeaderOfMTX64_Matrix(m1)->nor;
+    Int res = memcmp(DataOfMTX64_Matrix(m1), DataOfMTX64_Matrix(m2), Size_Data_Matrix(f,noc,nor));
+    return INTOBJ_INT((res < 0) ? -1 : (res > 0) ? 1 : 0);
 }
 
 Obj MTX64_ShallowCopyBitString(Obj self, Obj bs)
 {
     UInt len = DataOfBitStringObject(bs)[0];
     Obj copy = MTX64_MakeBitString(len);
-    memcpy(DataOfBitStringObject(copy), DataOfBitStringObject(bs), Size_MTX64_BitString(len));
+    memcpy(DataOfBitStringObject(copy), DataOfBitStringObject(bs), Size_Data_BitString(len));
     return copy;
 }
 
+// Order may not be consistent with GAP lists
+Obj MTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2)
+{
+    UInt len = DataOfBitStringObject(bs1)[0];
+    Int res = memcmp(DataOfBitStringObject(bs1), DataOfBitStringObject(bs2), Size_Data_BitString(len));
+    return INTOBJ_INT((res < 0) ? -1 : (res > 0) ? 1 : 0);
+}
 
 
 typedef Obj (* GVarFunc)(/*arguments*/);
@@ -535,6 +560,8 @@ static StructGVarFunc GVarFuncs [] = {
     
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyMatrix, 1, "m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyBitString, 1, "bs"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareMatrices, 2, "m1, m2"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareBitStrings, 2, "bs1, bs2"),
     
     { 0 } /* Finish with an empty entry */
 

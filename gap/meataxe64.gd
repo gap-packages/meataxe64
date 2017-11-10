@@ -14,10 +14,10 @@ DeclareCategory( "IsMTX64BitString",
                  IsObject );
 
 DeclareCategory( "IsMTX64FiniteFieldElement",
-                 IsObject );
+        IsScalar and IsCommutativeElement );
 
 DeclareCategory( "IsMTX64Matrix",
-                 IsObject );
+                 IsScalar );
 
 DeclareOperation( "MTX64_FiniteField", [IsPosInt]);
 

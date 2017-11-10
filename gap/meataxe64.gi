@@ -4,13 +4,9 @@
 # Implementations
 #
 
-# Cache by prime?
-
-
-## Finite fields
-
 #
-# Type of field objects (all the same)
+# Types and Families -- these variables and functions are imported and used by the C code
+# to create objects
 #
 BindGlobal( "MTX64_FieldFamily", NewFamily("MTX64_FieldFamily"));
 BindGlobal( "MTX64_FieldType",
@@ -20,6 +16,27 @@ BindGlobal( "MTX64_BitStringFamily", NewFamily("MTX64_BitStringFamily"));
 BindGlobal( "MTX64_BitStringType",
         NewType(MTX64_BitStringFamily, IsMutable and IsMTX64BitString and IsDataObjectRep) );
 
+BindGlobal("MTX64_FieldEltType", MemoizePosIntFunction(function(q)
+    local fam, type;
+    fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_ElementFamily"));
+    fam!.q := q;
+    fam!.field := MTX64_FiniteField(q);    
+    return NewType(fam, IsMTX64FiniteFieldElement and IsDataObjectRep);
+end, rec(flush := true)));
+
+BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
+    local fam, type;
+    fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_MatrixFamily"));
+    fam!.q := q;
+    fam!.field := MTX64_FiniteField(q);    
+    return NewType(fam, IsMutable and IsMTX64Matrix and IsDataObjectRep);
+end, rec(flush := true)));
+
+BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
+
+#
+# Fields
+#
 
 InstallMethod( MTX64_FiniteField, "for a size",
                [ IsPosInt ],
@@ -47,23 +64,16 @@ InstallMethod( ViewString, "for a meataxe64 field",
                    return r;
                end);
 
-
+InstallMethod(\=, [IsMTX64FiniteField, IsMTX64FiniteField],
+        IsIdenticalObj);
+                            
 InstallMethod( \<, "for meataxe64 fields",
                [IsMTX64FiniteField, IsMTX64FiniteField],
                {F1, F2} -> MTX64_FieldOrder(F1) < MTX64_FieldOrder(F2));
 
+#
 ## Elements of finite fields
 #
-
-BindGlobal("MTX64_FieldEltType", MemoizePosIntFunction(function(q)
-    local fam, type;
-    fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_ElementFamily"));
-    fam!.q := q;
-    fam!.field := MTX64_FiniteField(q);    
-    return NewType(fam, IsMTX64FiniteFieldElement and IsDataObjectRep);
-end, rec(flush := true)));
-
-
 
 InstallMethod( MTX64_FiniteFieldElement, "",
         [ IsMTX64FiniteField, IsInt ],        
@@ -85,16 +95,66 @@ function(e)
                   , ">");
 end);
 
-BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
-    local fam, type;
-    fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_MatrixFamily"));
-    fam!.q := q;
-    fam!.field := MTX64_FiniteField(q);    
-    return NewType(fam, IsMutable and IsMTX64Matrix and IsDataObjectRep);
-end, rec(flush := true)));
+InstallMethod(\=, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
+        function(x,y)
+    return MTX64_ExtractFieldElement(x) = MTX64_ExtractFieldElement(y);
+end);
 
-BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
+InstallMethod(\<, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
+        function(x,y)
+    return MTX64_ExtractFieldElement(x) < MTX64_ExtractFieldElement(y);
+end);
 
+
+InstallMethod(Zero, "for a meataxe64 field element",
+        [IsMTX64FiniteFieldElement],
+        x -> Zero(MTX64_FieldOfElement(x)));
+
+InstallMethod(One, "for a meataxe64 field element",
+        [IsMTX64FiniteFieldElement],
+        x -> One(MTX64_FieldOfElement(x)));
+
+InstallMethod(\+, "meataxe64 field elements", IsIdenticalObj,   [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
+        function(x,y)
+    return MTX64_FieldAdd(MTX64_FieldOfElement(x), x, y);    
+end);
+
+InstallMethod(\-, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
+        function(x,y)
+    return MTX64_FieldAdd(MTX64_FieldOfElement(x), x, y);    
+end);
+
+InstallMethod(AdditiveInverse, "meataxe64 field element",  
+        [IsMTX64FiniteFieldElement],
+        x -> MTX64_FieldNeg(MTX64_FieldOfElement(x), x));
+
+InstallMethod(\*, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
+        function(x,y)
+    return MTX64_FieldMul(MTX64_FieldOfElement(x), x, y);    
+end);
+
+InstallMethod(QUO, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
+        function(x,y)
+    return MTX64_FieldDiv(MTX64_FieldOfElement(x), x, y);    
+end);
+
+InstallMethod(Inverse,  "meataxe64 field element",  
+        [IsMTX64FiniteFieldElement],
+    x ->  MTX64_FieldInv(MTX64_FieldOfElement(x), x));
+    
+
+InstallOtherMethod(Zero, "for a meataxe64 field",
+        [IsMTX64FiniteField],
+        f->MTX64_FiniteFieldElement(f,0));
+
+InstallOtherMethod(One, "for a meataxe64 field",
+        [IsMTX64FiniteField],
+        f->MTX64_FiniteFieldElement(f,1));
+
+
+#
+# Matrices
+#
 
 InstallMethod( ViewString, "for a meataxe64 matrix",
                [ IsMTX64Matrix ],
@@ -110,12 +170,7 @@ function(m)
                   , ">");
 end);
 
-InstallMethod( ViewString, "for a meataxe64 bitstring",
-        [IsMTX64BitString],
-        bs -> STRINGIFY("< MTX64 bitstring ",MTX64_WeightOfBitString(bs),"/",MTX64_LengthOfBitString(bs),">"));
-
 InstallMethod( ShallowCopy, "for a meataxe matrix", [IsMTX64Matrix], MTX64_ShallowCopyMatrix);
-InstallMethod( ShallowCopy, "for a meataxe bitstring", [IsMTX64BitString], MTX64_ShallowCopyBitString);
 
 InstallOtherMethod(\*, "for meataxe64 matrices", IsIdenticalObj, [IsMTX64Matrix, IsMTX64Matrix], 
         function(m1,m2)
@@ -128,6 +183,28 @@ InstallOtherMethod(\*, "for meataxe64 matrices", IsIdenticalObj, [IsMTX64Matrix,
     return m;
 end);
 
+InstallMethod(\*, "for meataxe64 matrix and FELT", [IsMTX64Matrix, IsMTX64FiniteFieldElement],
+        function(m,x)
+    local  copy;
+    if FieldOfMTX64Matrix(m) <> MTX64_FieldOfElement(x) then
+        #
+        # Could possibly write a family predicate for this
+        #
+        Error("incompatible fields");
+    fi;
+    copy := ShallowCopy(m);    
+    MTX64_DSMul(MTX64_Matrix_NumRows(m), x, copy);
+    return copy;
+end);
+
+InstallMethod(\*, "for FELT and meataxe64 matrix ", [IsMTX64FiniteFieldElement, IsMTX64Matrix ],
+        function(x,m)
+    return m*x;
+end);
+
+    
+        
+
 InstallOtherMethod(\[\], "for a meataxe64 matrix and two indices", [IsMTX64Matrix, IsPosInt, IsPosInt], 
         function(m, i, j)
     if i > MTX64_Matrix_NumRows(m) or 
@@ -137,11 +214,9 @@ InstallOtherMethod(\[\], "for a meataxe64 matrix and two indices", [IsMTX64Matri
     return MTX64_GetEntry(m, i-1, j-1);
 end);
 
-InstallOtherMethod(\=, [IsMTX64FiniteField, IsMTX64FiniteField],
-        IsIdenticalObj);
 
-
-InstallOtherMethod(\[\]\:\=, "for a meataxe64 matrix and two indices and a FELT", [IsMTX64Matrix and IsMutable, IsPosInt, IsPosInt, IsMTX64FiniteFieldElement], 
+InstallOtherMethod(\[\]\:\=, "for a meataxe64 matrix and two indices and a FELT", 
+        [IsMTX64Matrix and IsMutable, IsPosInt, IsPosInt, IsMTX64FiniteFieldElement], 
         function(m, i, j, x)
     if i > MTX64_Matrix_NumRows(m) or 
        j > MTX64_Matrix_NumCols(m) then
@@ -164,13 +239,7 @@ end);
 
 InstallOtherMethod(TransposedMatImmutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
-        function(m)
-    local t;    
-    t := MTX64_NewMatrix(FieldOfMTX64Matrix(m), MTX64_Matrix_NumRows(m), MTX64_Matrix_NumCols(m));
-    MTX64_SLTranspose(m,t);
-    MakeImmutable(t);    
-    return t;
-end);
+        m->MakeImmutable(TransposedMatMutable(m)));
 
 InstallMethod(Display, "for a meataxe64 matrix",
         [IsMTX64Matrix],
@@ -178,11 +247,172 @@ InstallMethod(Display, "for a meataxe64 matrix",
     Display(List([1..MTX64_Matrix_NumRows(m)], i->
             List([1..MTX64_Matrix_NumCols(m)], j -> MTX64_ExtractFieldElement(m[i,j]))));
     
-      end );
+end );
+      
+
+InstallMethod(InverseMutable, "for a meataxe64 matrix",
+        [IsMTX64Matrix],
+        function(m)
+    local  len, copy, res;
+    len := MTX64_Matrix_NumCols(m);
+    if len <> MTX64_Matrix_NumRows(m) then
+        Error("not square");
+    fi;
+    copy := ShallowCopy(m);    
+    res := MTX64_SLEchelize(copy);
+    if res.rank <> len then
+        Error("not invertible");
+    fi;
+    return -res.multiplier;    
+end);
+
+InstallMethod(InverseSameMutability, "for a meataxe64 matrix", 
+        [IsMTX64Matrix],
+        function(m)
+    if not IsMutable(m) then
+        return Inverse(m);
+    else
+        return InverseMutable(m);        
+    fi;
+end);
+
+InstallMethod(AdditiveInverseSameMutability, "for a meataxe64 matrix", 
+        [IsMTX64Matrix],
+        function(m)
+    if not IsMutable(m) then
+        return AdditiveInverse(m);
+    else
+        return AdditiveInverseMutable(m);        
+    fi;
+end);
 
 
-        
+InstallMethod(\+, "for meataxe64 matrices", IsIdenticalObj,
+        [IsMTX64Matrix, IsMTX64Matrix],
+        function(m1,m2)
+    local  nrows, ncols, m;
+    nrows := MTX64_Matrix_NumRows(m1);
+    ncols := MTX64_Matrix_NumCols(m1);
+    if nrows <> MTX64_Matrix_NumRows(m2) or 
+        ncols <> MTX64_Matrix_NumCols(m2) then
+        Error("matrices not the same size");
+    fi;
+    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), ncols, nrows);
+    MTX64_DAdd(nrows, m1,m2,m);
+    return m;
+end);
+
+InstallMethod(\-, "for meataxe64 matrices", IsIdenticalObj,
+        [IsMTX64Matrix, IsMTX64Matrix],
+        function(m1,m2)
+    local  nrows, ncols, m;
+    nrows := MTX64_Matrix_NumRows(m1);
+    ncols := MTX64_Matrix_NumCols(m1);
+    if nrows <> MTX64_Matrix_NumRows(m2) or 
+        ncols <> MTX64_Matrix_NumCols(m2) then
+        Error("matrices not the same size");
+    fi;
+    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), ncols, nrows);
+    MTX64_DSub(nrows, m1,m2,m);
+    return m;
+end);
+
+InstallMethod(AdditiveInverseMutable, "for meataxe64 matrices",
+        [IsMTX64Matrix],
+        m-> -One(FieldOfMTX64Matrix(m))*m);
+
+InstallMethod(ZeroMutable, "for a meataxe64 matrix",
+        [IsMTX64Matrix],
+        m ->  MTX64_NewMatrix(FieldOfMTX64Matrix(m), MTX64_Matrix_NumCols(m),
+                MTX64_Matrix_NumRows(m)));
 
 
+MTX64_IdentityMat := function(n, field)
+    local  m, o, i;
+    m := MTX64_NewMatrix(field,n,n);
+    o := One(field);    
+    for i in [1..n] do 
+        m[i,i] := o;
+    od;
+    return m;
+    
+end;
+
+
+InstallMethod(OneMutable, "for a meataxe64 matrix",
+        [IsMTX64Matrix],
+        function(m)
+    local  n;
+    n := MTX64_Matrix_NumRows(m);
+    if n <> MTX64_Matrix_NumCols(m) then
+        Error("Not square");
+    fi;
+    return MTX64_IdentityMat(n,FieldOfMTX64Matrix(m));
+end);
+
+InstallMethod(\=,  "for meataxe64 matrices", IsIdenticalObj,
+        [IsMTX64Matrix, IsMTX64Matrix],
+        function(m1,m2)
+    return MTX64_Matrix_NumCols(m1) = MTX64_Matrix_NumCols(m2) and
+           MTX64_Matrix_NumRows(m1) = MTX64_Matrix_NumRows(m2) and
+           0 = MTX64_compareMatrices(m1,m2);
+end);
+
+InstallMethod(\<,  "for meataxe64 matrices", IsIdenticalObj,
+        [IsMTX64Matrix, IsMTX64Matrix],
+        function(m1,m2)
+    if MTX64_Matrix_NumCols(m1) <> MTX64_Matrix_NumCols(m2) or
+       MTX64_Matrix_NumRows(m1) <> MTX64_Matrix_NumRows(m2) then
+        Error("No ordering for matrices of different shapes");
+    fi;
+    return 0 > MTX64_compareMatrices(m1,m2);
+end);
+
+
+
+#
+# BitStrings
+#
+
+InstallMethod( ViewString, "for a meataxe64 bitstring",
+        [IsMTX64BitString],
+        bs -> STRINGIFY("< MTX64 bitstring ",MTX64_WeightOfBitString(bs),"/",MTX64_LengthOfBitString(bs),">"));
+
+InstallMethod( ShallowCopy, "for a meataxe bitstring", [IsMTX64BitString], MTX64_ShallowCopyBitString);
+
+
+InstallOtherMethod(Length, "for a meataxe bitstring", [IsMTX64BitString],
+        MTX64_LengthOfBitString);
+
+InstallOtherMethod(\[\], "for a meataxe bitstring", [IsMTX64BitString, IsPosInt],
+        function(bs, i)
+    if i > Length(bs) then
+        Error("Index too big");
+    fi;
+    return MTX64_GetEntryOfBitString(bs, i-1);
+end);
+
+InstallOtherMethod(\[\]\:\=, "for a meataxe bitstring", [IsMTX64BitString, IsPosInt, IsInt],
+        function(bs, i, x)
+    if i > Length(bs) then
+        Error("Index too big");
+    fi;
+    if x <> 1 then
+        Error("meataxe64 bitstring entries can ONLY be set to 1");
+    fi;
+    MTX64_SetEntryOfBitString(bs, i-1);
+end);
+
+InstallMethod(\=,  "for meataxe bitstrings",
+        [IsMTX64BitString, IsMTX64BitString],
+        function(bs1,bs2) 
+    return 0 = MTX64_compareBitStrings(bs1,bs2);
+end);
+
+InstallMethod(\<,  "for meataxe bitstrings",
+        [IsMTX64BitString, IsMTX64BitString],
+        function(bs1,bs2) 
+    return 0 > MTX64_compareBitStrings(bs1,bs2);
+end);
 
 
