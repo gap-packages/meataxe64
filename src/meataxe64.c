@@ -10,20 +10,20 @@
 #include "mtx64/bitstring.h"
 
 /* The slab level interface with meataxe 64 works uses mainly
-   interfaces defined in mtx64/field.h and mtx64/slab.h.  
+   interfaces defined in mtx64/field.h and mtx64/slab.h.
    This defines four types of
    object of interest, a FIELD (a large structure), a FELT (a 64 bit
    value representing a field element, a DSpace (a small structure
    that gathers some information about a bunch of vectors) and a a
    DFmt object, which is a char pointer to a block of bytes which
    contain vectors. We create the DSpace on the fly when we need if
-   we store the number of columns with the Dfmt data and also 
+   we store the number of columns with the Dfmt data and also
    an int for the number of rowns. We call this a MTX64_Matrix in GAP.
 
    We wrap FELTS (slightly inefficient, but we dont expect working
    with them to be performance critical), FIELDS, and blocks
    of Dfmt data in T_DATOBJ objects. We store a FIELD in the family of each MTX64_Matrix
-   and FELT. 
+   and FELT.
 
    For the time being, we make no attempt to unite these objects with
    FFE and List types in GAP. They are entirely separate objects
@@ -37,10 +37,10 @@
    TODO -- consts and asserts in appropriate places.
    TODO -- consistentise names
    TODO -- more comments
-   
+
  */
 
-static Obj TYPE_MTX64_Field;     // global variable. All FIELDS have same type 
+static Obj TYPE_MTX64_Field;     // global variable. All FIELDS have same type
 static Obj TYPE_MTX64_Felt;      // function, takes field
 static Obj TYPE_MTX64_Matrix;    // function takes field
 static Obj TYPE_MTX64_BitString; // global variable, type of MTX64 Bitstring objects
@@ -91,7 +91,7 @@ static inline UInt Size_Data_Matrix(Obj f, UInt noc, UInt nor) {
 }
 
 static inline UInt Size_Bag_Matrix(Obj f, UInt noc, UInt nor) {
-    return sizeof(Obj) + sizeof(MTX64_Matrix_Header) + Size_Data_Matrix(f,noc,nor) ;    
+    return sizeof(Obj) + sizeof(MTX64_Matrix_Header) + Size_Data_Matrix(f,noc,nor) ;
 }
 
 static inline Obj NEW_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
@@ -169,7 +169,7 @@ Obj MTX64_CreateFieldElement(Obj self, Obj field, Obj elt)
         ielt = (INT_INTOBJ(y) << 32) + INT_INTOBJ(x);
     } else
         ielt = INT_INTOBJ(elt);
-    // TODO Should check against field size as well 
+    // TODO Should check against field size as well
     return MakeMtx64Felt(field, ielt);
 }
 
@@ -291,7 +291,7 @@ Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj nrows)
     return 0;
 }
 
-Obj MTX64_DCut(Obj self, Obj m, Obj nrows, Obj startcol, Obj clip ) 
+Obj MTX64_DCut(Obj self, Obj m, Obj nrows, Obj startcol, Obj clip )
 {
     DSPACE ms, cs;
     Dfmt * mp, *cp;
@@ -314,14 +314,14 @@ Obj MTX64_DPaste(Obj self, Obj clip, Obj nrows, Obj startcol, Obj m)
     cp = DataOfMTX64_Matrix(clip);
     DPaste(&cs, cp, INT_INTOBJ(nrows), INT_INTOBJ(startcol), &ms, mp );
     return 0;
-    
+
 }
 
 Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2, Obj d)
 {
     DSPACE ds;
     Dfmt * d1p, *d2p, *dp;
-    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    SetDSpaceOfMTX64_Matrix(d1, &ds);
     d1p = DataOfMTX64_Matrix(d1);
     d2p = DataOfMTX64_Matrix(d2);
     dp = DataOfMTX64_Matrix(d);
@@ -333,7 +333,7 @@ Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2, Obj d)
 {
     DSPACE ds;
     Dfmt * d1p, *d2p, *dp;
-    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    SetDSpaceOfMTX64_Matrix(d1, &ds);
     d1p = DataOfMTX64_Matrix(d1);
     d2p = DataOfMTX64_Matrix(d2);
     dp = DataOfMTX64_Matrix(d);
@@ -347,7 +347,7 @@ Obj MTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2)
     DSPACE ds;
     Dfmt * d1p, *d2p;
     FELT x;
-    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    SetDSpaceOfMTX64_Matrix(d1, &ds);
     d1p = DataOfMTX64_Matrix(d1);
     d2p = DataOfMTX64_Matrix(d2);
     x = GetFELTFromFELTObject(scalar);
@@ -361,18 +361,18 @@ Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1)
     DSPACE ds;
     Dfmt *dp;
     FELT x;
-    SetDSpaceOfMTX64_Matrix(d1, &ds);    
+    SetDSpaceOfMTX64_Matrix(d1, &ds);
     dp = DataOfMTX64_Matrix(d1);
     x = GetFELTFromFELTObject(scalar);
     DSMul( &ds, x, INT_INTOBJ(nrows), dp);
-    return 0;    
+    return 0;
 }
 
 Obj MTX64_DNzl(Obj self, Obj m)
 {
     DSPACE ds;
     Dfmt *mp;
-    SetDSpaceOfMTX64_Matrix(m, &ds);    
+    SetDSpaceOfMTX64_Matrix(m, &ds);
     mp = DataOfMTX64_Matrix(m);
     return INTOBJ_INT(DNzl(&ds,mp));
 }
@@ -382,7 +382,7 @@ void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
     Obj f = CALL_1ARGS(FieldOfMTX64Matrix,mat);
     h->nor = nor;
     h->noc = noc;
-    ResizeBag(mat, Size_Bag_Matrix(f, noc, nor));    
+    ResizeBag(mat, Size_Bag_Matrix(f, noc, nor));
 }
 
 
@@ -399,7 +399,7 @@ Obj MTX64_SLEchelize(Obj self, Obj a)
     Obj m = NEW_MTX64_Matrix(field, rklimit, rklimit);
     Obj r = NEW_MTX64_Matrix(field, ncols, nrows); // this may be a bit too high
     Obj c = NEW_MTX64_Matrix(field, rklimit, ncols); // this is a bit too high, as both bounds cannot be achieved at once
-    // Done with garbage collection here 
+    // Done with garbage collection here
     uint64_t rank;
     uint64_t *rsp = DataOfBitStringObject(rs),
         *csp = DataOfBitStringObject(cs);
@@ -563,12 +563,12 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_WeightOfBitString, 1, "bs"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntryOfBitString, 2, "bs, pos"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntryOfBitString, 2, "bs, pos"),
-    
+
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyMatrix, 1, "m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyBitString, 1, "bs"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareMatrices, 2, "m1, m2"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareBitStrings, 2, "bs1, bs2"),
-    
+
     { 0 } /* Finish with an empty entry */
 
 };
