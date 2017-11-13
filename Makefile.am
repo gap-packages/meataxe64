@@ -11,6 +11,13 @@ GAPINSTALLLIB = $(BINARCHDIR)/meataxe64.so
 
 lib_LTLIBRARIES = meataxe64.la
 
+# replace the pcritGENc.c line in the below by two of these three for
+# Haswell acceleration
+# TODO build all of this and the OSXification process into the build process
+#   src/mtx64/pcritHASc.c 
+#  src/mtx64/osx-pcritHASs.s 
+#  src/mtx64/pcritHASs.s 
+
 meataxe64_la_SOURCES = \
   src/meataxe64.c \
   src/mtx64/field.c \
@@ -20,6 +27,7 @@ meataxe64_la_SOURCES = \
   src/mtx64/linf.c \
   src/mtx64/pmul.c \
   src/mtx64/bitstring.c \
+  src/mtx64/tabmake.c \
   src/mtx64/slab.c
 
 meataxe64_la_CPPFLAGS = -Isrc/mtx64 $(GAP_CPPFLAGS) -DCONFIG_H
