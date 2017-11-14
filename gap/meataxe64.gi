@@ -79,8 +79,9 @@ InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an integer",
         [ IsMTX64FiniteField, IsInt ],        
         MTX64_CreateFieldElement);
 
-BindGlobal("MTX64_PopulateConversionTable", function(f)
-    local  tab1, tab2, q, z, y, i, fam;
+BindGlobal("MTX64_ConversionTables", MemoizePosIntFunction(function(q)
+    local  f, tab1, tab2, z, y, i, tab3, tab4;
+    f := MTX64_FiniteField(q);    
     tab1 := MTX64_MakeFELTfromFFETable(f);
     tab2 := [];
     q := Length(tab1);        
@@ -90,37 +91,40 @@ BindGlobal("MTX64_PopulateConversionTable", function(f)
     for i in [2..q] do
         tab2[1+tab1[i]] := y;
         y := y*z;            
+    od;    
+    return [tab1,tab2];
+end));
+
+BindGlobal("MTX64_ByteTables", MemoizePosIntFunction(function(q)
+    local  tab3, tab4, i, f;
+    f := MTX64_FiniteField(q);    
+    tab3 := MTX64_Make8BitConversion(f);
+    ConvertToStringRep(tab3);    
+    tab4 := [];
+    for i in [1..Length(tab3)] do
+        tab4[IntChar(tab3[i])+1] := CharInt(i-1);
     od;
-    fam := FamilyObj(f);
+    ConvertToStringRep(tab4);    
+    return [tab3,tab4];
+end));
     
-    fam!.FFEfromFELTTable := tab2;
-    fam!.FELTfromFFETable := tab1;
-    return;
-end);
-
-
 
 BindGlobal("MTX64_GetFFEfromFELTTable", function(f)
-    local  fam;
-    fam := FamilyObj(f);    
-    if not IsBound(fam!.FFEfromFELTTable) then
-        MTX64_PopulateConversionTable(f);        
-    fi;
-    return fam!.FFEfromFELTTable;
+    return MTX64_ConversionTables(MTX64_FieldOrder(f))[2];    
 end);
 
     
 BindGlobal("MTX64_GetFELTfromFFETable", function(f)
-    local  fam;
-    fam := FamilyObj(f);    
-    if not IsBound(fam!.FFEfromFELTTable) then
-        MTX64_PopulateConversionTable(f);        
-    fi;
-    return fam!.FELTfromFFETable;
+    return MTX64_ConversionTables(MTX64_FieldOrder(f))[1];    
 end);
 
-    
-    
+BindGlobal("MTX64_Get8BitImportTable", function(f)
+    return MTX64_ByteTables(MTX64_FieldOrder(f))[1];    
+end);
+
+BindGlobal("MTX64_Get8BitExportTable", function(f)
+    return MTX64_ByteTables(MTX64_FieldOrder(f))[2];    
+end);
 
 InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
         [ IsMTX64FiniteField, IsFFE ],        
@@ -133,7 +137,7 @@ InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
         Error("Element not in field");        
     fi;
     if p^d <= 65536 then
-        tab := MTX64_MakeFELTfromFFETable(field);
+        tab := MTX64_GetFELTfromFFETable(field);
         if IsZero(ffe) then
             x := 0;
         else 
@@ -267,6 +271,9 @@ BindGlobal( "MTX64_InsertVector",
     if IsGF2VectorRep(v) and fail <> MTX64_InsertVecGF2(m,v,row) then
         return;
     fi;
+    if Is8BitVectorRep(v) and fail <> MTX64_InsertVec8Bit(m,v,row) then
+        return;
+    fi;    
     if (TNUM_OBJ_INT(v) = T_PLIST_FFE or TNUM_OBJ_INT(v) = T_PLIST_FFE+1)
         and fail <> MTX64_InsertVecFFE(m, v, row) then
         return;
@@ -294,6 +301,8 @@ BindGlobal( "MTX64_ExtractVector",
     q := MTX64_FieldOrder(f);
     if q = 2 then
         return MTX64_ExtractVecGF2(m, row);        
+    elif q <= 256 then
+        return MTX64_ExtractVec8Bit(m, row);        
     elif q<= 2^16 then
         return MTX64_ExtractVecFFE(m,row);
     else

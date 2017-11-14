@@ -4,6 +4,7 @@
 
 #include "src/compiled.h"          /* GAP headers */
 #include "src/vecgf2.h"          /* GAP headers */
+#include "src/vec8bit.h"          /* GAP headers */
 
 #include <assert.h>
 #include "mtx64/field.h"
@@ -637,6 +638,89 @@ Obj MTX64_ExtractVecGF2(Obj self, Obj d, Obj rownum)
 }
 
 
+// makes a table such that table[i] is the
+// byte of D-format corresponding to i in GAP 8 bit vector
+// format
+
+Obj MTX64_Make8BitConversion( Obj self, Obj fld)
+{
+    UInt q = DataOfFieldObject(fld)->fdef;
+    GAP_ASSERT(2 < q && q <= 256);
+    UInt p = DataOfFieldObject(fld)->charc;
+    Obj tab = CALL_1ARGS(MTX64_GetFELTfromFFETable,fld);
+    UInt max = q;
+    Obj info = GetFieldInfo8Bit(q);
+    UInt e = ELS_BYTE_FIELDINFO_8BIT(info);
+    for (UInt i = 1; i < e; i++)
+        max *= q;
+    Obj tabout = NEW_STRING(max);
+    for (UInt byte = 0; byte < max; byte++) {
+        UInt1 x = byte;
+        UInt1 y = 0;
+        UInt1 z = 1;
+        for (UInt i = 0; i < e; i++) {
+            UInt ent = x % q;
+            x /= q;
+            FFV ent2 = VAL_FFE(FFE_FELT_FIELDINFO_8BIT(info)[ent]);
+            FELT ent3 = INT_INTOBJ(ELM_PLIST(tab, ent2+1));
+            y += ent3*z;
+            z *=q;
+        }
+        CHARS_STRING(tabout)[byte] = y;
+    }
+    return tabout;
+}
+
+static Obj MTX64_Get8BitImportTable;
+static Obj MTX64_Get8BitExportTable;
+
+Obj MTX64_InsertVec8Bit(Obj self, Obj d, Obj v, Obj rownum)
+{
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,d);
+    UInt q = DataOfFieldObject(fld)->fdef;
+    if (q != FIELD_VEC8BIT(v))
+        // maybe the matrix is over a bigger field and we need to
+        // do this the slow way
+        return Fail;    
+    GAP_ASSERT(IS_VEC8BIT_REP(v));
+    UInt len = LEN_VEC8BIT(v);
+    if ( len != HeaderOfMTX64_Matrix(d)->noc)
+        ErrorMayQuit("row length mismatch",0,0);
+    if (len == 0)
+        return 0;
+    Obj tbl = CALL_1ARGS(MTX64_Get8BitImportTable,fld);
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(d, &ds);
+    UChar *tptr = CHARS_STRING(tbl);
+    Dfmt *dptr = DataOfMTX64_Matrix(d);
+    UInt1 *vptr = BYTES_VEC8BIT(v);
+    dptr = DPAdv(&ds, INT_INTOBJ(rownum), dptr);    
+    for (UInt i = 0; i < ds.nob; i++)
+        dptr[i] = tptr[vptr[i]];
+    return INTOBJ_INT(len);
+}
+
+Obj MTX64_ExtractVec8Bit(Obj self, Obj d, Obj rownum)
+{
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,d);
+    UInt q = DataOfFieldObject(fld)->fdef;
+    if (q == 2 || q > 256)
+        ErrorMayQuit("field mismatch",0,0);
+    UInt len = HeaderOfMTX64_Matrix(d)->noc;
+    Obj v = ZeroVec8Bit(q, len, 1);
+    DSPACE ds;
+    Obj tbl = CALL_1ARGS(MTX64_Get8BitExportTable,fld);
+    SetDSpaceOfMTX64_Matrix(d, &ds);
+    Dfmt *dptr = DataOfMTX64_Matrix(d);
+    UInt1 *vptr = BYTES_VEC8BIT(v);
+    UChar *tptr = CHARS_STRING(tbl);
+    dptr = DPAdv(&ds, INT_INTOBJ(rownum), dptr);
+    for (UInt i = 0; i < ds.nob; i++)
+        vptr[i] = tptr[((UInt1 *)dptr)[i]];
+    return v;
+}
+
+
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
   {#name, nparam, \
@@ -697,6 +781,9 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecFFE, 2, "d, row"),
         GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVecGF2, 3, "d, v, row"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecGF2, 2, "d, row"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Make8BitConversion, 1, "f"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVec8Bit, 3, "d, v, row"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVec8Bit, 2, "d, row"),
         
     { 0 } /* Finish with an empty entry */
 
@@ -718,6 +805,8 @@ static Int InitKernel(StructInitInfo *module) {
                         &MTX64_GetFFEfromFELTTable);
   ImportFuncFromLibrary("MTX64_GetFELTfromFFETable",
                         &MTX64_GetFELTfromFFETable);
+  ImportFuncFromLibrary("MTX64_Get8BitImportTable",&MTX64_Get8BitImportTable);
+  ImportFuncFromLibrary("MTX64_Get8BitExportTable",&MTX64_Get8BitExportTable);
 
   /* return success */
   return 0;
