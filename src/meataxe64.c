@@ -27,14 +27,12 @@
 
    For the time being, we make no attempt to unite these objects with
    FFE and List types in GAP. They are entirely separate objects
-   accessed only by their own functions (and maybe a few OtherMethods
-   for convenience).
-
+   accessed only by their own functions.
 
    We might want to change this later and unite these with the
    MatrixObj development, or pay for another layer of wrapping.
 
-   TODO -- consts and asserts in appropriate places.
+   TODO -- consts, asserts and actual checks on arguments in appropriate places.
    TODO -- consistentise names
    TODO -- more comments
    
@@ -42,7 +40,7 @@
 
 static Obj TYPE_MTX64_Field;     // global variable. All FIELDS have same type 
 static Obj TYPE_MTX64_Felt;      // function, takes field
-static Obj TYPE_MTX64_Matrix;    // function takes field
+static Obj TYPE_MTX64_Matrix;    // function,  takes field
 static Obj TYPE_MTX64_BitString; // global variable, type of MTX64 Bitstring objects
 
 static inline uint64_t *DataOfBitStringObject(Obj bs) {
@@ -248,7 +246,7 @@ Obj MTX64_Matrix_NumCols(Obj self, Obj m) {
 }
 
 // 0 based adressing
-static FELT GetEntryMTX64(Obj m, UInt col, UInt row)
+static FELT GetEntryMTX64(Obj m, UInt row, UInt col)
 {
     DSPACE ds;
     Dfmt * d;
@@ -258,13 +256,13 @@ static FELT GetEntryMTX64(Obj m, UInt col, UInt row)
     return DUnpak(&ds, col, d);
 }
 
-Obj MTX64_GetEntry(Obj self, Obj m, Obj col, Obj row)
+Obj MTX64_GetEntry(Obj self, Obj m, Obj row, Obj col)
 {
     Obj f = CALL_1ARGS(FieldOfMTX64Matrix,m);
     return MakeMtx64Felt(f,GetEntryMTX64(m, INT_INTOBJ(col), INT_INTOBJ(row)));
 }
 
-void SetEntryMTX64(Obj m, UInt col, UInt row, FELT entry)
+void SetEntryMTX64(Obj m, UInt row, UInt col, FELT entry)
 {
     DSPACE ds;
     Dfmt * d;
@@ -274,7 +272,7 @@ void SetEntryMTX64(Obj m, UInt col, UInt row, FELT entry)
     DPak(&ds, col, d, entry);
 }
 
-Obj MTX64_SetEntry(Obj self, Obj m, Obj col, Obj row, Obj entry)
+Obj MTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry)
 {
     SetEntryMTX64(m, INT_INTOBJ(col), INT_INTOBJ(row),GetFELTFromFELTObject(entry));
     return 0;
@@ -386,7 +384,7 @@ void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
 }
 
 
-Obj MTX64_SLEchelize(Obj self, Obj a)
+Obj MTX64_SLEchelizeDestructive(Obj self, Obj a)
 {
     MTX64_Matrix_Header * h = HeaderOfMTX64_Matrix(a);
     UInt nrows = h->nor;
@@ -513,6 +511,90 @@ Obj MTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2)
     return INTOBJ_INT((res < 0) ? -1 : (res > 0) ? 1 : 0);
 }
 
+//
+// limited to fields up to 2^60 or so by small int, but
+// considerably smaller by memory, at least for a while
+//
+Obj MTX64_MakeFELTfromFFETable (Obj self, Obj field)
+{
+    FIELD *f = DataOfFieldObject(field);
+    UInt q = f->fdef;
+    UInt p = f->charc;
+    Obj l = NEW_PLIST(T_PLIST_CYC+IMMUTABLE, q);
+    // line above may cause GC
+    f = DataOfFieldObject(field);
+    SET_ELM_PLIST(l,1,INTOBJ_INT(0));
+    FELT x = 1;
+    FELT z = (p == q) ? f->conp : p;
+    for (int i = 0; i < q-1; i++) {
+        SET_ELM_PLIST(l, i+2, INTOBJ_INT(x));
+        x = FieldMul(f, x, z);
+    }
+    SET_LEN_PLIST(l, q);
+    return l;
+}
+
+static Obj MTX64_GetFELTfromFFETable;
+static Obj MTX64_GetFFEfromFELTTable;
+
+// Copy a T_VECFFE vector of appropriate field and length into
+// the specified row of a meataxe64 matrix
+// rownum is zero based 
+
+Obj MTX64_InsertVecFFE(Obj self, Obj d, Obj v, Obj rownum) {
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,d);
+    UInt q = DataOfFieldObject(fld)->fdef;
+    UInt len = LEN_PLIST(v);
+    if ( len != HeaderOfMTX64_Matrix(d)->noc)
+        ErrorMayQuit("row length mismatch",0,0);
+    if (len == 0)
+        return 0;    
+    FF field = FLD_FFE(ELM_PLIST(v,1));    
+    if (SIZE_FF(field) != q)
+        // this should mean that the vector is written over a smaller (or bigger)
+        // field. The entries may still be OK, so this signals the calling function
+        // to fall back to element-by-element conversion at GAP level
+        return Fail;
+    Obj tab = CALL_1ARGS(MTX64_GetFELTfromFFETable, fld);
+    // from here no GC
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(d, &ds);
+    Obj *vptr = ADDR_OBJ(v);
+    Dfmt *dptr = DataOfMTX64_Matrix(d);
+    dptr = DPAdv(&ds, INT_INTOBJ(rownum), dptr);
+    Obj *tptr = ADDR_OBJ(tab);
+    for (UInt i = 0; i < len; i++)
+        DPak(&ds, i, dptr, INT_INTOBJ(tptr[VAL_FFE(vptr[i+1])+1]));
+    // GC OK again
+    return INTOBJ_INT(len);
+}
+
+// rownum is zero based 
+Obj MTX64_ExtractVecFFE(Obj self, Obj d, Obj rownum) {
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,d);
+    UInt q = DataOfFieldObject(fld)->fdef;
+    UInt p = DataOfFieldObject(fld)->charc;
+    UInt deg = DataOfFieldObject(fld)->pow;
+    UInt len = HeaderOfMTX64_Matrix(d)->noc;
+    if (len == 0)
+        return NEW_PLIST(T_PLIST_EMPTY, 0);    
+    Obj v = NEW_PLIST(T_PLIST_FFE, len);
+    SET_LEN_PLIST(v,len);
+    Obj tab = CALL_1ARGS(MTX64_GetFFEfromFELTTable, fld);
+    // from here no GC
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(d, &ds);
+    Obj *vptr = ADDR_OBJ(v);
+    Dfmt *dptr = DataOfMTX64_Matrix(d);
+    dptr = DPAdv(&ds, INT_INTOBJ(rownum), dptr);
+    Obj *tptr = ADDR_OBJ(tab);
+    for (UInt i = 0; i < len; i++)
+        vptr[i+1] = tptr[1+DUnpak(&ds, i, dptr)];
+    // GC OK again
+    return v;
+}
+
+
 
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
@@ -556,7 +638,7 @@ static StructGVarFunc GVarFuncs [] = {
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLMultiply, 3, "a, b, c"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLTranspose, 2, "m, t"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLEchelize, 1, "a"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLEchelizeDestructive, 1, "a"),
 
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_LengthOfBitString, 1, "bs"),
@@ -569,6 +651,10 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareMatrices, 2, "m1, m2"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareBitStrings, 2, "bs1, bs2"),
     
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_MakeFELTfromFFETable, 1, "q"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVecFFE, 3, "d, v, row"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecFFE, 2, "d, row"),
+        
     { 0 } /* Finish with an empty entry */
 
 };
@@ -576,19 +662,22 @@ static StructGVarFunc GVarFuncs [] = {
 /******************************************************************************
 *F  InitKernel( <module> )  . . . . . . . . initialise kernel data structures
 */
-static Int InitKernel( StructInitInfo *module )
-{
-    /* init filters and functionsi */
-    InitHdlrFuncsFromTable( GVarFuncs );
+static Int InitKernel(StructInitInfo *module) {
+  /* init filters and functionsi */
+  InitHdlrFuncsFromTable(GVarFuncs);
 
-    ImportGVarFromLibrary( "MTX64_FieldType", &TYPE_MTX64_Field);
-    ImportGVarFromLibrary( "MTX64_BitStringType", &TYPE_MTX64_BitString);
-    ImportFuncFromLibrary( "MTX64_FieldEltType", &TYPE_MTX64_Felt);
-    ImportFuncFromLibrary( "MTX64_MatrixType", &TYPE_MTX64_Matrix);
-    ImportFuncFromLibrary( "FieldOfMTX64Matrix", &FieldOfMTX64Matrix);
+  ImportGVarFromLibrary("MTX64_FieldType", &TYPE_MTX64_Field);
+  ImportGVarFromLibrary("MTX64_BitStringType", &TYPE_MTX64_BitString);
+  ImportFuncFromLibrary("MTX64_FieldEltType", &TYPE_MTX64_Felt);
+  ImportFuncFromLibrary("MTX64_MatrixType", &TYPE_MTX64_Matrix);
+  ImportFuncFromLibrary("FieldOfMTX64Matrix", &FieldOfMTX64Matrix);
+  ImportFuncFromLibrary("MTX64_GetFFEfromFELTTable",
+                        &MTX64_GetFFEfromFELTTable);
+  ImportFuncFromLibrary("MTX64_GetFELTfromFFETable",
+                        &MTX64_GetFELTfromFFETable);
 
-    /* return success */
-    return 0;
+  /* return success */
+  return 0;
 }
 
 /******************************************************************************

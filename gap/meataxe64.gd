@@ -26,5 +26,8 @@ DeclareOperation( "MTX64_FiniteField", [IsPosInt, IsPosInt]);
 DeclareOperation( "MTX64_FiniteFieldElement",
                   [IsMTX64FiniteField, IsInt] );
 
+DeclareOperation( "MTX64_FiniteFieldElement",
+                  [IsMTX64FiniteField, IsFFE] );
+
 DeclareGlobalFunction( "MTX64_FieldOfElement" );
 

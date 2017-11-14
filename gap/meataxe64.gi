@@ -75,9 +75,89 @@ InstallMethod( \<, "for meataxe64 fields",
 ## Elements of finite fields
 #
 
-InstallMethod( MTX64_FiniteFieldElement, "",
+InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an integer",
         [ IsMTX64FiniteField, IsInt ],        
         MTX64_CreateFieldElement);
+
+BindGlobal("MTX64_PopulateConversionTable", function(f)
+    local  tab1, tab2, q, z, y, i, fam;
+    tab1 := MTX64_MakeFELTfromFFETable(f);
+    tab2 := [];
+    q := Length(tab1);        
+    z := Z(q);
+    tab2[1] := 0*z;
+    y := z^0;        
+    for i in [2..q] do
+        tab2[1+tab1[i]] := y;
+        y := y*z;            
+    od;
+    fam := FamilyObj(f);
+    
+    fam!.FFEfromFELTTable := tab2;
+    fam!.FELTfromFFETable := tab1;
+    return;
+end);
+
+
+
+BindGlobal("MTX64_GetFFEfromFELTTable", function(f)
+    local  fam;
+    fam := FamilyObj(f);    
+    if not IsBound(fam!.FFEfromFELTTable) then
+        MTX64_PopulateConversionTable(f);        
+    fi;
+    return fam!.FFEfromFELTTable;
+end);
+
+    
+BindGlobal("MTX64_GetFELTfromFFETable", function(f)
+    local  fam;
+    fam := FamilyObj(f);    
+    if not IsBound(fam!.FFEfromFELTTable) then
+        MTX64_PopulateConversionTable(f);        
+    fi;
+    return fam!.FELTfromFFETable;
+end);
+
+    
+    
+
+InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
+        [ IsMTX64FiniteField, IsFFE ],        
+        function(field, ffe)
+    local  d, p, tab, x, cb, vec, pp, c;
+    d := MTX64_FieldDegree(field);
+    p := Characteristic(ffe);    
+    if p <> MTX64_FieldCharacteristic(field) or 
+       d < DegreeFFE(ffe) then
+        Error("Element not in field");        
+    fi;
+    if p^d <= 65536 then
+        tab := MTX64_MakeFELTfromFFETable(field);
+        if IsZero(ffe) then
+            x := 0;
+        else 
+            x := tab[LogFFE(ffe,Z(p,d))+1];
+        fi;
+    else      
+        cb := CanonicalBasis(AsVectorSpace(GF(p),GF(p,d)));
+        vec := Coefficients(cb, ffe);
+        x := 0;
+        pp := 1;    
+        for c  in vec do        
+            x := x+IntFFE(c)*pp;
+            pp := pp*p;
+        od;
+    fi;
+    return MTX64_FiniteFieldElement(field,x);
+end);
+
+InstallOtherMethod( MTX64_FiniteFieldElement, "for an FFE, choose default field",
+        [IsFFE],
+        ffe-> MTX64_FiniteFieldElement(MTX64_FiniteField(Characteristic(ffe), DegreeFFE(ffe)), ffe));
+
+
+
 
 InstallGlobalFunction( MTX64_FieldOfElement, "",
 function(e)
@@ -143,16 +223,16 @@ InstallMethod(Inverse,  "meataxe64 field element",
     x ->  MTX64_FieldInv(MTX64_FieldOfElement(x), x));
 
 
-#
-# TODO for Conway fields you could assemble the vector directly instead of using
-# field arithemetic and access it directly instead of making a basis
-#
 FFEfromFELT := function(felt)
-    local  fld, p, d, x, z, zp, y;
+    local  fld, p, d, x, tab, z, zp, y;
     fld := MTX64_FieldOfElement(felt);    
     p := MTX64_FieldCharacteristic(fld);
     d := MTX64_FieldDegree(fld);
     x := MTX64_ExtractFieldElement(felt);
+    if p^d <= 65536 then
+        tab := MTX64_GetFFEfromFELTTable(fld);
+        return tab[x+1];
+    fi;
     z := Z(p,d);
     zp := z^0;    
     y := 0*z;    
@@ -162,28 +242,6 @@ FFEfromFELT := function(felt)
         x := QuoInt(x,p);        
     od;
     return y;    
-end;
-
-FELTfromFFE := function(ffe, d...)
-    local  p, cb, vec, x, pp, c;
-    if Length(d) = 0 then
-        d := DegreeFFE(ffe);
-    else
-        d := d[1];
-        if DegreeFFE(ffe) > d then
-            Error("element is too high degree");
-        fi;
-    fi;
-    p := Characteristic(ffe);
-    cb := CanonicalBasis(AsVectorSpace(GF(p),GF(p,d)));
-    vec := Coefficients(cb, ffe);
-    x := 0;
-    pp := 1;    
-    for c  in vec do        
-        x := x+IntFFE(c)*pp;
-        pp := pp*p;
-    od;
-    return MTX64_FiniteFieldElement(MTX64_FiniteField(p^d),x);
 end;
 
 
@@ -199,6 +257,52 @@ InstallOtherMethod(One, "for a meataxe64 field",
 #
 # Matrices
 #
+#
+# row is zero based
+#
+
+BindGlobal( "MTX64_InsertVector",
+        function(m,v,row)
+    local  f, i;
+    if (TNUM_OBJ_INT(v) = T_PLIST_FFE or TNUM_OBJ_INT(v) = T_PLIST_FFE+1)
+        and fail <> MTX64_InsertVecFFE(m, v, row) then
+        return;
+    fi;
+    f := FieldOfMTX64Matrix(m);    
+    for i in [1..Length(v)] do
+        m[row+1, i] := MTX64_FiniteFieldElement(f, v[i]);
+    od;
+    return;
+end);
+
+InstallOtherMethod(\[\]\:\=, [IsMTX64Matrix and IsMutable, IsPosInt, IsRowVector and IsFFECollection],
+                          function(m,i,v)
+    MTX64_InsertVector(m,v,i-1);
+end);
+
+
+#
+# row is zero based
+#
+BindGlobal( "MTX64_ExtractVector", 
+        function(m,row)
+    local  f;
+    f := FieldOfMTX64Matrix(m);    
+    if MTX64_FieldOrder(f) <= 2^16 then
+        return MTX64_ExtractVecFFE(m,row);
+    else
+        return List([1..MTX64_Matrix_NumRows(m)], i->
+                    FFEfromFELT(m[row+1,i]));
+    fi;
+end);
+
+InstallOtherMethod(\[\], [IsMTX64Matrix, IsPosInt], 
+        function(m,i)
+    return MTX64_ExtractVector(m, i-1);
+end);
+
+        
+        
 
 InstallMethod( ViewString, "for a meataxe64 matrix",
                [ IsMTX64Matrix ],
@@ -294,6 +398,14 @@ InstallMethod(Display, "for a meataxe64 matrix",
 end );
       
 
+#
+# Richard plans to build the copying into the slab level
+# so this extra indirection can eventually go away.
+#
+BindGlobal("MTX64_SLEchelize",
+        a -> MTX64_SLEchelizeDestructive(ShallowCopy(a)));
+
+
 InstallMethod(InverseMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         function(m)
@@ -302,8 +414,7 @@ InstallMethod(InverseMutable, "for a meataxe64 matrix",
     if len <> MTX64_Matrix_NumRows(m) then
         Error("not square");
     fi;
-    copy := ShallowCopy(m);    
-    res := MTX64_SLEchelize(copy);
+    res := MTX64_SLEchelize(m);
     if res.rank <> len then
         Error("not invertible");
     fi;
