@@ -3,6 +3,7 @@
  */
 
 #include "src/compiled.h"          /* GAP headers */
+#include "src/vecgf2.h"          /* GAP headers */
 
 #include <assert.h>
 #include "mtx64/field.h"
@@ -595,6 +596,46 @@ Obj MTX64_ExtractVecFFE(Obj self, Obj d, Obj rownum) {
 }
 
 
+// This assumes little-endian storage
+Obj MTX64_InsertVecGF2(Obj self, Obj d, Obj v, Obj rownum)
+{
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,d);
+    UInt q = DataOfFieldObject(fld)->fdef;
+    if (q != 2)
+        // maybe the matrix is over a bigger field and we need to
+        // do this the slow way
+        return Fail;    
+    GAP_ASSERT(IS_GF2VEC_REP(v));
+    UInt len = LEN_GF2VEC(v);
+    if ( len != HeaderOfMTX64_Matrix(d)->noc)
+        ErrorMayQuit("row length mismatch",0,0);
+    if (len == 0)
+        return 0;    
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(d, &ds);
+    Dfmt *dptr = DataOfMTX64_Matrix(d);
+    dptr = DPAdv(&ds, INT_INTOBJ(rownum), dptr);
+    memcpy(dptr,BLOCKS_GF2VEC(v),ds.nob);
+    return INTOBJ_INT(len);
+}
+
+Obj MTX64_ExtractVecGF2(Obj self, Obj d, Obj rownum)
+{
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,d);
+    UInt q = DataOfFieldObject(fld)->fdef;
+    if (q != 2)
+        ErrorMayQuit("field mismatch",0,0);
+    UInt len = HeaderOfMTX64_Matrix(d)->noc;
+    Obj v;
+    NEW_GF2VEC(v,TYPE_LIST_GF2VEC, len);
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(d, &ds);
+    Dfmt *dptr = DataOfMTX64_Matrix(d);
+    dptr = DPAdv(&ds, INT_INTOBJ(rownum), dptr);
+    memcpy(BLOCKS_GF2VEC(v),dptr, ds.nob);
+    return v;
+}
+
 
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
@@ -654,6 +695,8 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_MakeFELTfromFFETable, 1, "q"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVecFFE, 3, "d, v, row"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecFFE, 2, "d, row"),
+        GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVecGF2, 3, "d, v, row"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecGF2, 2, "d, row"),
         
     { 0 } /* Finish with an empty entry */
 

@@ -264,6 +264,9 @@ InstallOtherMethod(One, "for a meataxe64 field",
 BindGlobal( "MTX64_InsertVector",
         function(m,v,row)
     local  f, i;
+    if IsGF2VectorRep(v) and fail <> MTX64_InsertVecGF2(m,v,row) then
+        return;
+    fi;
     if (TNUM_OBJ_INT(v) = T_PLIST_FFE or TNUM_OBJ_INT(v) = T_PLIST_FFE+1)
         and fail <> MTX64_InsertVecFFE(m, v, row) then
         return;
@@ -286,9 +289,12 @@ end);
 #
 BindGlobal( "MTX64_ExtractVector", 
         function(m,row)
-    local  f;
+    local  f,q;
     f := FieldOfMTX64Matrix(m);    
-    if MTX64_FieldOrder(f) <= 2^16 then
+    q := MTX64_FieldOrder(f);
+    if q = 2 then
+        return MTX64_ExtractVecGF2(m, row);        
+    elif q<= 2^16 then
         return MTX64_ExtractVecFFE(m,row);
     else
         return List([1..MTX64_Matrix_NumRows(m)], i->
