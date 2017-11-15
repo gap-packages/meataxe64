@@ -290,6 +290,58 @@ InstallOtherMethod(\[\]\:\=, [IsMTX64Matrix and IsMutable, IsPosInt, IsRowVector
     MTX64_InsertVector(m,v,i-1);
 end);
 
+InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl],
+        function(m)
+    local  nor, noc, f, fld, mm, i;
+    nor := Length(m);
+    if nor = 0 then
+        Error("Don't know how many columns each of the 0 rows has");
+    fi;
+    noc := Length(m[1]);
+    if noc = 0 then
+        Error("Don't know what field the 0 entries in each row lie in");
+    fi;
+    f := DefaultFieldOfMatrix(m);
+    fld := MTX64_FiniteField(Size(f));        
+    mm := MTX64_NewMatrix(fld, nor, noc);
+    for i in [1..nor] do
+        MTX64_InsertVector(mm,m[i], i-1);        
+    od;
+    return mm;
+end);
+
+    
+    
+
+InstallMethod(MTX64_Matrices, [IsMatrix and IsFFECollCollColl],
+        function(m)
+    local  nom, nor, noc, f, fld, mms, j, mm, i;
+    nom := Length(m);
+    if nom = 0 then
+        return [];
+    fi;    
+    nor := Length(m[1]);
+    if nor = 0 then
+        Error("Don't know how many columns each of the 0 rows has");
+    fi;
+    noc := Length(m[1][1]);
+    if noc = 0 then
+        Error("Don't know what field the 0 entries in each row lie in");
+    fi;
+    f := DefaultScalarDomainOfMatrixList(m);
+    fld := MTX64_FiniteField(Size(f));  
+    mms := [];    
+    for j in [1..nom] do
+        mm := MTX64_NewMatrix(fld, nor, noc);
+        for i in [1..nor] do
+            MTX64_InsertVector(mm,m[i], i-1);        
+        od;
+        Add(mms,mm);
+    od;
+    return mms;    
+end);
+
+    
 
 #
 # row is zero based
@@ -316,6 +368,22 @@ InstallOtherMethod(\[\], [IsMTX64Matrix, IsPosInt],
     return MTX64_ExtractVector(m, i-1);
 end);
 
+InstallMethod(MTX64_ExtractMatrix, [IsMTX64Matrix],
+        function(m)
+    local  f, q, gm, len, i;
+    f := FieldOfMTX64Matrix(m);
+    q := MTX64_FieldOrder(f);    
+    gm := [];
+    len := MTX64_Matrix_NumRows(m);
+    for i in [1..len] do
+        gm[i] := MTX64_ExtractVector(m, i-1);
+    od;
+    if q < 256 then
+        ConvertToMatrixRep(gm, q);
+    fi;
+    return gm;
+end);
+
         
         
 
@@ -332,6 +400,16 @@ function(m)
                   , ViewString(f)
                   , ">");
 end);
+
+#
+# DisplayString would be better, but we need DisplayString for GAP matrices first
+#
+InstallMethod( Display, "for a meataxe64 matrix", [IsMTX64Matrix],
+        function(m)
+    Display(MTX64_ExtractMatrix(m));
+end);
+
+        
 
 InstallMethod( ShallowCopy, "for a meataxe matrix", [IsMTX64Matrix], MTX64_ShallowCopyMatrix);
 
@@ -395,7 +473,7 @@ InstallOtherMethod(TransposedMatMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         function(m)
     local t;    
-    t := MTX64_NewMatrix(FieldOfMTX64Matrix(m), MTX64_Matrix_NumRows(m), MTX64_Matrix_NumCols(m));
+    t := MTX64_NewMatrix(FieldOfMTX64Matrix(m), MTX64_Matrix_NumCols(m), MTX64_Matrix_NumRows(m));
     MTX64_SLTranspose(m,t);
     return t;
 end);
@@ -404,14 +482,6 @@ InstallOtherMethod(TransposedMatImmutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         m->MakeImmutable(TransposedMatMutable(m)));
 
-InstallMethod(Display, "for a meataxe64 matrix",
-        [IsMTX64Matrix],
-        function(m)
-    Display(List([1..MTX64_Matrix_NumRows(m)], i->
-            List([1..MTX64_Matrix_NumCols(m)], j -> MTX64_ExtractFieldElement(m[i,j]))));
-    
-end );
-      
 
 #
 # Richard plans to build the copying into the slab level
@@ -467,7 +537,7 @@ InstallMethod(\+, "for meataxe64 matrices", IsIdenticalObj,
         ncols <> MTX64_Matrix_NumCols(m2) then
         Error("matrices not the same size");
     fi;
-    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), ncols, nrows);
+    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), nrows, ncols);
     MTX64_DAdd(nrows, m1,m2,m);
     return m;
 end);
@@ -482,7 +552,7 @@ InstallMethod(\-, "for meataxe64 matrices", IsIdenticalObj,
         ncols <> MTX64_Matrix_NumCols(m2) then
         Error("matrices not the same size");
     fi;
-    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), ncols, nrows);
+    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), nrows, ncols);
     MTX64_DSub(nrows, m1,m2,m);
     return m;
 end);
@@ -493,8 +563,8 @@ InstallMethod(AdditiveInverseMutable, "for meataxe64 matrices",
 
 InstallMethod(ZeroMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
-        m ->  MTX64_NewMatrix(FieldOfMTX64Matrix(m), MTX64_Matrix_NumCols(m),
-                MTX64_Matrix_NumRows(m)));
+        m ->  MTX64_NewMatrix(FieldOfMTX64Matrix(m),
+                MTX64_Matrix_NumRows(m), MTX64_Matrix_NumCols(m)));
 
 
 MTX64_IdentityMat := function(n, field)
@@ -536,6 +606,22 @@ InstallMethod(\<,  "for meataxe64 matrices", IsIdenticalObj,
         Error("No ordering for matrices of different shapes");
     fi;
     return 0 > MTX64_compareMatrices(m1,m2);
+end);
+
+
+BindGlobal("MTX64_Submatrix",
+        function(m, starty, leny, startx, lenx)
+    local  nor, noc, sm;
+    nor := MTX64_Matrix_NumRows(m);
+    noc := MTX64_Matrix_NumCols(m);
+    if startx = 1 and lenx = noc then
+        sm := MTX64_NewMatrix(FieldOfMTX64Matrix(m), leny, noc);
+        MTX64_DCpy(m, starty-1, leny, sm);
+    else
+        sm := MTX64_NewMatrix(FieldOfMTX64Matrix(m), leny, lenx);
+        MTX64_DCut(m, starty-1, leny, startx-1, sm);
+    fi;
+    return sm;
 end);
 
 

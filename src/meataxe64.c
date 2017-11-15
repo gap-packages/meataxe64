@@ -94,7 +94,7 @@ static inline UInt Size_Bag_Matrix(Obj f, UInt noc, UInt nor) {
     return sizeof(Obj) + sizeof(MTX64_Matrix_Header) + Size_Data_Matrix(f,noc,nor) ;    
 }
 
-static inline Obj NEW_MTX64_Matrix(Obj f, UInt noc, UInt nor) {
+static inline Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
     Obj m;
     m = NewBag(T_DATOBJ,Size_Bag_Matrix(f, noc, nor) );
     SET_TYPE_DATOBJ(m, CALL_1ARGS(TYPE_MTX64_Matrix,INTOBJ_INT(DataOfFieldObject(f)->fdef)));
@@ -280,24 +280,26 @@ Obj MTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry)
     return 0;
 }
 
-Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj nrows)
+Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows)
 {
     DSPACE ds;
     Dfmt * sp, *dp;
     SetDSpaceOfMTX64_Matrix(src, &ds);
     sp = DataOfMTX64_Matrix(src);
     dp = DataOfMTX64_Matrix(dst);
+    dp = DPAdv(&ds, INT_INTOBJ(startrow), dp);
     DCpy(&ds, sp, INT_INTOBJ(nrows), dp);
     return 0;
 }
 
-Obj MTX64_DCut(Obj self, Obj m, Obj nrows, Obj startcol, Obj clip ) 
+Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol, Obj clip ) 
 {
     DSPACE ms, cs;
     Dfmt * mp, *cp;
     SetDSpaceOfMTX64_Matrix(m, &ms);
     SetDSpaceOfMTX64_Matrix(clip, &cs);
     mp = DataOfMTX64_Matrix(m);
+    mp = DPAdv(&ms, INT_INTOBJ(startrow), mp);
     cp = DataOfMTX64_Matrix(clip);
     DCut(&ms, INT_INTOBJ(nrows), INT_INTOBJ(startcol),
          mp, &cs, cp);
@@ -397,8 +399,8 @@ Obj MTX64_SLEchelizeDestructive(Obj self, Obj a)
     FELT det;
     Obj field = CALL_1ARGS(FieldOfMTX64Matrix,a);
     Obj m = NEW_MTX64_Matrix(field, rklimit, rklimit);
-    Obj r = NEW_MTX64_Matrix(field, ncols, nrows); // this may be a bit too high
-    Obj c = NEW_MTX64_Matrix(field, rklimit, ncols); // this is a bit too high, as both bounds cannot be achieved at once
+    Obj r = NEW_MTX64_Matrix(field, nrows, ncols); // this may be a bit too high
+    Obj c = NEW_MTX64_Matrix(field, ncols, rklimit); // this is a bit too high, as both bounds cannot be achieved at once
     // Done with garbage collection here 
     uint64_t rank;
     uint64_t *rsp = DataOfBitStringObject(rs),
@@ -482,7 +484,7 @@ Obj MTX64_ShallowCopyMatrix(Obj self, Obj m)
     Obj f = CALL_1ARGS(FieldOfMTX64Matrix,m);
     UInt noc = HeaderOfMTX64_Matrix(m)->noc;
     UInt nor = HeaderOfMTX64_Matrix(m)->nor;
-    Obj copy = NEW_MTX64_Matrix(f, noc, nor);
+    Obj copy = NEW_MTX64_Matrix(f, nor, noc);
     memcpy(DataOfMTX64_Matrix(copy), DataOfMTX64_Matrix(m), Size_Data_Matrix(f,noc,nor));
     return copy;
 }
@@ -752,8 +754,8 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntry, 3, "m,i,j"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntry, 4, "m,i,j,x"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCpy, 3, "src,dst,nrows"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCut, 4, "m,nrows,startcol,clip"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCpy, 4, "src,dst,startrow,nrows"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCut, 5, "m,startrow,nrows,startcol,clip"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DPaste, 4, "clip,nrows,startcol,m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DAdd, 4, "nrows,d1,d2,d"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSub, 4, "nrows,d1,d2,d"),
