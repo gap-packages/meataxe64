@@ -306,13 +306,14 @@ Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol, Obj clip 
     return 0;
 }
 
-Obj MTX64_DPaste(Obj self, Obj clip, Obj nrows, Obj startcol, Obj m)
+Obj MTX64_DPaste(Obj self, Obj clip, Obj startrow, Obj nrows, Obj startcol, Obj m)
 {
     DSPACE ms, cs;
     Dfmt * mp, *cp;
     SetDSpaceOfMTX64_Matrix(m, &ms);
     SetDSpaceOfMTX64_Matrix(clip, &cs);
     mp = DataOfMTX64_Matrix(m);
+    mp = DPAdv(&ms, INT_INTOBJ(startrow), mp);
     cp = DataOfMTX64_Matrix(clip);
     DPaste(&cs, cp, INT_INTOBJ(nrows), INT_INTOBJ(startcol), &ms, mp );
     return 0;
@@ -756,7 +757,7 @@ static StructGVarFunc GVarFuncs [] = {
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCpy, 4, "src,dst,startrow,nrows"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCut, 5, "m,startrow,nrows,startcol,clip"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DPaste, 4, "clip,nrows,startcol,m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DPaste, 5, "clip,startrow,nrows,startcol,m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DAdd, 4, "nrows,d1,d2,d"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSub, 4, "nrows,d1,d2,d"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMad, 4, "nrows,scalar,d1,d2"),
