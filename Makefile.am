@@ -28,6 +28,7 @@ meataxe64_la_SOURCES = \
   src/mtx64/pmul.c \
   src/mtx64/bitstring.c \
   src/mtx64/tabmake.c \
+  src/mtx64/io.c \
   src/mtx64/slab.c
 
 meataxe64_la_CPPFLAGS = -Isrc/mtx64 $(GAP_CPPFLAGS) -DCONFIG_H

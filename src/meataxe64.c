@@ -10,6 +10,7 @@
 #include "mtx64/field.h"
 #include "mtx64/slab.h"
 #include "mtx64/bitstring.h"
+#include "mtx64/io.h"
 
 /* The slab level interface with meataxe 64 works uses mainly
    interfaces defined in mtx64/field.h and mtx64/slab.h.  
@@ -723,6 +724,34 @@ Obj MTX64_ExtractVec8Bit(Obj self, Obj d, Obj rownum)
     return v;
 }
 
+static Obj MTX64_FiniteField;
+
+Obj MTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
+    UInt header[5];
+    Obj fld = CALL_1ARGS(FieldOfMTX64Matrix,mx);
+    UInt nor = HeaderOfMTX64_Matrix(mx)->nor;
+    UInt noc = HeaderOfMTX64_Matrix(mx)->noc;
+    header[0] = 1;
+    header[1] = DataOfFieldObject(fld)->fdef;
+    header[2] = nor;
+    header[3] = noc;
+    EFIL *f = EWHdr((const char *)CHARS_STRING(fname), header);
+    EWData(f, Size_Data_Matrix(fld, noc, nor), DataOfMTX64_Matrix(mx));
+    EWClose(f);
+    return 0;
+}
+
+Obj MTX64_ReadMatrix(Obj self, Obj fname) {
+    UInt header[5];
+    EFIL *f = ERHdr((const char *)CHARS_STRING(fname), header);
+    Obj fld = CALL_1ARGS(MTX64_FiniteField, INTOBJ_INT(header[1]));
+    UInt nor = header[2];
+    UInt noc = header[3];
+    Obj mx = NEW_MTX64_Matrix(fld, nor, noc);
+    ERData(f, Size_Data_Matrix(fld, noc, nor), DataOfMTX64_Matrix(mx));
+    ERClose(f);
+    return mx;
+}
 
 typedef Obj (* GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params) \
@@ -787,6 +816,10 @@ static StructGVarFunc GVarFuncs [] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Make8BitConversion, 1, "f"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVec8Bit, 3, "d, v, row"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVec8Bit, 2, "d, row"),
+    
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_WriteMatrix, 2, "m, fn"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ReadMatrix, 1, "fn"),
+    
         
     { 0 } /* Finish with an empty entry */
 
@@ -810,6 +843,7 @@ static Int InitKernel(StructInitInfo *module) {
                         &MTX64_GetFELTfromFFETable);
   ImportFuncFromLibrary("MTX64_Get8BitImportTable",&MTX64_Get8BitImportTable);
   ImportFuncFromLibrary("MTX64_Get8BitExportTable",&MTX64_Get8BitExportTable);
+  ImportFuncFromLibrary("MTX64_FiniteField",&MTX64_FiniteField);
 
   /* return success */
   return 0;
