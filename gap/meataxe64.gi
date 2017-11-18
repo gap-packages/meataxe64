@@ -33,6 +33,7 @@ BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
 end, rec(flush := true)));
 
 BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
+BIND_GLOBAL("FieldOfMTX64FELT", e -> FamilyObj(e)!.field);
 
 #
 # Fields
@@ -40,8 +41,13 @@ BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
 
 InstallMethod( MTX64_FiniteField, "for a size",
                [ IsPosInt ],
-        MemoizePosIntFunction(MTX64_CreateField,
-                rec(flush := true)) );
+        MemoizePosIntFunction(function(q)
+    if  q >= 2^64 or not IsPrimePowerInt(q) then
+        Error("MTX64_FiniteField: field order must be a prime power < 2^64");
+    fi;
+    return MTX64_CREATE_FIELD(q);
+end,
+  rec(flush := true)) );
 
 InstallMethod( MTX64_FiniteField, "for a characteristic, and a degree",
                [ IsPosInt, IsPosInt ],
