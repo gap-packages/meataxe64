@@ -12,14 +12,14 @@
  
 int main(int argc,  char **argv)
 {
-    uint64 fdef,dim,j,col;
+    uint64_t fdef,dim,j,col;
     long g,vec,k,rank;
     int ngens,pfxlen,dig;
     EFIL *e;
     FIELD * f;
     FELT fel;
     DSPACE ds;
-    uint64 hdr[5];
+    uint64_t hdr[5];
     Dfmt ** m;
     char fn[200];
     int * piv;

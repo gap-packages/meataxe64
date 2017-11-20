@@ -1,8 +1,5 @@
-/*    Meataxe-64         fieldreg.c         */
-/*    ==========         ==========         */
-/*   regression program for the field module*/
-
-/*    R. A. Parker      19.05.13        */
+// Copyright (C) Jon Thackray   2017
+// Meataxe64 Nikolaus version
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,9 +15,9 @@
 #define QUICKFLAG 1
 
 int errors;
-uint64 fdef;
+uint64_t fdef;
 
-uint64 fields[] = {
+uint64_t fields[] = {
   2,
   3,
   4,
@@ -229,7 +226,7 @@ uint64 fields[] = {
 
 unsigned int total_fields = sizeof(fields)/sizeof(fdef);
 
-static void ckint64(int e, uint64 was, uint64 shouldbe)
+static void ckint64(int e, uint64_t was, uint64_t shouldbe)
 {
     if(was==shouldbe) return;
     printf("Error %d, field %lu, was %lx, should be %lx\n",
@@ -250,9 +247,9 @@ int main(int argc, const char *const argv[])
     int res;
     FELT x1,x2,x3,x4,x5;
     FIELD *field;
-    uint64 fdefsing;
+    uint64_t fdefsing;
     int quick_flag;
-    uint64 k;
+    uint64_t k;
 
     fdefsing=0;
     if (argc > 2) {
@@ -373,7 +370,7 @@ int main(int argc, const char *const argv[])
           DSPACE ds;
           FELT a, b, c;
           Dfmt *d1, *d2, *d3;
-          uint64 bytes;
+          uint64_t bytes;
           if( (quick_flag==1) && 
               ( i!=1) &&
               ( i!=2) &&
@@ -495,7 +492,7 @@ int main(int argc, const char *const argv[])
             /* Testing first non zero element at column j
              * j == i means no element at all, ie all zero
              */
-            uint64 l;
+            uint64_t l;
             memset(d1, 0, bytes);
             if (j < i) {
               unsigned int k;
@@ -630,13 +627,13 @@ int main(int argc, const char *const argv[])
                 b = DUnpak(&ds, l, d1);
                 ckint64(100000, b, a % fdef);
                 if (a % fdef != b) {
-                  printf ("Failure row 0, column = %d, matrix = 0x%lx\n", l, *(uint64 *)d1);
+                  printf ("Failure row 0, column = %d, matrix = 0x%lx\n", l, *(uint64_t *)d1);
                 }
                 assert(a % fdef == b);
                 b = DUnpak(&ds, l, src_row);
                 ckint64(100000, b, (a+1) % fdef);
                 if ((a+1) % fdef != b) {
-                  printf ("Failure row 1, column = %d, matrix = 0x%lx\n", l, *(uint64 *)d1);
+                  printf ("Failure row 1, column = %d, matrix = 0x%lx\n", l, *(uint64_t *)d1);
                 }
                 assert((a+1) % fdef == b);
               }
@@ -645,13 +642,13 @@ int main(int argc, const char *const argv[])
                 b = DUnpak(&ds, l+j, d1);
                 ckint64(100000, b, a % fdef);
                 if (a % fdef != b) {
-                  printf ("Failure row 0, column = %d, matrix = 0x%lx\n", l+j, *(uint64 *)d1);
+                  printf ("Failure row 0, column = %d, matrix = 0x%lx\n", l+j, *(uint64_t *)d1);
                 }
                 assert(a % fdef == b);
                 b = DUnpak(&ds, l+j, src_row);
                 ckint64(100000, b, (a+1) % fdef);
                 if ((a+1) % fdef != b) {
-                  printf ("Failure row 1, column = %d, matrix = 0x%lx\n", l+j, *(uint64 *)d1);
+                  printf ("Failure row 1, column = %d, matrix = 0x%lx\n", l+j, *(uint64_t *)d1);
                 }
                 assert((a+1) % fdef == b);
               }
@@ -660,13 +657,13 @@ int main(int argc, const char *const argv[])
                 b = DUnpak(&ds, l, d1);
                 ckint64(100000, b, a % fdef);
                 if (a % fdef != b) {
-                  printf ("Failure column = %d, matrix = 0x%lx\n", l, *(uint64 *)d1);
+                  printf ("Failure column = %d, matrix = 0x%lx\n", l, *(uint64_t *)d1);
                 }
                 assert(a % fdef == b);
                 b = DUnpak(&ds, l, src_row);
                 ckint64(100000, b, (a+1) % fdef);
                 if ((a+1) % fdef != b) {
-                  printf ("Failure column = %d, matrix = 0x%lx\n", l, *(uint64 *)d1);
+                  printf ("Failure column = %d, matrix = 0x%lx\n", l, *(uint64_t *)d1);
                 }
                 assert((a+1) % fdef == b);
               }

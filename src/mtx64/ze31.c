@@ -13,8 +13,8 @@
 int main(int argc,  char **argv)
 {
     EFIL *ef1,*ef2;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor1,noc1,nor2,noc2;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor1,noc1,nor2,noc2;
     FIELD * f;
     int i1,i2,i3,j1,j2,j3,ix;
     DSPACE ds1,ds2;

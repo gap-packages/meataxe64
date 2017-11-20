@@ -14,11 +14,11 @@ int main(int argc,  char **argv)
 {
     EFIL *e1,*e2;
     FIELD * f;
-    uint64 hdr[5];
-    uint64 fdef,nor,noc;    // as for input matrix
+    uint64_t hdr[5];
+    uint64_t fdef,nor,noc;    // as for input matrix
     DSPACE ds1,ds2;
     Dfmt *m1,*v2,*pt;
-    uint64 i,j;
+    uint64_t i,j;
     FELT fel;
     LogCmd(argc,argv);
 	/******  First check the number of input arguments  */

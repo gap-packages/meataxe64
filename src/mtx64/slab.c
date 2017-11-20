@@ -32,8 +32,45 @@ void FieldSet (uint64_t fdef, FIELD * f)
     (void)res;
 }
 
+uint64_t SLSize (FIELD * f, uint64_t nor, uint64_t noc)
+{
+    DSPACE ds;
+    DSSet(f,noc,&ds);
+    return ds.nob*nor;
+}
+uint64_t SLSizeM(FIELD * f, uint64_t nor, uint64_t noc)
+{
+    DSPACE ds;
+    uint64_t rank;
+    rank=nor;
+    if(rank>noc) rank=noc;
+    DSSet(f,rank,&ds);
+    return ds.nob*rank;
+}
+
+// the next two are correct but far too pessimistic
+
+uint64_t SLSizeC(FIELD * f, uint64_t nor, uint64_t noc)
+{
+    DSPACE ds;
+    uint64_t rank;
+    rank=nor;
+    if(rank>noc) rank=noc;
+    DSSet(f,rank,&ds);
+// columns at most rank, rows at most nor
+    return ds.nob*nor;
+}
+
+uint64_t SLSizeR(FIELD * f, uint64_t nor, uint64_t noc)
+{
+    DSPACE ds;
+    DSSet(f,noc,&ds);
+// remnant no bigger than the original matrix
+    return ds.nob*nor;
+}
+
 void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
-          Dfmt * c, uint64 nora, uint64 noca, uint64 nocb)
+          Dfmt * c, uint64_t nora, uint64_t noca, uint64_t nocb)
 {
     FELT e;
     const Dfmt *da,*db;
@@ -72,7 +109,7 @@ void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
 }
 
 void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
-           uint64 naru, uint64 nacu)
+           uint64_t naru, uint64_t nacu)
 {
 
 // a is matrix from, b is matrix to:
@@ -172,7 +209,7 @@ void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
         uint16_t x;
         uint64_t noba,nobb;
 
-        f8=(uint8 *)f;
+        f8=(uint8_t *)f;
         tra16=(uint16_t *) (f8+f->Ttra);
         noba=(nac+1)/2;
         nobb=(nar+1)/2;
@@ -229,7 +266,7 @@ void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
         uint32_t x;
         uint64_t noba,nobb;
 
-        f8=(uint8 *)f;
+        f8=(uint8_t *)f;
         tra32=(uint32_t *) (f8+f->Ttra);
         noba=(nac+2)/3;
         nobb=(nar+2)/3;
@@ -299,7 +336,7 @@ void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
         uint32_t x;
         uint64_t noba,nobb;
 
-        f8=(uint8 *)f;
+        f8=(uint8_t *)f;
         tra32=(uint32_t *) (f8+f->Ttra);
         noba=(nac+3)/4;
         nobb=(nar+3)/4;
@@ -378,7 +415,7 @@ void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
         uint64_t x;
         uint64_t noba,nobb;
 
-        f8=(uint8 *)f;
+        f8=(uint8_t *)f;
         tra64=(uint64_t *) (f8+f->Ttra);
         noba=(nac+4)/5;
         nobb=(nar+4)/5;
@@ -467,7 +504,7 @@ void SLTra(const FIELD *f, const Dfmt *am, Dfmt *bm,
         uint64_t x;
         uint64_t noba,nobb;
 
-        f8=(uint8 *)f;
+        f8=(uint8_t *)f;
         tra64=(uint64_t *) (f8+f->Ttra);
         noba=(nac+7)/8;
         nobb=(nar+7)/8;
@@ -586,8 +623,8 @@ uint64_t RCEchS(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
              FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor, int lev)
 {
     int * piv;
-    uint64 fel;
-    uint64 nck,rank,i,j,z,col;
+    uint64_t fel;
+    uint64_t nck,rank,i,j,z,col;
     size_t sbsr, sbsc;
     FELT deter;
     DSPACE dsk,dsm,dsr;

@@ -13,10 +13,10 @@
 int main(int argc,  char **argv)
 {
     EFIL *e1,*e2;
-    uint64 * inv;
-    uint64 hdr[5];
-    uint64 nor;
-    uint64 i,k;
+    uint64_t * inv;
+    uint64_t hdr[5];
+    uint64_t nor;
+    uint64_t i,k;
     LogCmd(argc,argv);
 /******  First check the number of input arguments  */
     if (argc != 3)
@@ -34,13 +34,13 @@ int main(int argc,  char **argv)
 
     for(i=0;i<nor;i++)
     {
-        ERData(e1,8,(uint8 *) &k);
+        ERData(e1,8,(uint8_t *) &k);
         inv[k]=i;
     }
     ERClose(e1);
 
     e2 = EWHdr(argv[2],hdr);
-    EWData(e2,8*nor,(uint8 *)inv);
+    EWData(e2,8*nor,(uint8_t *)inv);
     EWClose(e2);
     free(inv);
     return 0;

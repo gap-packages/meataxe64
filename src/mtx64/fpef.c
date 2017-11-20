@@ -1,8 +1,6 @@
-/*
-              fpef.c     Disk chopping echelon form
-              ======     R. A. Parker   1.6.2017
-     Does not yet chop on disk
- */
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// fpef.c   fProduceNREF
 
 #include <stdint.h>
 #include <stdlib.h>

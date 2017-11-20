@@ -9,12 +9,12 @@
 #include "field.h"
 #include "io.h"
 
-uint64 pseed;
-uint64 pseed1;
-uint64 pseed2;
-static uint64 prand(void)
+uint64_t pseed;
+uint64_t pseed1;
+uint64_t pseed2;
+static uint64_t prand(void)
 {
-    uint64 x;
+    uint64_t x;
     x=1;
     x=x<<63;
     if((x&pseed)!=0) pseed=(pseed<<1)^0x3b4f0bf89;
@@ -26,14 +26,14 @@ static uint64 prand(void)
  
 int main(int argc,  char **argv)
 {
-    uint64 fdef,nor,noc;
-    uint64 hdr[5];
+    uint64_t fdef,nor,noc;
+    uint64_t hdr[5];
     EFIL * e;
     FIELD * f;
     DSPACE ds;
     Dfmt * v1;
     FELT elt;
-    uint64 i,j;
+    uint64_t i,j;
     LogCmd(argc,argv);
     if(  (argc<5) || (argc>6)  )
     {

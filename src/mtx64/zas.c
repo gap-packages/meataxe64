@@ -16,15 +16,15 @@ int main(int argc,  char **argv)
     char fn[200];    //  work area for making filenames
     char *pt;
     int lfn;
-    uint64 hdr[5];
-    uint64 fdef,nor,noc,nor1,noc1;
+    uint64_t hdr[5];
+    uint64_t fdef,nor,noc,nor1,noc1;
     FIELD * f;
     DSPACE ds,dsv;
     Dfmt *v1,*v2;
-    uint64 r1,r2,c1;
+    uint64_t r1,r2,c1;
     EFIL *e2[100];
     EFIL *e;
-    uint64 cch[100],cac[100]; 
+    uint64_t cch[100],cac[100]; 
 
     LogCmd(argc,argv);
     if (argc != 3)

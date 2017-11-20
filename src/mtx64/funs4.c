@@ -1,7 +1,6 @@
-/*
-              funs4.c     Tensor and Pieces of tensor powers
-              =======     R. A. Parker   27.9.2017
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// funs4.c   functions for  Tensor and Pieces of tensor powers
 
 //    Contents
 
@@ -29,9 +28,9 @@ void fTensor(const char *mt1, int s1, const char *mt2, int s2,
     EFIL *ef1,*ef2,*ef3;
     FIELD * f;
     FELT e1;
-    uint64 hdr1[5],hdr2[5],hdr3[5];
-    uint64 fdef,nor1,noc1,nor2,noc2,nor3,noc3;
-    uint64 i1,i2,j1;
+    uint64_t hdr1[5],hdr2[5],hdr3[5];
+    uint64_t fdef,nor1,noc1,nor2,noc2,nor3,noc3;
+    uint64_t i1,i2,j1;
     DSPACE ds1,ds2,ds3;
     Dfmt *v1,*m2,*v3,*v4;
     long mem,wkr,thiswkr;
@@ -203,9 +202,9 @@ void fTensor(const char *mt1, int s1, const char *mt2, int s2,
 void fExteriorSquare(const char *mt1, int s1, const char *mt2, int s2)
 {
     EFIL *ef1,*ef2;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor1,noc1,nor2,noc2;
-    uint64 p,q,i,col;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor1,noc1,nor2,noc2;
+    uint64_t p,q,i,col;
     FELT e11,e12;
     FIELD * f;
     DSPACE ds1,ds2,vs;
@@ -271,8 +270,8 @@ void fExteriorSquare(const char *mt1, int s1, const char *mt2, int s2)
 void fExteriorCube(const char *mt1, int s1, const char *mt2, int s2)
 {
     EFIL *ef1,*ef2;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor1,noc1,nor2,noc2;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor1,noc1,nor2,noc2;
     FIELD * f;
     int i1,i2,i3,j1,j2,ix;
     DSPACE ds1,ds2,ds3;
@@ -379,8 +378,8 @@ void fExteriorCube(const char *mt1, int s1, const char *mt2, int s2)
 void fSymmetricSquare(const char *mt1, int s1, const char *mt2, int s2)
 {
     EFIL *ef1,*ef2;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor1,noc1,nor2,noc2;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor1,noc1,nor2,noc2;
     FIELD * f;
     int i1,i2,j1,j2,ix;
     DSPACE ds1,ds2,ds3;

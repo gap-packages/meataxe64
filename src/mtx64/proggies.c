@@ -255,14 +255,14 @@ void M3Dest(M3 a)
 void pgadd(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ, MOJ CMOJ)
 {
     FIELD * f;
-    uint64 *a,*b,*c;
+    uint64_t *a,*b,*c;
     Dfmt *da, *db, *dc;
-    uint64 nor,noc;
+    uint64_t nor,noc;
     DSPACE ds;
 
     f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64 *) TFPointer(AMOJ);
-    b=(uint64 *) TFPointer(BMOJ);
+    a=(uint64_t *) TFPointer(AMOJ);
+    b=(uint64_t *) TFPointer(BMOJ);
     if( (a[0]!=b[0]) || (a[1]!=b[1]) )
     {
         printf("Add with incompatible matrices %lu %lu + %lu %lu\n",
@@ -292,14 +292,14 @@ void genmul(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ, MOJ CMOJ)
 {
 
     FIELD * f;
-    uint64 *a,*b,*c;
+    uint64_t *a,*b,*c;
     Dfmt *da, *db, *dc;
-    uint64 nor1,noc1,noc2;
+    uint64_t nor1,noc1,noc2;
     DSPACE ds;
 
     f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64 *) TFPointer(AMOJ);
-    b=(uint64 *) TFPointer(BMOJ);
+    a=(uint64_t *) TFPointer(AMOJ);
+    b=(uint64_t *) TFPointer(BMOJ);
     if(a[1]!=b[0])
     {
         printf("Mul with incompatible matrices %lu %lu x %lu %lu\n",
@@ -333,14 +333,14 @@ printf(" %lu x %lu  X  %lu x %lu",nor1,noc1,noc1,noc2);
 void genadd(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
 {
     FIELD * f;
-    uint64 *a,*c;
+    uint64_t *a,*c;
     Dfmt *da, *dc;
-    uint64 nor,noc;
+    uint64_t nor,noc;
     DSPACE ds;
 
     f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64 *) TFPointer(AMOJ);
-    c=(uint64 *) TFPointer(CMOJ);
+    a=(uint64_t *) TFPointer(AMOJ);
+    c=(uint64_t *) TFPointer(CMOJ);
     if( (a[0]!=c[0]) || (a[1]!=c[1]) )
     {
         printf("Add with incompatible matrices %lu %lu + %lu %lu\n",
@@ -363,12 +363,12 @@ printf(" add %lu x %lu\n",nor,noc);
 void gencpy(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
 {
     FIELD * f;
-    uint64 *a,*c;
-    uint64 nor,noc;
+    uint64_t *a,*c;
+    uint64_t nor,noc;
     DSPACE ds;
 
     f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64 *) TFPointer(AMOJ);
+    a=(uint64_t *) TFPointer(AMOJ);
     nor=a[0];
     noc=a[1];
 #ifdef DEBUG
@@ -405,15 +405,15 @@ static void pgcex(MOJ FMOJ, MOJ BSMOJ, MOJ MATMOJ,
                   MOJ SELMOJ, MOJ NONSELMOJ)
 {
     FIELD *f;
-    uint64 *sel, *nonsel;
-    const uint64 *bs, *mat;
+    uint64_t *sel, *nonsel;
+    const uint64_t *bs, *mat;
     DSPACE ds_mat, ds_sel, ds_nonsel;
-    uint64 nor, noc;
+    uint64_t nor, noc;
     Dfmt *d_mat, *d_sel, *d_nonsel;
  
     f = (FIELD *)TFPointer(FMOJ);
-    bs = (uint64 *)TFPointer(BSMOJ);
-    mat = (uint64 *)TFPointer(MATMOJ);
+    bs = (uint64_t *)TFPointer(BSMOJ);
+    mat = (uint64_t *)TFPointer(MATMOJ);
     nor = mat[0];
     noc = mat[1];
     if(noc!=bs[0])
@@ -446,16 +446,16 @@ static void pgrex(MOJ FMOJ, MOJ BSMOJ, MOJ MATMOJ,
                   MOJ SELMOJ, MOJ NONSELMOJ)
 {
     FIELD *f;
-    uint64 *sel, *nonsel;
-    const uint64 *bs, *mat;
+    uint64_t *sel, *nonsel;
+    const uint64_t *bs, *mat;
     DSPACE ds_mat;
-    uint64 nor, noc, nor1, nor2, r;
+    uint64_t nor, noc, nor1, nor2, r;
     Dfmt *d_mat, *d_sel, *d_nonsel;
     int set;
 
     f = (FIELD *)TFPointer(FMOJ);
-    bs = (uint64 *)TFPointer(BSMOJ);
-    mat = (uint64 *)TFPointer(MATMOJ);
+    bs = (uint64_t *)TFPointer(BSMOJ);
+    mat = (uint64_t *)TFPointer(MATMOJ);
     nor = mat[0];
     noc = mat[1];
     DSSet(f, noc, &ds_mat);
@@ -506,17 +506,17 @@ static void pgrrf(MOJ FMOJ, MOJ BSMOJ, MOJ SELMOJ, MOJ UMOJ,
                   MOJ MATMOJ)
 {
     FIELD *f;
-    const uint64  *bs, *sel, *u;
-    uint64 *mat;
+    const uint64_t  *bs, *sel, *u;
+    uint64_t *mat;
     DSPACE ds_mat;
-    uint64 nor, noc, nor1, nor2, r;
+    uint64_t nor, noc, nor1, nor2, r;
     Dfmt *d_mat, *d_sel, *d_u;
     int set;
 
     f = (FIELD *)TFPointer(FMOJ);
-    bs = (uint64 *)TFPointer(BSMOJ);
-    sel = (uint64 *)TFPointer(SELMOJ);
-    u = (uint64 *)TFPointer(UMOJ);
+    bs = (uint64_t *)TFPointer(BSMOJ);
+    sel = (uint64_t *)TFPointer(SELMOJ);
+    u = (uint64_t *)TFPointer(UMOJ);
     nor1 = sel[0];
     nor2 = u[0];
     nor = nor1 + nor2;
@@ -566,14 +566,14 @@ printf("RRF %lu + %lu -> %lu X %lu\n",nor1,nor2,nor,noc);
 /* Pivot combine P1,P2->P3,  riffle RF */
 static void pgpvc(MOJ P1, MOJ P2, MOJ P3, MOJ RF)
 {
-    const uint64 *p1, *p2;
-    uint64 *p3, *rf;
-    uint64 nor, noc1, noc2, noc3;
-    uint64 p3siz, rfsiz;
+    const uint64_t *p1, *p2;
+    uint64_t *p3, *rf;
+    uint64_t nor, noc1, noc2, noc3;
+    uint64_t p3siz, rfsiz;
 
   /* Get pointers to the inputs */
-    p1 = (uint64 *)TFPointer(P1);
-    p2 = (uint64 *)TFPointer(P2);
+    p1 = (uint64_t *)TFPointer(P1);
+    p2 = (uint64_t *)TFPointer(P2);
   /* Compute the parameters */
     nor = p1[0]; /* Total bits in p1 */
     noc1 = p1[1]; /* Bits set in p1 */
@@ -588,8 +588,8 @@ static void pgpvc(MOJ P1, MOJ P2, MOJ P3, MOJ RF)
 printf("PVC %lu  %lu + %lu -> %lu\n",nor,noc1,noc2,noc3);
 #endif
   /* Compute sizes */
-    p3siz = (sizeof(uint64)) * (2 + (nor + 63) / 64);
-    rfsiz = (sizeof(uint64)) * (2 + (noc3 + 63) / 64);
+    p3siz = (sizeof(uint64_t)) * (2 + (nor + 63) / 64);
+    rfsiz = (sizeof(uint64_t)) * (2 + (noc3 + 63) / 64);
   /* Allocate p3 and rf */
     p3 = TFAllocate(P3, p3siz);
     rf = TFAllocate(RF, rfsiz);
@@ -602,13 +602,13 @@ printf("PVC %lu  %lu + %lu -> %lu\n",nor,noc1,noc2,noc3);
 /* Pivot combine P2->P3,  riffle RF with no P1 start */
 static void pgpc0(MOJ P2, MOJ P3, MOJ RF)
 {
-    const uint64 *p2;
-    uint64 *p3, *rf;
-    uint64 nor, noc;
-    uint64 p3siz, rfsiz;
+    const uint64_t *p2;
+    uint64_t *p3, *rf;
+    uint64_t nor, noc;
+    uint64_t p3siz, rfsiz;
 
   /* Get pointers to the input */
-    p2 = (uint64 *)TFPointer(P2);
+    p2 = (uint64_t *)TFPointer(P2);
   /* Compute the parameters */
     nor = p2[0]; /* Total bits in p1=p2 */
     noc = p2[1]; /* Bits set in p2 */
@@ -616,8 +616,8 @@ static void pgpc0(MOJ P2, MOJ P3, MOJ RF)
 printf("PC0 %lu  %lu\n",nor,noc);
 #endif
   /* Compute sizes */
-    p3siz = (sizeof(uint64)) * (2 + (nor + 63) / 64);
-    rfsiz = (sizeof(uint64)) * (2 + (noc + 63) / 64);
+    p3siz = (sizeof(uint64_t)) * (2 + (nor + 63) / 64);
+    rfsiz = (sizeof(uint64_t)) * (2 + (noc + 63) / 64);
   /* Allocate p3 and rf */
     p3 = TFAllocate(P3, p3siz);
     rf = TFAllocate(RF, rfsiz);
@@ -633,35 +633,34 @@ static void pgech(MOJ FMOJ, MOJ AMOJ, MOJ RSMOJ, MOJ CSMOJ,
                    MOJ MMOJ, MOJ CMOJ, MOJ RMOJ)
 {
     FIELD *f;
-    uint64 nor,noc,rank;
-    uint64 *ah,*mh,*ch,*rh, *rsp,*csp;
+    uint64_t nor,noc,rank;
+    uint64_t *ah,*mh,*ch,*rh, *rsp,*csp;
     Dfmt *am,*mm,*cm,*rm;
-    DSPACE dsa;
     size_t z;
     uint64_t det;
-
+    DSPACE ds;
     f  = (FIELD *) TFPointer(FMOJ);
     am = (Dfmt *)  TFPointer(AMOJ);
-    ah=(uint64 *) am;
+    ah=(uint64_t *) am;
     nor=ah[0];
     noc=ah[1];
-    DSSet(f,noc,&dsa);
     z=16+8*((nor+63)/64);
     rsp=TFAllocate(RSMOJ,z);
     z=16+8*((noc+63)/64);
     csp=TFAllocate(CSMOJ,z);
-    mm=TFAllocate(MMOJ,16+nor*dsa.nob);   // don't need all this
-    cm=TFAllocate(CMOJ,16+nor*dsa.nob);   // nor all this either
-    rm=TFAllocate(RMOJ,16+nor*dsa.nob);
-    
-    rank=SLEch(&dsa,am+16,rsp,csp,&det,mm+16,cm+16,rm+16,nor);
+    mm=TFAllocate(MMOJ,16+SLSizeM(f,nor,noc));
+    cm=TFAllocate(CMOJ,16+SLSizeC(f,nor,noc));
+    rm=TFAllocate(RMOJ,16+SLSizeR(f,nor,noc));
+    DSSet(f,noc,&ds);
+// determinant discarded at the moment
+    rank=SLEch(&ds,am+16,rsp,csp,&det,mm+16,cm+16,rm+16,nor);
 #ifdef DEBUG
 printf("ECH %lu x %lu rank %lu\n",nor,noc,rank);
 #endif
 
-    mh=(uint64 *) mm;
-    ch=(uint64 *) cm;
-    rh=(uint64 *) rm;
+    mh=(uint64_t *) mm;
+    ch=(uint64_t *) cm;
+    rh=(uint64_t *) rm;
     mh[0]=rank;
     mh[1]=rank;
     ch[0]=nor-rank;

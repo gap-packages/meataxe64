@@ -1,7 +1,6 @@
-/*    Meataxe-64    conex.c Conway Polynomial Exceptions     */
-/*    ==========    =======     */
-
-/*    R. A. Parker 20.8.2016    */
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// conex.c Conway Polynomial Exceptions
 
 #include <stdint.h>
 

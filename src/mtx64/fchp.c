@@ -1,7 +1,6 @@
-/*
-         fchp.c  -   meataxe64 Level III function - chop
-         ======      J. G. Thackray 25.08.2016
-*/
+// Copyright (C) Jon Thackray   2017
+// Meataxe64 Nikolaus version
+// fchp.c  chop matrix into parts
 
 #include <stdio.h>
 #include <string.h>
@@ -13,14 +12,14 @@
 
 char ***fchp(const char *fname, const char *tmp, unsigned int rchops, unsigned int cchops)
 {
-  uint64 hdr1[5], hdr2[5];
+  uint64_t hdr1[5], hdr2[5];
   FIELD *f;
   EFIL *e1;
   EFIL **e2;
   DSPACE ds1,ds2;
-  uint64 nor, noc, fdef, sub_nor, sub_noc;
-  uint64 *rch, *cch;
-  uint64 i, j;
+  uint64_t nor, noc, fdef, sub_nor, sub_noc;
+  uint64_t *rch, *cch;
+  uint64_t i, j;
   unsigned int k;
   Dfmt *v1, *v2;
   char ***tmpnames;
@@ -78,7 +77,7 @@ char ***fchp(const char *fname, const char *tmp, unsigned int rchops, unsigned i
       e2[k] = EWHdr(tmpnames[i][k], hdr2);
     }
     for (j = 0; j < rch[i]; j++) { /* Loop over rows within output file */
-      uint64 start_col = 0;
+      uint64_t start_col = 0;
       ERData(e1, ds1.nob, v1); /* Read an inout row */
       for (k = 0; k < cchops; k++) { /* Loop over file columns */
         DSSet(f, cch[k], &ds2);

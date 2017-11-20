@@ -1,8 +1,6 @@
-/*    Meataxe-64         conreg.c           */
-/*    ==========         ========           */
-/*   Test the Conway Polynomial computation */
-
-/*    R. A. Parker      4.05.13             */
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// conreg.c Test the Conway Polynomial computation
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,14 +9,14 @@
 #include "field.h"
 
 int errors;
-uint64 fdef;
+uint64_t fdef;
 
 int main(int argc, char ** argv)
 {
     FILE * f;
     int p,deg,i,j,res,junk;
     FIELD *field;
-    uint64 prim,conp,k;
+    uint64_t prim,conp,k;
     int pol[70];
     f = fopen(argv[1],"rb");
     if(f==NULL)

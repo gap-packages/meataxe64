@@ -12,13 +12,13 @@
 int hadcr;
 FIELD * f;
 FELT dig[11];
-uint64 fdef;
+uint64_t fdef;
  
     /******  subroutine to get an integer like FORTRAN does  */
-uint64 getin(uint64 a)
+uint64_t getin(uint64_t a)
 {
     int c;
-    uint32 i,j;
+    uint32_t i,j;
     j=0;
  
     if(hadcr == 1) return j;
@@ -38,7 +38,7 @@ uint64 getin(uint64 a)
 }
 
     /****** get single character as a field element  */
-uint64 getaz(void)
+uint64_t getaz(void)
 {
     int c;
     if(hadcr == 1) return 0;
@@ -97,13 +97,13 @@ static void nextline()
 int main(int argc,  char **argv)
 {
     EFIL * e;
-    uint64 hdr[5];
-    uint64 nor,noc,mode;
+    uint64_t hdr[5];
+    uint64_t nor,noc,mode;
     int res;
     DSPACE ds;
     FELT fel;
 
-    uint64 i,j,k;
+    uint64_t i,j,k;
     Dfmt * v1;
     LogCmd(argc,argv);
     res=0;
@@ -134,7 +134,7 @@ int main(int argc,  char **argv)
         {
             res+=scanf("%lu",&k);
             k--;
-            EWData(e,8,(uint8 *) &k);
+            EWData(e,8,(uint8_t *) &k);
         }
         EWClose(e);
         return 0;

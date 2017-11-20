@@ -69,11 +69,11 @@ static void bcsstart(EFIL * e)
 
 /* update the hash for bk32 32-byte chunks at e->buck64  */
 
-static void bcshash(EFIL * e, uint64 * bk, uint64 bk32)
+static void bcshash(EFIL * e, uint64_t * bk, uint64_t bk32)
 {
-    uint64 X1,X2,X3,X4,i;
-    uint64 * d;
-    uint64 P1,P2,P3,P4,Q1,Q2,Q3,Q4;
+    uint64_t X1,X2,X3,X4,i;
+    uint64_t * d;
+    uint64_t P1,P2,P3,P4,Q1,Q2,Q3,Q4;
     d=bk;
     P1=e->P1;
     P2=e->P2;
@@ -124,23 +124,23 @@ static void bcshash(EFIL * e, uint64 * bk, uint64 bk32)
     e->Q4=Q4;
 }
 
-static uint64 hash1(EFIL * e)
+static uint64_t hash1(EFIL * e)
 {
     return 5*e->P1+11*e->P3+19*e->Q2+29*e->Q4;
 }
 
-static uint64 hash2(EFIL * e)
+static uint64_t hash2(EFIL * e)
 {
     return 7*e->P2+13*e->P4+17*e->Q1+23*e->Q3;
 }
 
-static uint64 getbytes(EFIL * e, uint8 * p, size_t len)
+static uint64_t getbytes(EFIL * e, uint8_t * p, size_t len)
 {
     int r,bt;
     if(e->nex==64)
     {
         r=fread(e->bk,1,64,e->f);
-        bcshash(e,(uint64 *)e->bk,2);
+        bcshash(e,(uint64_t *)e->bk,2);
         (void) r;
         if(e->bk[0]==10) e->nex=1;
              else        e->nex=2;
@@ -166,10 +166,10 @@ static uint64 getbytes(EFIL * e, uint8 * p, size_t len)
     return 1;
 }
 
-static size_t putbytes(EFIL * e, const uint8 * p, size_t bytes)
+static size_t putbytes(EFIL * e, const uint8_t * p, size_t bytes)
 {
     int i,zct,r,bt;
-    uint8 t[64];
+    uint8_t t[64];
     if(e->bk[0]==10)
     {
         if(e->nex<63)
@@ -185,7 +185,7 @@ static size_t putbytes(EFIL * e, const uint8 * p, size_t bytes)
         for(i=1;i<64;i++) if(e->bk[i]==0) zct++;
         if(zct<=32)
         {
-            bcshash(e,(uint64 *)e->bk,2);
+            bcshash(e,(uint64_t *)e->bk,2);
             if(e->null!=1) r=fwrite(e->bk,1,64,e->f);
             e->bk[0]=10;
             e->nex=1;
@@ -224,7 +224,7 @@ static size_t putbytes(EFIL * e, const uint8 * p, size_t bytes)
         e->bk[e->nex]=0;
         return 1;
     }
-    bcshash(e,(uint64 *)e->bk,2);
+    bcshash(e,(uint64_t *)e->bk,2);
     if(e->null!=1) r=fwrite(e->bk,1,64,e->f);
     (void) r;
     e->bk[0]=10;
@@ -243,13 +243,13 @@ char * fnamst(const char * fname)
     return fn;
 }
 
-EFIL * ERHdr(const char * fname, uint64 * header)
+EFIL * ERHdr(const char * fname, uint64_t * header)
 {
 
     EFIL *e;
     FILE * f;
-    uint64 blk[8];
-    uint64 sav6,sav7;
+    uint64_t blk[8];
+    uint64_t sav6,sav7;
     int r,i;
     f = fopen(fname,"rb");
     if(f == NULL)
@@ -284,11 +284,11 @@ EFIL * ERHdr(const char * fname, uint64 * header)
 }
 
 
-void EPeek(const char * fname, uint64 * header)
+void EPeek(const char * fname, uint64_t * header)
 {
     EFIL *e;
-    uint64 blk[8];
-    uint64 sav6,sav7;
+    uint64_t blk[8];
+    uint64_t sav6,sav7;
     int r,i;
     FILE * f;
     f = fopen(fname,"rb");
@@ -321,11 +321,11 @@ void EPeek(const char * fname, uint64 * header)
     free(e);
 }
 
-EFIL * EWHdr(const char * fname, const uint64 * header)
+EFIL * EWHdr(const char * fname, const uint64_t * header)
 {
     FILE *f;
     EFIL *e;
-    uint64 blk[8];
+    uint64_t blk[8];
     int i,nil;
     int r;
     nil=0;
@@ -362,9 +362,9 @@ EFIL * EWHdr(const char * fname, const uint64 * header)
     return e;
 }
 
-void EWData(EFIL * e, size_t bytes, const uint8 * d)
+void EWData(EFIL * e, size_t bytes, const uint8_t * d)
 {
-    uint64 i;
+    uint64_t i;
     while(bytes!=0)
     {
         i=putbytes(e,d,bytes);
@@ -374,9 +374,9 @@ void EWData(EFIL * e, size_t bytes, const uint8 * d)
     return;
 }
 
-void ERData(EFIL * e, size_t bytes, uint8 * d)
+void ERData(EFIL * e, size_t bytes, uint8_t * d)
 {
-    uint64 i;
+    uint64_t i;
     while(bytes!=0)
     {
         i=getbytes(e,d,bytes);
@@ -389,9 +389,9 @@ void ERData(EFIL * e, size_t bytes, uint8 * d)
 int EWClose1(EFIL * e, int mode)
 {
     FILE * logfile;
-    uint64 * pt;
+    uint64_t * pt;
     int i,j,k,r;
-    uint64 x;
+    uint64_t x;
 
 /* first flush the last block  */
 /* needs to be clean to get checksum correct  */
@@ -400,7 +400,7 @@ int EWClose1(EFIL * e, int mode)
         if(e->nex!=1)
         {
             while(e->nex<64) e->bk[e->nex++]=0;
-            bcshash(e,(uint64 *)e->bk,2);
+            bcshash(e,(uint64_t *)e->bk,2);
             if(e->null!=1) r=fwrite(e->bk,1,64,e->f);
             (void) r;
         }
@@ -409,13 +409,13 @@ int EWClose1(EFIL * e, int mode)
     {
         e->nex++;
         while(e->nex<64) e->bk[e->nex++]=0;
-        bcshash(e,(uint64 *)e->bk,2);
+        bcshash(e,(uint64_t *)e->bk,2);
         if(e->null!=1) r=fwrite(e->bk,1,64,e->f);
         (void) r;
     }
     for(i=0;i<64;i++) e->bk[i]=0;
     e->bk[0]=20;
-    pt=(uint64 *) e->bk;
+    pt=(uint64_t *) e->bk;
     pt[1]=hash1(e);
     pt[2]=hash2(e);
     if(mode==0) 
@@ -458,13 +458,13 @@ int ERClose1(EFIL * e, int mode)
 {
     FILE * logfile;
     int r,i,j,k;
-    uint64 x;
-    uint64 * pt;
+    uint64_t x;
+    uint64_t * pt;
     XLock();
     logfile=fopen("logfile","ab");
     r=fread(e->bk,1,64,e->f);
     (void)r;
-    pt=(uint64 *) e->bk;
+    pt=(uint64_t *) e->bk;
     e->bck[0]=hash1(e);
     e->bck[1]=hash2(e);
     if( (e->bck[0]!=pt[1]) || (e->bck[1]!=pt[2]) )

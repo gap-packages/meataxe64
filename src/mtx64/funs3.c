@@ -1,7 +1,6 @@
-/*
-              funs3.c     Some field changing functions
-              =======     R. A. Parker   27.9.2017
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// funs3.c     Some field changing functions
 
 //    Contents
 // fFrobenius
@@ -24,12 +23,12 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
     EFIL *e1,*e2;
     FELT f1,f2,f3;
     FELT sig[63][63];
-    uint64 hdr[5];
-    uint64 fdef,nor,noc;
+    uint64_t hdr[5];
+    uint64_t fdef,nor,noc;
     FIELD * f;
     DSPACE ds,dp;
     Dfmt *v1,*v2,*vpx,*vpa;
-    uint64 i,j,k,z;
+    uint64_t i,j,k,z;
     uint64_t i1,i2,i3,i4,j1,j2,j3,j4;
     int mode;
     uint16_t *log16, *alog16;

@@ -12,10 +12,10 @@
  
 int main(int argc,  char **argv)
 {
-    uint64 fdef,nor1,noc1,nor2,noc2,nor3,noc3;
-    uint64 i,j;
+    uint64_t fdef,nor1,noc1,nor2,noc2,nor3,noc3;
+    uint64_t i,j;
     EFIL *ef1,*ef2,*ef3;
-    uint64 hdr1[5],hdr2[5],hdr3[5];
+    uint64_t hdr1[5],hdr2[5],hdr3[5];
     DSPACE ds1,ds2;
     Dfmt *m1,*m2,*m3;
     Dfmt *da,*db;

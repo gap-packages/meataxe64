@@ -14,13 +14,13 @@ void DtoA(DSPACE * ds1, uint64_t * ix, const Dfmt * d, Afmt * a,
 {
     int i,j,k;
     uint64_t nz1;
-    uint8 orc,byte,byte1;
-    const uint8 *pt1,*pt2;
+    uint8_t orc,byte,byte1;
+    const uint8_t *pt1,*pt2;
     int s;
     int bits,nbits;
     int copybytes;
-    uint8  * Thpa;
-    uint16 * Thpv;
+    uint8_t  * Thpa;
+    uint16_t * Thpv;
     uint64_t alen;
     DSPACE ds;
     const FIELD * f;
@@ -72,7 +72,7 @@ void DtoA(DSPACE * ds1, uint64_t * ix, const Dfmt * d, Afmt * a,
     if(f->AfmtMagic==3)
     {
 
-        Thpv=(uint16 *)(f8+f->Thpv);
+        Thpv=(uint16_t *)(f8+f->Thpv);
         bits=0;
         for(i=0;i<nora;i++)  // for each row of matrix A
         {
@@ -358,24 +358,44 @@ void BGrease(const FIELD * f, uint8_t * bwa, int sparsity)
     r=f->cfmtcauld;
     if((f->GreaseMagic)==1)
     {
-        pcchain(f->prog,bwa,f->parms);
+        pcdasc(f->prog,bwa,f->parms);
         return;
     }
     if((f->GreaseMagic)==2)
     {
+// this should use addition-chain technology
+        if(f->mact[0]>='j')
+        {
+            for(i=0;i<8;i++)
+            {
+                pcjxor(bwa+ 3*r,bwa+2*r,bwa+1*r,r);
+                pcjxor(bwa+ 5*r,bwa+4*r,bwa+1*r,r);
+                pcjxor(bwa+ 6*r,bwa+4*r,bwa+2*r,r);
+                pcjxor(bwa+ 7*r,bwa+4*r,bwa+3*r,r);
+                pcjxor(bwa+ 9*r,bwa+8*r,bwa+1*r,r);
+                pcjxor(bwa+10*r,bwa+8*r,bwa+2*r,r);
+                pcjxor(bwa+11*r,bwa+8*r,bwa+3*r,r);
+                pcjxor(bwa+12*r,bwa+8*r,bwa+4*r,r);
+                pcjxor(bwa+13*r,bwa+8*r,bwa+5*r,r);
+                pcjxor(bwa+14*r,bwa+8*r,bwa+6*r,r);
+                pcjxor(bwa+15*r,bwa+8*r,bwa+7*r,r);
+                bwa+=16*r;
+            }
+            return;
+        }
         for(i=0;i<8;i++)
         {
-            pcxor(bwa+ 3*r,bwa+2*r,bwa+1*r,r);
-            pcxor(bwa+ 5*r,bwa+4*r,bwa+1*r,r);
-            pcxor(bwa+ 6*r,bwa+4*r,bwa+2*r,r);
-            pcxor(bwa+ 7*r,bwa+4*r,bwa+3*r,r);
-            pcxor(bwa+ 9*r,bwa+8*r,bwa+1*r,r);
-            pcxor(bwa+10*r,bwa+8*r,bwa+2*r,r);
-            pcxor(bwa+11*r,bwa+8*r,bwa+3*r,r);
-            pcxor(bwa+12*r,bwa+8*r,bwa+4*r,r);
-            pcxor(bwa+13*r,bwa+8*r,bwa+5*r,r);
-            pcxor(bwa+14*r,bwa+8*r,bwa+6*r,r);
-            pcxor(bwa+15*r,bwa+8*r,bwa+7*r,r);
+            pcaxor(bwa+ 3*r,bwa+2*r,bwa+1*r,r);
+            pcaxor(bwa+ 5*r,bwa+4*r,bwa+1*r,r);
+            pcaxor(bwa+ 6*r,bwa+4*r,bwa+2*r,r);
+            pcaxor(bwa+ 7*r,bwa+4*r,bwa+3*r,r);
+            pcaxor(bwa+ 9*r,bwa+8*r,bwa+1*r,r);
+            pcaxor(bwa+10*r,bwa+8*r,bwa+2*r,r);
+            pcaxor(bwa+11*r,bwa+8*r,bwa+3*r,r);
+            pcaxor(bwa+12*r,bwa+8*r,bwa+4*r,r);
+            pcaxor(bwa+13*r,bwa+8*r,bwa+5*r,r);
+            pcaxor(bwa+14*r,bwa+8*r,bwa+6*r,r);
+            pcaxor(bwa+15*r,bwa+8*r,bwa+7*r,r);
             bwa+=16*r;
         }
         return;
@@ -429,9 +449,47 @@ void BGrease(const FIELD * f, uint8_t * bwa, int sparsity)
 void BwaMad(const FIELD *f, uint8_t * bwa, int sparsity, Afmt *af, Cfmt *c)
 {
     if(sparsity==0) return;
-    if(f->BwaMagic==1) pcbmas(af,bwa,c,f->parms);
-    if(f->BwaMagic==2) pcbm2(af,bwa,c);
-    if(f->BwaMagic==3) pcbm3(af,bwa,c);
+    if(f->BwaMagic==1)
+    {
+        if(f->mact[0]>='j')
+        {
+            pcjas(af,bwa,c,f->parms);    // AVX2
+            return;
+        }
+        pcaas(af,bwa,c,f->parms);        // SSE2
+        return;
+    }
+// maybe ought to be different BwaMagic values . . . ?
+    if(f->BwaMagic==2)
+    {
+        if(f->mact[0]>='j')
+        {
+            pcjb2(af,bwa,c);    // AVX2
+            return;
+        }
+        pcab2(af,bwa,c);        // SSE2
+        return;
+    }
+    if(f->BwaMagic==3)
+    {
+        if(f->mact[0]>='j')
+        {
+            pcjb3(af,bwa,c);    // AVX2
+            return;
+        }
+        pcab3(af,bwa,c);        // SSE2
+        return;
+    }
+    if(f->BwaMagic==4)
+    {
+        if(f->mact[0]>='j')
+        {
+            pcjat(af,bwa,c,f->parms);    // AVX2
+            return;
+        }
+        pcdas(af,bwa,c,f->parms);        // SSE2
+        return;
+    }
 }
 
 void BrickMad(const FIELD *f, uint8_t *bwa,
@@ -467,13 +525,13 @@ void CZer(DSPACE * ds, Cfmt * c, uint64_t nor)
 void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor)
 {
     long zlen,cpylen,z2,z0,bits,ix,i;
-    uint8 * sp;
+    uint8_t * sp;
     uint16_t * sp16;
     uint32_t * sp32;
     Dfmt * dp;
     Dfmt dbyte;
-    uint64 bu,bt;
-    uint8 * Thpc;
+    uint64_t bu,bt;
+    uint8_t * Thpc;
     uint64_t nz2;
     uint64_t x,y,z;
     const FIELD * f;
@@ -484,7 +542,7 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor)
     bu=0;    // stop compiler
     bits=0;
     bt=0;    // warnings
-    Thpc=(uint8 *)f + (f->Thpc);
+    Thpc=(uint8_t *)f + (f->Thpc);
     for(z2=0;z2<nz2;z2++)
     {
         zlen=((z2+1)*f->cauldron);

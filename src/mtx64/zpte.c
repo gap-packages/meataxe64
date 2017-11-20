@@ -13,10 +13,10 @@
 int main(int argc,  char **argv)
 {
     EFIL *e1,*e2,*e3;
-    uint64 * p2;
-    uint64 i,j,k,t;
-    uint64 hdr1[5],hdr2[5],hdr3[5];
-    uint64 nor1,noc1,nor2,noc2;
+    uint64_t * p2;
+    uint64_t i,j,k,t;
+    uint64_t hdr1[5],hdr2[5],hdr3[5];
+    uint64_t nor1,noc1,nor2,noc2;
 
     LogCmd(argc,argv);
     if (argc != 4)
@@ -33,7 +33,7 @@ int main(int argc,  char **argv)
     noc2=hdr2[3];
 
     p2=malloc(8*nor2);
-    ERData(e2,8*nor2,(uint8 *) p2);
+    ERData(e2,8*nor2,(uint8_t *) p2);
     hdr3[0]=3;
     hdr3[1]=1;
     hdr3[2]=nor1*nor2;
@@ -42,11 +42,11 @@ int main(int argc,  char **argv)
     e3 = EWHdr(argv[3],hdr3);
     for(i=0;i<nor1;i++)
     {
-        ERData(e1,8,(uint8 *) &k);
+        ERData(e1,8,(uint8_t *) &k);
         for(j=0;j<nor2;j++)
         {
             t=k*noc1+p2[j];
-            EWData(e3,8,(uint8 *)&t);
+            EWData(e3,8,(uint8_t *)&t);
         }
     }
     ERClose(e1);

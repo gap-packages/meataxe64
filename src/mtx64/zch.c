@@ -13,11 +13,11 @@
 int main(int argc,  char **argv)
 {
     int chops;
-    uint64 r1,r2,c1,i,j;
-    uint64 rch[100],cch[100],cac[100]; 
+    uint64_t r1,r2,c1,i,j;
+    uint64_t rch[100],cch[100],cac[100]; 
     EFIL * e2[100];
-    uint64 fdef,nor,noc;
-    uint64 hdr[5];
+    uint64_t fdef,nor,noc;
+    uint64_t hdr[5];
     EFIL *e1;
     FIELD * f;
     DSPACE ds1,ds2;

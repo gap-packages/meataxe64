@@ -14,11 +14,11 @@
 
 int main(int argc,  char **argv)
 {
-    uint64 hdr[5];
+    uint64_t hdr[5];
     uint64_t wdone[MAXSPACE];
     uint64_t piv[MAXSPACE];
     EFIL *e1;
-    uint64 fdef,noc,nvec,ngens,dim,nextgen,tvec;
+    uint64_t fdef,noc,nvec,ngens,dim,nextgen,tvec;
     uint64_t i,j,col,k,dig;
     FIELD * f;
     FELT fel;

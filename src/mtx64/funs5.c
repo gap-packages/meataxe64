@@ -1,7 +1,6 @@
-/*
-      funs5.c     Meataxe-64 miscellanous small functions
-      =======     R. A. Parker    1.6.2017
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// funs5.c   Miscellanous small functions
 
 // Contents
 // fAdd
@@ -21,11 +20,11 @@ void fAdd(const char * fn1, int s1, const char * fn2, int s2,
 {
     EFIL *e1,*e2,*e3;
     FIELD * f;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor,noc;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor,noc;
     DSPACE ds;
     Dfmt *v1,*v2;
-    uint64 i;
+    uint64_t i;
 
     e1=ERHdr(fn1,hdr1);
     e2=ERHdr(fn2,hdr2);

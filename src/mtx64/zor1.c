@@ -13,10 +13,10 @@ int main(int argc,  char **argv)
 {
     long order,orgord,k,rank;
     char st[200];
-    uint64 hdr[5];
+    uint64_t hdr[5];
     EFIL *e;
-    uint64 fdef,dim,col;
-    uint64 i,j;
+    uint64_t fdef,dim,col;
+    uint64_t i,j;
     FIELD * f;
     DSPACE ds;
     int * piv;

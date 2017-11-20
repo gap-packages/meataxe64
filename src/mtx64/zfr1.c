@@ -14,12 +14,12 @@ int main(int argc,  char **argv)
 {
     EFIL *e1,*e2;
     FELT f1,f2;
-    uint64 hdr[5];
-    uint64 fdef,nor,noc;
+    uint64_t hdr[5];
+    uint64_t fdef,nor,noc;
     FIELD * f;
     DSPACE ds;
     Dfmt *v1,*v2;
-    uint64 i,j,k;
+    uint64_t i,j,k;
 
 
     LogCmd(argc,argv);

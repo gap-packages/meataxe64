@@ -13,11 +13,11 @@ int main(int argc,  char **argv)
 {
     EFIL *e1,*e2,*e3;
     FIELD * f;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor,noc;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor,noc;
     DSPACE ds;
     Dfmt *v1,*v2;
-    uint64 i;
+    uint64_t i;
 
     LogCmd(argc,argv);
 /******  First check the number of input arguments  */

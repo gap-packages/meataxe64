@@ -1,8 +1,6 @@
-/*    Meataxe-64    field.c     */
-/*    ==========    =======     */
-
-/*    R. A. Parker J. G. Thackray           */
-/*      mtx64 version 2.0 27.11.2016            */
+// Copyright (C) Richard Parker Jon Thackray  2017
+// Meataxe64 Nikolaus version
+// field.c operations in finite fields
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -366,6 +364,19 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     int r1,r2,r3,r4,r5,r6,r7,spacp;
     uint16_t s1,s2,s3,s4,s5,s6,s7,t1,t2,t3,t4,t5,t6,t7;
     uint16_t *pt1,*pt2;
+//uint32_t bin;
+// sort out cpuid and mact
+
+    mactype(f->mact);
+//bin=*((uint32_t *)&f->mact[4]);
+//for(i=0;i<32;i++) {
+//    if(bin&1) printf("1");
+//       else   printf("0");
+//     if((i%4)==3) printf(" "); 
+//     bin>>=1; }
+//  printf(" - %c\n",f->mact[0]);
+
+//  strcpy(f->mact,"j00");
     f8=(uint8_t *)f;
     ftab8=f8 + sizeof(FIELD);
     ftab16=(uint16_t*)ftab8;
@@ -2658,7 +2669,12 @@ void DAdd(const DSPACE * ds, uint64_t nor,
     switch ( addtyp )
     {
       case 1:
-        pcxor(d,d1,d2,nor*ds->nob);
+        if(f->mact[0]>='j')
+        {
+            pcjxor(d,d1,d2,nor*ds->nob);  // AVX2
+            return;
+        }
+        pcaxor(d,d1,d2,nor*ds->nob);    // SSE2
         return;
       case 2:
         f8=(uint8_t *)f;
@@ -2912,7 +2928,12 @@ void DSub(const DSPACE * ds, uint64_t nor,
     switch ( addtyp )
     {
       case 1:
-        pcxor(d,d1,d2,nor*ds->nob);
+        if(f->mact[0]>='j')
+        {
+            pcjxor(d,d1,d2,nor*ds->nob);  // AVX2
+            return;
+        }
+        pcaxor(d,d1,d2,nor*ds->nob);      // SSE2
         return;
       case 2:
         f8=(uint8_t *)f;
@@ -3365,21 +3386,21 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
             *(q32++)=x64;
         }
         return;
-      case 11:    // about to be rewritten to use pccl32
-#ifdef NEVER
+      case 11:
         p32=(uint32_t *)d1;
         q32=(uint32_t *)d2;
+        if(f->mact[0]>='f')
+        {
+            pccl32(f->clpm,(scalar<<f->clpm[2]),ds->noc*nor,p32,q32);
+            return;
+        }
+// should be case 14 really
         a64=scalar;
         for(i=0;i<ds->noc*nor;i++)
         {
             x64=qmul(f,*(p32++),a64)^*q32;
             *(q32++)=x64;
         }
-        return;
-#endif
-        p32=(uint32_t *)d1;
-        q32=(uint32_t *)d2;
-        pccl32(f->clpm,(scalar<<f->clpm[2]),ds->noc*nor,p32,q32);
         return;
       case 12:
         p64=(uint64_t *)d1;
@@ -3395,7 +3416,18 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
       case 13:
         p64=(uint64_t *)d1;
         q64=(uint64_t *)d2;
-        pccl64(f->clpm,(scalar<<f->clpm[2]),ds->noc*nor,p64,q64);
+        if(f->mact[0]>='f')
+        {
+            pccl64(f->clpm,(scalar<<f->clpm[2]),ds->noc*nor,p64,q64);
+            return;
+        }
+// should be case 15
+        a64=scalar;
+        for(i=0;i<ds->noc*nor;i++)
+        {
+            x64=qmul(f,*(p64++),a64)^*q64;
+            *(q64++)=x64;
+        }
         return;
       default:
         printf("Internal error in DSMad - type not set\n");
@@ -3620,7 +3652,7 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
 // following branches should be correctly predicted, since
 // ds->noc (and hence j) will usually be the same every time
             if(j==0) continue;
-                     wk2 =lfy1[*ptq];
+            wk2 =lfy1[*ptq];
             if(j>=3) wk2+=lfy1[*(ptq+1)]*9;
             if(j>=5) wk2+=lfy2[*(ptq+2)];
             if(j>=7) wk2+=lfy1[*(ptq+3)]*768;

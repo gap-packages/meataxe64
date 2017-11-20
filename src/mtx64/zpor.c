@@ -15,12 +15,12 @@
 int main(int argc,  char **argv)
 {
     EFIL *e;
-    uint64 hdr[5];
-    uint64 nor,lenbs,ord,ord1;
-    uint64 * p;
+    uint64_t hdr[5];
+    uint64_t nor,lenbs,ord,ord1;
+    uint64_t * p;
     long k;
-    uint64 i,j;
-    uint64 * bs;
+    uint64_t i,j;
+    uint64_t * bs;
     char st[200];
 
     LogCmd(argc,argv);
@@ -33,7 +33,7 @@ int main(int argc,  char **argv)
     e = ERHdr(argv[1],hdr);
     nor=hdr[2];
     p=malloc(8*nor);
-    ERData(e,8*nor,(uint8 *) p);
+    ERData(e,8*nor,(uint8_t *) p);
     ERClose(e);
     lenbs=8*(2+(nor+63)/64);
     bs=malloc(lenbs);

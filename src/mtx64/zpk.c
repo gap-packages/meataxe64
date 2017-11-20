@@ -49,6 +49,7 @@ printf("Type 1 - flat matrix, field order %ld, %ld rows, %ld columns\n",
         f8=(uint8_t *)f;
 printf("    Characteristic %ld, degree %ld\n",
                         f->charc,    f->pow);
+printf("    mact string %c %c\n",f->mact[0],f->mact[1]);
 #ifdef DEBUG
 printf("   Field %ld entries per %ld bytes, Prime field %ld per %ld bytes\n",
                f->entbyte,    f->bytesper,        f->pentbyte, f->pbytesper);

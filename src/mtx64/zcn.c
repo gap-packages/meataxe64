@@ -12,8 +12,8 @@
 int main(int argc,  char **argv)
 {
     int nof,i;
-    uint64 fdef,noc,maxnor,norout;
-    uint64 hdr[5];
+    uint64_t fdef,noc,maxnor,norout;
+    uint64_t hdr[5];
     DSPACE ds;
     EFIL *e1,*e2;
     FIELD *f;

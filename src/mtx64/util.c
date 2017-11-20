@@ -19,7 +19,7 @@ char ***mk_tmps(const char *tmp, unsigned int rchops, unsigned int cchops)
 {
   char ***tmpnames = malloc(sizeof(*tmpnames) * rchops);
   size_t len;
-  uint64 i, j;
+  uint64_t i, j;
   unsigned int k;
 
   len = strlen(tmp);

@@ -1,7 +1,6 @@
-/*
-         fasp.c  -   meataxe64 Level III function - assemble
-         ======      J. G. Thackray 25.08.2016
-*/
+// Copyright (C) Jon Thackray   2017
+// Meataxe64 Nikolaus version
+// fasp.c assemble file from chopped-up parts
 
 #include <stdio.h>
 #include <string.h>
@@ -12,15 +11,15 @@
 
 void fasp(const char *fname, char ***tmpnames, unsigned int rchops, unsigned int cchops)
 {
-  uint64 hdr[5];
-  uint64 fdef, nor, noc, nor1, noc1;
+  uint64_t hdr[5];
+  uint64_t fdef, nor, noc, nor1, noc1;
   FIELD *f;
   DSPACE ds, dsv;
   Dfmt *v1, *v2;
-  uint64 i, j, k;
+  uint64_t i, j, k;
   EFIL **e2;
   EFIL *e;
-  uint64 *noc_seg; 
+  uint64_t *noc_seg; 
 
   EPeek(tmpnames[0][0], hdr);
   fdef = hdr[1];

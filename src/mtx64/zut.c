@@ -16,9 +16,9 @@ int main(int argc,  char **argv)
 {
     EFIL *e;
     int mode,b1,b2,c,res,gens;
-    uint64 hdr[5];
-    uint64 siz,i;
-    uint64 * bs;
+    uint64_t hdr[5];
+    uint64_t siz,i;
+    uint64_t * bs;
     LogCmd(argc,argv);
     if (argc < 2)
     {
@@ -61,7 +61,7 @@ int main(int argc,  char **argv)
         hdr[3]=bs[1];
         hdr[4]=0;
         e=EWHdr(argv[2],hdr);
-        EWData(e,siz,(uint8 *) bs);
+        EWData(e,siz,(uint8_t *) bs);
         EWClose(e);
         if(b2!=0) printf("Error - incorrect number of set bits\n");        
         free(bs);
@@ -73,7 +73,7 @@ int main(int argc,  char **argv)
         e=ERHdr(argv[2],hdr);
         siz=8*((hdr[2]+63)/64 + 2);
         bs=malloc(siz);
-        ERData(e,siz,(uint8 *) bs);
+        ERData(e,siz,(uint8_t *) bs);
         ERClose(e);
         printf(" %d %d\n",(int)bs[0],(int)bs[1]);
         for(i=0;i<hdr[2];i++)

@@ -12,10 +12,10 @@
  
 int main(int argc,  char **argv)
 {
-    uint64 hdr[5];
+    uint64_t hdr[5];
     EFIL *e,*e1;
     int vec,rank,j,i,readvec,dimvec;
-    uint64 fdef,dim,col;
+    uint64_t fdef,dim,col;
     FIELD * f;
     DSPACE ds;
     DSPACE dso;     // output subspace

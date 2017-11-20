@@ -16,16 +16,16 @@ int main(int argc,  char **argv)
 {
     EFIL *e1,*e2,*e3;                // e1 input matrix  
                                      // e2 row-select   e3 remnant
-    uint64 fdef,nor,noc;
-    uint64 hdr[5];
+    uint64_t fdef,nor,noc;
+    uint64_t hdr[5];
     FIELD * f;
     int * piv;
     DSPACE dsm,ds3;
     Dfmt *m, *vo, *junk;
     Dfmt *vm;
     size_t sbsr,sbsc;
-    uint64 *bsr,*bsc;
-    uint64 rank,i,j,col,fel;
+    uint64_t *bsr,*bsc;
+    uint64_t rank,i,j,col,fel;
     char st[200];
 
     LogCmd(argc,argv);
@@ -89,7 +89,7 @@ int main(int argc,  char **argv)
     hdr[4]=0;
     e2=EWHdr(argv[2],hdr);
     bsc[1]=rank;
-    EWData(e2,sbsc,(uint8 *)bsc);
+    EWData(e2,sbsc,(uint8_t *)bsc);
     EWClose(e2);
 
 //  need to permute the rows of the remnant

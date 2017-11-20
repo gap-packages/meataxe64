@@ -138,8 +138,8 @@ void hpmitabas(FIELD * f)
     bias=7*f->charc;
     if(f->charc<=7) bias=6*f->charc;
     bitlen=16;
-    if(f->charc<=61) bitlen=10;
-    if(f->charc<=13) bitlen=8;
+    if(f->CfmtMagic==4) bitlen=10;
+    if(f->CfmtMagic>=5) bitlen=8;
     if(bitlen==16)
         f->czer=bias+(bias<<16)+(bias<<32)+(bias<<48);
     if(bitlen==10)
@@ -170,7 +170,8 @@ void hpmitabas(FIELD * f)
         f->parms[0]=x+(x<<8)+(x<<16)+(x<<24)
                +(x<<32)+(x<<40)+(x<<48)+(x<<56);
     x=pow2%f->charc;
-    f->parms[7]=x+(x<<32);
+    if(f->BwaMagic==4) f->parms[7]=x+(x<<32);
+          else      f->parms[7]=x+(x<<16)+(x<<32)+(x<<48);
     pow2a=1;
     pow2a=pow2a<<bitlen;
     mask=(pow2a-1)^(pow2-1);

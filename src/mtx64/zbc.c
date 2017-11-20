@@ -15,11 +15,11 @@
 int main(int argc,  char **argv)
 {
     EFIL *e1,*e2;
-    uint64 nor, noc;
-    uint64 hdr[5];
+    uint64_t nor, noc;
+    uint64_t hdr[5];
     size_t siz;
-    uint64 *bs1,*bs2;
-    uint64 i;
+    uint64_t *bs1,*bs2;
+    uint64_t i;
 
     LogCmd(argc,argv);
     if (argc != 3)
@@ -35,7 +35,7 @@ int main(int argc,  char **argv)
     siz = 8*(2+(nor+63)/64);
     bs1=malloc(siz);
     bs2=malloc(siz);
-    ERData(e1,siz,(uint8 *)bs1);
+    ERData(e1,siz,(uint8_t *)bs1);
     ERClose(e1);
     memset(bs2,0,siz);
     bs2[0]=nor;
@@ -44,7 +44,7 @@ int main(int argc,  char **argv)
     for(i=0;i<nor;i++)
         if(BSBitRead(bs1, i)==0) BSBitSet (bs2,i);
 
-    EWData(e2,siz ,(uint8 *)bs2);
+    EWData(e2,siz ,(uint8_t *)bs2);
 
     EWClose(e2);
 

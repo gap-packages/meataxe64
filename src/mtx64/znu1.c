@@ -12,9 +12,9 @@
 int main(int argc,  char **argv)
 {
     EFIL *e1,*e2;
-    uint64 hdr[5];
-    uint64 fdef,nor,noc,i,j;
-    uint64 rank,nullity,col;
+    uint64_t hdr[5];
+    uint64_t fdef,nor,noc,i,j;
+    uint64_t rank,nullity,col;
     FIELD * f;
     DSPACE ds1,ds2;
     int * piv;

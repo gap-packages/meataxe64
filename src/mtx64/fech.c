@@ -1,8 +1,6 @@
-/*
-              fech.c     Disk chopping echelon form
-              ======     R. A. Parker   7.6.2017
-     Does not yet chop on disk
- */
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// fech.c - early version of full echelize function
 
 #include <stdint.h>
 #include "mezz.h"

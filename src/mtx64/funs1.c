@@ -1,7 +1,6 @@
-/*
-              funs1.c     Some simple Gaussian-related functions
-              =======     R. A. Parker   27.9.2017
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// funs1.c     Some simple Gaussian-related functions
 
 // Contents
 // fColumnExtract
@@ -172,7 +171,7 @@ void fPivotCombine(const char *b1, int sb1, const char *b2, int sb2,
 
     siz = 8*(2+(nor2+63)/64); // read b2 into bs2
     bs2=malloc(siz);
-    ERData(e2,siz,(uint8 *)bs2);
+    ERData(e2,siz,(uint8_t *)bs2);
     ERClose1(e2,sb2);
 
     siz = 8*(2+(nor+63)/64);  // set bs3 and bs4 to zero

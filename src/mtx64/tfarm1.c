@@ -458,17 +458,17 @@ void TFRelease(MOJ mj)
 {
     int i;
 
+    while(1)
+    {
+        if(stopfree==0) break;    // atomic fetch
+        TfPause(100);
+    }
     i=TfAdd(&(mj->refc),-1);
     if(i>0) return;
     if(i<0)
     {
         printf("Refcount went negative!\n");
         return;
-    }
-    while(1)
-    {
-        if(stopfree==0) break;    // atomic fetch
-        TfPause(100);
     }
     if(mj->refc!=0) return;
     if(mj->mem!=NULL) AlignTree(mj->mem);

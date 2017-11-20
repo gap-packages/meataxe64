@@ -1,7 +1,6 @@
-/*
-      fsmu.c     meataxe-64 Scalar multiplication
-      ======     R. A. Parker    9.7.2017
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// fsmu.c  Scalar multiplication may be obsolete
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,11 +13,11 @@ void fsmu(TLS * tls, const char * fn1, int s1, const char * fn2, int s2,
          FELT sc)
 {
     EFIL *e1,*e2;
-    uint64 hdr[5];
-    uint64 nor,noc;
+    uint64_t hdr[5];
+    uint64_t nor,noc;
     DSPACE ds;
     Dfmt *v1;
-    uint64 i;
+    uint64_t i;
 
     e1=ERHdr(fn1,hdr);
 

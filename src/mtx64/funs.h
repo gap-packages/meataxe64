@@ -1,9 +1,6 @@
-/*
-         funs.h  -   functions prototypes
-         ======      R. A. Parker 14.9.2017
-*/
-
-// This file is in the process of re-organization
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// functions header file
 
 // First the large functions each in a separate own source file
 

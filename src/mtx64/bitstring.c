@@ -1,7 +1,6 @@
-/*
-         bitstring.c  -   Bit String Operations
-         ===========      R. A. Parker 21.9.2015
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// bitstring.c  -   Bit String Operations
 
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +32,7 @@ void BSBitSet (uint64_t * bs, uint64_t bitno)
     return;
 }
 
-void BSColSelect (const FIELD * f, const uint64 * bs, uint64 nor,
+void BSColSelect (const FIELD * f, const uint64_t * bs, uint64_t nor,
                   const Dfmt * d, Dfmt * sel, Dfmt * nonsel)
 {
     uint64_t noc,noc1,noc0;
@@ -185,7 +184,7 @@ uint32_t * BSGpc(const uint64_t * bs)
     return gpc;  
 }
 
-void BSColRifZ (const FIELD * f, const uint64_t * bs, uint64 nor,
+void BSColRifZ (const FIELD * f, const uint64_t * bs, uint64_t nor,
                   const Dfmt * mtxin, Dfmt * mtxout)
 {
     uint64_t noc1,noc2;
@@ -282,14 +281,14 @@ void BSColPutS (const FIELD * f, const uint64_t * bs, uint64_t nor,
     free(lix);
 }
 
-void BSCombine (const uint64 * bs1, const uint64 * bs2,
-                  uint64 * comb, uint64 * rif)
+void BSCombine (const uint64_t * bs1, const uint64_t * bs2,
+                  uint64_t * comb, uint64_t * rif)
 {
-    uint64 bc1, sb1, sb2;
-    uint64 wd1,wd2,wdc,wdr;   // word containing the bits
-    uint64 ix1,ix2,ixc,ixr;   // index in array
-    uint64 sg1,sg2,sgc,sgr;   // sig bits in word
-    uint64 bt;                // a bit
+    uint64_t bc1, sb1, sb2;
+    uint64_t wd1,wd2,wdc,wdr;   // word containing the bits
+    uint64_t ix1,ix2,ixc,ixr;   // index in array
+    uint64_t sg1,sg2,sgc,sgr;   // sig bits in word
+    uint64_t bt;                // a bit
     wd1=0;             // stop compiler warnings
     bc1=bs1[0];   // bits to be processed
     sb1=bs1[1];   // bits set in bs1
@@ -416,9 +415,9 @@ extern void BSMkr(const uint64_t * lit, const uint64_t * big, uint64_t * rif)
     return;
 }
 
-extern void BSShiftOr (const uint64 * bs1, uint64 shift, uint64 * bs2)
+extern void BSShiftOr (const uint64_t * bs1, uint64_t shift, uint64_t * bs2)
 {
-    uint64 src,dst;
+    uint64_t src,dst;
     int bit;
     dst=shift;
     for(src=0;src<bs1[0];src++)

@@ -1,8 +1,6 @@
-/*
-              ftra.c     Disk chopping transpose
-              ======     R. A. Parker   1.6.2017
-     Does not yet chop on disk
- */
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// ftra.c    fTranspose function
 
 #include <stdint.h>
 #include <stdlib.h>

@@ -1,52 +1,47 @@
-/*
-         field.h  -   Field Routines Header
-         =======      R. A. Parker  mtx64t version 30.6.2015
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// field.h header file for operations in finite fields
 
-typedef uint8_t  uint8;
-typedef uint16_t uint16;
-typedef uint32_t   uint32;
-typedef uint64_t uint64;
-
-extern uint8 * AlignMalloc(size_t bytes);
-extern void AlignFree(uint8 * ptr);
+extern uint8_t * AlignMalloc(size_t bytes);
+extern void AlignFree(uint8_t * ptr);
 
 #define FIELDLEN 4194304
 #define NOMUL 16
 
-typedef uint64 FELT;
-typedef uint8  Dfmt;
+typedef uint64_t FELT;
+typedef uint8_t  Dfmt;
 
 typedef struct
 {
     uint64_t fdef;            // field order
     uint64_t charc;           // field characteristic
     uint64_t pow;             // field degree fdef = charc^pow
+    char mact[8];
 
 /* ================================ */
 
-    uint64 conp;
+    uint64_t conp;
     FELT   cp0;
     FELT   cp1;
-    uint64 qstep;  /* fdef/charc */
-    uint64 bar41;  /* spaclev power */
+    uint64_t qstep;  /* fdef/charc */
+    uint64_t bar41;  /* spaclev power */
     uint64_t bar48;  /* 2^48/charc rounded up */
-    uint64 sqpower;
-    uint64 sqpower2;
+    uint64_t sqpower;
+    uint64_t sqpower2;
 
 
-    uint64 entbyte;
-    uint64 bytesper;
-    uint32 dbytevals;
-    uint32 qminus1;
-    uint32 p32;
+    uint64_t entbyte;
+    uint64_t bytesper;
+    uint32_t dbytevals;
+    uint32_t qminus1;
+    uint32_t p32;
 /* 0-64bit 1-32bit 2-16bit 3-8bit 4-2inbyte 5-mod5 6-GF4 7-mod3 8-mod2 */
      int   paktyp;  /* 0-8 indicating how FELT packed in Dfmt */
      int   ppaktyp;  /* similar, but for ground field */
-    uint64 pentbyte;
-    uint64 pbytesper;
-    uint16 spaczero;
-    uint16 spacneg;
+    uint64_t pentbyte;
+    uint64_t pbytesper;
+    uint16_t spaczero;
+    uint16_t spacneg;
     uint64_t clpm[3];
 
      int   addtyp;
@@ -122,8 +117,8 @@ typedef struct
 typedef struct
 {
   const FIELD * f;  /* the field in use */
-  uint64 noc;       /* Dimension of the space. */
-  uint64 nob;       /* Number of bytes for a row of Dfmt in memory. */
+  uint64_t noc;       /* Dimension of the space. */
+  uint64_t nob;       /* Number of bytes for a row of Dfmt in memory. */
   int ground;       /* 0 = extension, 1=ground */
 }   DSPACE;
 
@@ -145,25 +140,25 @@ extern FELT FieldDiv(const FIELD * f, FELT a, FELT b);
 
 /* The D-format things in field.c  */
 
-extern void DSSet(const FIELD * f, uint64 noc, DSPACE * ds);
-extern void PSSet(const FIELD * f, uint64 noc, DSPACE * ds);
-extern FELT DUnpak(const DSPACE * ds, uint64 col, const Dfmt * d);
-extern void DPak(const DSPACE * ds, uint64 col, Dfmt * d, FELT a);
-extern void DAdd(const DSPACE * ds, uint64 nor,
+extern void DSSet(const FIELD * f, uint64_t noc, DSPACE * ds);
+extern void PSSet(const FIELD * f, uint64_t noc, DSPACE * ds);
+extern FELT DUnpak(const DSPACE * ds, uint64_t col, const Dfmt * d);
+extern void DPak(const DSPACE * ds, uint64_t col, Dfmt * d, FELT a);
+extern void DAdd(const DSPACE * ds, uint64_t nor,
                   const Dfmt * d1, const Dfmt * d2, Dfmt * d);
-extern void DSub(const DSPACE * ds, uint64 nor,
+extern void DSub(const DSPACE * ds, uint64_t nor,
                   const Dfmt * d1, const Dfmt * d2, Dfmt * d);
-extern void DSMad(const DSPACE * ds, FELT scalar, uint64 nor,
+extern void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor,
                                      const Dfmt * d1, Dfmt * d2);
-extern void DSMul(const DSPACE * ds, FELT a, uint64 nor, Dfmt * d);
+extern void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d);
 #define ZEROROW 0xffffffffffffffffull
-extern uint64 DNzl(const DSPACE * ds, const Dfmt * d);
-extern void DCpy(const DSPACE * ds, const Dfmt * d1, uint64 nor, Dfmt * d2);
-extern void DCut(const DSPACE * ms, uint64 nor, uint64 col,
+extern uint64_t DNzl(const DSPACE * ds, const Dfmt * d);
+extern void DCpy(const DSPACE * ds, const Dfmt * d1, uint64_t nor, Dfmt * d2);
+extern void DCut(const DSPACE * ms, uint64_t nor, uint64_t col,
                   const Dfmt * m, const DSPACE * cbs, Dfmt *cb);
-extern void DPaste(const DSPACE * cbs, const Dfmt * cb, uint64 nor, 
-                   uint64 col, const DSPACE * ms, Dfmt * m);
-extern Dfmt * DPAdv(const DSPACE * ds, uint64 nor, const Dfmt * d);
+extern void DPaste(const DSPACE * cbs, const Dfmt * cb, uint64_t nor, 
+                   uint64_t col, const DSPACE * ms, Dfmt * m);
+extern Dfmt * DPAdv(const DSPACE * ds, uint64_t nor, const Dfmt * d);
 extern Dfmt * DPInc(const DSPACE * ds, const Dfmt * d);
 extern void PExtract(const DSPACE * ds, const Dfmt *mq,
                    Dfmt *mp, uint64_t nor, uint64_t psiz); 

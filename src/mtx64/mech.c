@@ -122,14 +122,14 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
     FIELD *f;
     DSPACE ds,ds1;
     EFIL * e;
-    uint64 hdr[5];
-    uint64 fdef, noc,nor,shift,maxrows;
-    uint64 xc,xr,chsz;
+    uint64_t hdr[5];
+    uint64_t fdef, noc,nor,shift,maxrows;
+    uint64_t xc,xr,chsz;
     uint64_t cha;   //  rows of blocks
     uint64_t chb;   //  cols of blocks
     size_t cslen,rslen;
-    uint64 *cs,*rs;
-    uint64 *bscs,*bsrs;
+    uint64_t *cs,*rs;
+    uint64_t *bscs,*bsrs;
     uint64_t i, h;       // rows of blocks
     uint64_t j, k, l;    // cols of blocks
     MOJ fmoj;
@@ -312,7 +312,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
     hdr[3]=rank;
     hdr[4]=0;
     e=EWHdr(b3,hdr);
-    EWData(e,cslen,(uint8 *)bscs);
+    EWData(e,cslen,(uint8_t *)bscs);
     EWClose1(e,s3);
 /* now write out remnant  */
     chp=malloc(chb*sizeof(long));
@@ -348,7 +348,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
             DSSet(f,chpcol[k],&ds1);
             DPaste(&ds1,mx+16,chp[j],colstart[k],&ds,buf);
         }
-        EWData(e,chp[j]*ds.nob,(uint8 *)buf);
+        EWData(e,chp[j]*ds.nob,(uint8_t *)buf);
     }
     EWClose1(e,s6);
 
@@ -394,7 +394,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
             DSSet(f,chqcol[h],&ds1);
             DPaste(&ds1,mx+16,chq[j],coqstart[h],&ds,buf);
         }
-        EWData(e,chq[j]*ds.nob,(uint8 *)buf);
+        EWData(e,chq[j]*ds.nob,(uint8_t *)buf);
     }
     EWClose1(e,s4);
     free(chq);
@@ -443,7 +443,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
             DSSet(f,chrcol[h],&ds1);
             DPaste(&ds1,mx+16,chr[i],corstart[h],&ds,buf);
         }
-        EWData(e,chr[i]*ds.nob,(uint8 *)buf);
+        EWData(e,chr[i]*ds.nob,(uint8_t *)buf);
     }
     EWClose1(e,s5);
     free(chr);
@@ -472,7 +472,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
     hdr[3]=rank;
     hdr[4]=0;
     e=EWHdr(b2,hdr);
-    EWData(e,rslen,(uint8 *)bsrs);
+    EWData(e,rslen,(uint8_t *)bsrs);
     EWClose1(e,s2);
     free(bsrs);
 /* Free the bits we needed for output */

@@ -73,14 +73,14 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     FIELD *f;
     DSPACE ds,ds1;
     EFIL * e;
-    uint64 hdr[5];
-    uint64 fdef, noc,nor,shift,maxrows;
-    uint64 xc,xr,chsz;
+    uint64_t hdr[5];
+    uint64_t fdef, noc,nor,shift,maxrows;
+    uint64_t xc,xr,chsz;
     uint64_t cha;   //  rows of blocks
     uint64_t chb;   //  cols of blocks
     size_t rslen;
-    uint64 *cs;
-    uint64 * bsrs;
+    uint64_t *cs;
+    uint64_t * bsrs;
     uint64_t i;          // rows of blocks
     uint64_t j, k, l;    // cols of blocks
     MOJ fmoj;
@@ -218,7 +218,7 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     hdr[3]=rank;
     hdr[4]=0;
     e=EWHdr(b2,hdr);
-    EWData(e,rslen,(uint8 *)bsrs);
+    EWData(e,rslen,(uint8_t *)bsrs);
     EWClose1(e,s2);
 /* now write out remnant  */
     chp=malloc(chb*sizeof(long));
@@ -254,7 +254,7 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
             DSSet(f,chpcol[k],&ds1);
             DPaste(&ds1,mx+16,chp[j],colstart[k],&ds,buf);
         }
-        EWData(e,chp[j]*ds.nob,(uint8 *)buf);
+        EWData(e,chp[j]*ds.nob,(uint8_t *)buf);
     }
     EWClose1(e,s3);
 /* Free the bits we needed for the remnant */

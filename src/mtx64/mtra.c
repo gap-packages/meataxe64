@@ -14,10 +14,10 @@ int mtra(const char *in, int sin, const char *out, int sout)
 {
     FIELD * f;
     EFIL *e1, *e2;
-    uint64 hdr[5];
+    uint64_t hdr[5];
     DSPACE ads,bds;
     Dfmt *am,*bm;
-    uint64 fdef,nora,noca;
+    uint64_t fdef,nora,noca;
     e1=ERHdr(in,hdr);
     fdef=hdr[1];
     nora=hdr[2];

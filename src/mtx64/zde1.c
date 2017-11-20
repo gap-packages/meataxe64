@@ -11,10 +11,10 @@
  
 int main(int argc,  char **argv)
 {
-    uint64 hdr[5];
+    uint64_t hdr[5];
     EFIL *e;
     FELT det,fel;
-    uint64 fdef,dim,i,j,col;
+    uint64_t fdef,dim,i,j,col;
     DSPACE ds;
     FIELD * f;
     Dfmt *m;

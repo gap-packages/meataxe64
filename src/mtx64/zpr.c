@@ -15,10 +15,10 @@ int main(int argc,  char **argv)
     Dfmt * v1;
     DSPACE ds;
     int opt,chct,ch;
-    uint64 fdef,nor,noc;
+    uint64_t fdef,nor,noc;
     FELT fel;
-    uint64 i,j,k,fk;
-    uint64 header[5];
+    uint64_t i,j,k,fk;
+    uint64_t header[5];
     LogCmd(argc,argv);
 
     if ( (argc < 2) || (argc>3) )
@@ -50,7 +50,7 @@ int main(int argc,  char **argv)
                   else printf(" %lu\n",noc);
         for(i=0;i<nor;i++)
         {
-            ERData(e,8,(uint8*)&k);
+            ERData(e,8,(uint8_t *)&k);
             k++;
             if(k>99999) printf(" %lu\n",k);
               else      printf("%6lu\n",k);

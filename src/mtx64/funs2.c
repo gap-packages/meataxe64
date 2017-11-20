@@ -1,7 +1,6 @@
-/*
-              funs2.c     Some simple composite functions
-              =======     R. A. Parker   27.9.2017
-*/
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// funs2.c     Some simple composite functions
 
 // Contents
 // fMultiplyAdd

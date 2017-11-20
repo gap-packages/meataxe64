@@ -1,8 +1,6 @@
-/*
-              fmul.c     Disk chopping multiply
-              ======     R. A. Parker   1.6.2017
-     Does not yet chop on disk
- */
+// Copyright (C) Richard Parker   2017
+// Meataxe64 Nikolaus version
+// fmul.c  fMultiply function
 
 #include <stdio.h>
 #include <stdint.h>

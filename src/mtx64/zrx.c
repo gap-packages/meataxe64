@@ -15,12 +15,12 @@ int main(int argc,  char **argv)
 {
     EFIL *e1,*e2,*e3,*e4;
     FIELD * f;
-    uint64 hdr1[5],hdr2[5];
-    uint64 fdef,nor,noc,nor1,nor2;
+    uint64_t hdr1[5],hdr2[5];
+    uint64_t fdef,nor,noc,nor1,nor2;
     DSPACE ds;
     Dfmt *v;
-    uint64 i,siz;
-    uint64 * bs;
+    uint64_t i,siz;
+    uint64_t * bs;
 
     LogCmd(argc,argv);
     /******  First check the number of input arguments  */
@@ -56,7 +56,7 @@ int main(int argc,  char **argv)
     v=malloc(ds.nob);
     siz = 8*(2+(nor+63)/64);
     bs=malloc(siz);
-    ERData(e1,siz,(uint8 *)bs);
+    ERData(e1,siz,(uint8_t *)bs);
     for(i=0;i<nor;i++)
     {
 	ERData(e2,ds.nob,v);;

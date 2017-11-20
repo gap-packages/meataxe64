@@ -19,7 +19,7 @@ void g1(int a)
 {
     Dfmt *ma;
     FELT min1;
-    uint64 i;
+    uint64_t i;
     min1=FieldNeg(f,1);
     memset(m[a],0,ds.noc*ds.nob);
     ma=m[a];
@@ -347,8 +347,8 @@ int main(int argc,  char **argv)
 
     char fn[200];
     EFIL *e;
-    uint64 hdr[5];
-    uint64 fdef,dim;
+    uint64_t hdr[5];
+    uint64_t fdef,dim;
 
     LogCmd(argc,argv);
     if (argc != 5) 
@@ -411,6 +411,3 @@ int main(int argc,  char **argv)
 }
 
 /*  end of zga.c    */
-
-
-

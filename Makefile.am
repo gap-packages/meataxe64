@@ -11,18 +11,32 @@ GAPINSTALLLIB = $(BINARCHDIR)/meataxe64.so
 
 lib_LTLIBRARIES = meataxe64.la
 
-# replace the pcritGENc.c line in the below by two of these three for
-# Haswell acceleration
-# TODO build all of this and the OSXification process into the build process
-#   src/mtx64/pcritHASc.c 
-#  src/mtx64/osx-pcritHASs.s 
-#  src/mtx64/pcritHASs.s 
+#
+# The commented out version is for OSX. You also need to make osx-pcrits.s
+# using etc/asmfix.g
+# TODO automate this.
+#
+
+# meataxe64_la_SOURCES = \
+#   src/meataxe64.c \
+#   src/mtx64/field.c \
+#   src/mtx64/conex.c \
+#   src/mtx64/pcritc.c \
+#   src/mtx64/osx-pcrits.s \
+#   src/mtx64/hpmi.c \
+#   src/mtx64/linf.c \
+#   src/mtx64/pmul.c \
+#   src/mtx64/bitstring.c \
+#   src/mtx64/tabmake.c \
+#   src/mtx64/io.c \
+#   src/mtx64/slab.c
 
 meataxe64_la_SOURCES = \
   src/meataxe64.c \
   src/mtx64/field.c \
   src/mtx64/conex.c \
-  src/mtx64/pcritGENc.c \
+  src/mtx64/pcritc.c \
+  src/mtx64/pcrits.s \
   src/mtx64/hpmi.c \
   src/mtx64/linf.c \
   src/mtx64/pmul.c \
