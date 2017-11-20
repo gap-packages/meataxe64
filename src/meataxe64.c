@@ -231,7 +231,6 @@ static inline void CHECK_MTX64_Matrices(Obj m1, Obj m2, UInt level) {
     ErrorMayQuit("Meataxe64 matrices not same shape", 0, 0);
 }
 
-
 static inline void CHECK_MTX64_MATRIX_FELT(Obj m, Obj x) {
   if (CALL_1ARGS(FieldOfMTX64FELT, x) != CALL_1ARGS(FieldOfMTX64Matrix, m))
     ErrorMayQuit("MTX64: element is not over same field as matrix", 0, 0);
@@ -272,17 +271,17 @@ static inline void CHECK_MTX64_RowCount(Obj row, Obj m) {
 // We assume that we have already checked that m is matrix
 static inline void CHECK_MTX64_RowRange(Obj startrow, Obj nrows, Obj m) {
   CHECK_NONNEG_SMALLINTS(startrow, nrows);
-  if (INT_INTOBJ(startrow)+ INT_INTOBJ(nrows) > HeaderOfMatrix(m)->nor)
+  if (INT_INTOBJ(startrow) + INT_INTOBJ(nrows) > HeaderOfMatrix(m)->nor)
     ErrorMayQuit("Meataxe64: row range too large for matrix", 0, 0);
 }
 
 /* GAP Callable low-level creation and access functions */
 
 static Obj MTX64_CREATE_FIELD(Obj self, Obj field_order) {
-    // This is capitalised because we can't check here whether
-    // the order is a prime power and the underlying functions will exit
-    // if it isn't. 
-    // We do what checking we can.
+  // This is capitalised because we can't check here whether
+  // the order is a prime power and the underlying functions will exit
+  // if it isn't.
+  // We do what checking we can.
   if (!IS_POS_INT(field_order))
     ErrorMayQuit(
         "MTX64_CreateField: argument must be a prime power < 2^64, not a %s",
@@ -318,7 +317,8 @@ Obj MTX64_CreateFieldElement(Obj self, Obj field, Obj elt) {
         0);
   ielt = UInt_ObjInt(elt); // will error out for over-large integers
   if (ielt >= DataOfFieldObject(field)->fdef)
-      ErrorMayQuit("MTX64_CreateFieldElement: element number too large for field",0,0);
+    ErrorMayQuit("MTX64_CreateFieldElement: element number too large for field",
+                 0, 0);
   return MakeMtx64Felt(field, ielt);
 }
 
@@ -328,7 +328,6 @@ Obj MTX64_ExtractFieldElement(Obj self, Obj elt) {
 }
 
 // GAP bindings for meataxe64 field element functions
-
 
 Obj MTX64_FieldAdd(Obj self, Obj f, Obj a, Obj b) {
   CHECK_MTX64_Field(f);
@@ -408,7 +407,6 @@ Obj MTX64_Matrix_NumCols(Obj self, Obj m) {
 
 // GAP bindings for matrix (Dfmt) functions
 
-
 static inline void SetDSpaceOfMTX64_Matrix(Obj m, DSPACE *ds) {
   // populate DSPACE on the fly, Only safe until next garbage collection
   Obj field = CALL_1ARGS(FieldOfMTX64Matrix, m);
@@ -482,8 +480,9 @@ Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows) {
   return 0;
 }
 
-Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol, Obj clip) {
-    DSPACE ms,cs;
+Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol,
+               Obj clip) {
+  DSPACE ms, cs;
   Dfmt *mp, *cp;
   CHECK_MTX64_Matrices(m, clip, 0);
   CHECK_MTX64_RowRange(startrow, nrows, m);
@@ -876,7 +875,7 @@ GAP_STATIC_ASSERT(
 
 Obj MTX64_InsertVecGF2(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
-  CHECK_MTX64_Row(rownum,d);
+  CHECK_MTX64_Row(rownum, d);
   Obj fld = CALL_1ARGS(FieldOfMTX64Matrix, d);
   UInt q = DataOfFieldObject(fld)->fdef;
   if (q != 2)
