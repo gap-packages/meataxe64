@@ -635,7 +635,7 @@ Obj MTX64_SLEchelizeDestructive(Obj self, Obj a) {
   // Garbage collection OK again here
   // Resize all the output matrices
   SetShapeAndResize(m, rank, rank);
-  SetShapeAndResize(c, ncols - rank, rank);
+  SetShapeAndResize(c, nrows - rank, rank);
   SetShapeAndResize(r, rank, ncols - rank);
   Obj result = NEW_PREC(7);
   AssPRec(result, RNamName("rank"), INTOBJ_INT(rank));
