@@ -415,7 +415,6 @@ InstallMethod( Display, "for a meataxe64 matrix", [IsMTX64Matrix],
     Display(MTX64_ExtractMatrix(m));
 end);
 
-        
 
 InstallMethod( ShallowCopy, "for a meataxe matrix", [IsMTX64Matrix], MTX64_ShallowCopyMatrix);
 
@@ -639,6 +638,19 @@ end);
 InstallMethod( ViewString, "for a meataxe64 bitstring",
         [IsMTX64BitString],
         bs -> STRINGIFY("< MTX64 bitstring ",MTX64_WeightOfBitString(bs),"/",MTX64_LengthOfBitString(bs),">"));
+
+InstallMethod( DisplayString, "for a meataxe64 bitstring",
+        [IsMTX64BitString],
+        function(bs)
+    local  s, i;
+    s := [];    
+    for i in [1..MTX64_LengthOfBitString(bs)] do
+        Add(s, String(MTX64_GetEntryOfBitString(bs,i-1)));
+    od;
+    return Concatenation("[", JoinStringsWithSeparator(s,","), "]\n");    
+end);
+
+
 
 InstallMethod( ShallowCopy, "for a meataxe bitstring", [IsMTX64BitString], MTX64_ShallowCopyBitString);
 
