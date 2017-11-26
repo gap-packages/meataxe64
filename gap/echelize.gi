@@ -58,14 +58,24 @@ MTX64_EchelizeInner :=  function(mat, optrec)
     elif optrec.splitMethod = 2 then
         rowSplit := Int(n*optrec.splitRatio/(1+optrec.splitRatio));
         colSplit := Int(m*optrec.splitRatio/(1+optrec.splitRatio));
-        baseCase := n < optrec.rowSplitParam and m < optrec.colSplitParam;
+        baseCase := n*optrec.rowSplitMin < optrec.rowSplitParam or
+                    m*optrec.colSplitMin < optrec.colSplitParam or
+                    (n < optrec.rowSplitParam and m < optrec.colSplitParam);
+    elif optrec.splitMethod = 3 then
+        rowSplit := Int(n*optrec.splitRatio/(1+optrec.splitRatio));
+        colSplit := Int(m*optrec.splitRatio/(1+optrec.splitRatio));
+        rowSplit := Minimum(rowSplit, colSplit);
+        colSplit := rowSplit;
+        baseCase := n*optrec.rowSplitMin < optrec.rowSplitParam or
+                    m*optrec.colSplitMin < optrec.colSplitParam or
+                    (n < optrec.rowSplitParam and m < optrec.colSplitParam);
     fi;
     if baseCase then
         res := MTX64_SLEchelize(mat);
         Info(InfoMTX64_NG,2, "Base case rank ",res.rank);
         return res;
     fi;
-    a1 := MTX64_Submatrix(mat, 1, rowSplit, 1, colSplit);
+    a1 := MTX64_Submatrix(mat, 1, rowSplit, 1, colSplit); # k x k
     Info(InfoMTX64_NG,2,"Splitting off ",rowSplit," rows and ",colSplit," columns");
     if optrec.recurseTop then
         optrec2 := ShallowCopy(optrec);
@@ -88,21 +98,21 @@ MTX64_EchelizeInner :=  function(mat, optrec)
     fi;
     
     # Pull out the pivot rows and columns from the top part and split up the matrix
-    xrs := MTX64_PaddedBitString(res.rowSelect, n, 0);
+    xrs := MTX64_PaddedBitString(res.rowSelect, n, 0); 
     xcs := MTX64_PaddedBitString(res.colSelect, m, 0);
-    hilo := MTX64_RowSelect(xrs, mat);
-    a2 := MTX64_ColSelect(xcs,hilo[1])[2];
-    a34 := MTX64_ColSelect(xcs,hilo[2]);
-    a3 := a34[1];
-    a4 := a34[2];
+    hilo := MTX64_RowSelect(xrs, mat); 
+    a2 := MTX64_ColSelect(xcs,hilo[1])[2]; # r1 x (m-r1)
+    a34 := MTX64_ColSelect(xcs,hilo[2]);   
+    a3 := a34[1];                          # (n-r1) x r1
+    a4 := a34[2];                          # (n-r1) x (m-r1)
     # Clean right
-    a2 := res.multiplier*a2;
+    a2 := res.multiplier*a2;               
     if optrec.multiplierNeeded then
         # Start populating the keeptrack
-        keep1 := res.multiplier;
+        keep1 := res.multiplier;           # r1 x r1
     fi;
     if optrec.cleanerNeeded or optrec.multiplierNeeded then
-        keep2 := a3*res.multiplier;
+        keep2 := a3*res.multiplier;       # (n-r1) x r1
     fi;
     # clean down
     a4 := a4+a3*a2;
@@ -139,12 +149,12 @@ MTX64_EchelizeInner :=  function(mat, optrec)
     fi;
     
     # combine pivots 
-    comb := MTX64_BSCombine(xcs, res2.colSelect);
-    pc := comb[1];
-    rifc := comb[2];  
+    comb := MTX64_BSCombine(xcs, res2.colSelect);  
+    pc := comb[1];             # rank/m
+    rifc := comb[2];           # r2/rank
     comb := MTX64_BSCombine(xrs, res2.rowSelect);
-    pr := comb[1];
-    rifr := comb[2];    
+    pr := comb[1];             # rank/n
+    rifr := comb[2];           # r2/rank
     
     ret.rowSelect := pr;
     ret.colSelect := pc;    
@@ -157,12 +167,12 @@ MTX64_EchelizeInner :=  function(mat, optrec)
     
     # calculate cleaner
     if optrec.cleanerNeeded or optrec.multiplierNeeded then
-        keep2:= MTX64_BSColRifZ(rifr,keep2);    
-        k2ab := MTX64_RowSelect(res2.rowSelect,keep2);
-        k2a := k2ab[1];
+        keep2:= MTX64_BSColRifZ(rifr,keep2);           #  (n-r1) x rank
+        k2ab := MTX64_RowSelect(res2.rowSelect,keep2); 
+        k2a := k2ab[1];                                #  r2 x rank 
         MTX64_BSColPutS(rifr,k2a,One(f));    
         if optrec.cleanerNeeded then
-            k2b := k2ab[2] + res2.cleaner*k2a;
+            k2b := k2ab[2] + res2.cleaner*k2a;         # (n-rank) x rank  + (m-rank) x r2 * r2 x rank
             ret.cleaner := k2b;
             if not (optrec.multiplierNeeded or optrec.remnantNeeded) then
                 return ret;
@@ -195,6 +205,8 @@ BindGlobal("MTX64_Echelize_DefaultOptions", rec(
                               rowSplitParam := 256,
                               colSplitParam := 256,
                               splitRatio := 1,
+                              rowSplitMin := 2,
+                              colSplitMin := 2,
                               multiplierNeeded := true,
                               cleanerNeeded := true,
                               remnantNeeded := true,
