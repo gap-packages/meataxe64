@@ -621,7 +621,7 @@ BindGlobal("MTX64_Submatrix",
     noc := MTX64_Matrix_NumCols(m);
     if startx = 1 and lenx = noc then
         sm := MTX64_NewMatrix(FieldOfMTX64Matrix(m), leny, noc);
-        MTX64_DCpy(m, starty-1, leny, sm);
+        MTX64_DCpy(m, sm, starty-1, leny);
     else
         sm := MTX64_NewMatrix(FieldOfMTX64Matrix(m), leny, lenx);
         MTX64_DCut(m, starty-1, leny, startx-1, sm);
