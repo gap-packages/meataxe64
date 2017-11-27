@@ -17,6 +17,7 @@
 #include "src/vec8bit.h" /* GAP headers -- we need the internals of these objects */
 #include "src/vecgf2.h" /* GAP headers    for efficient vector conversion */
 
+
 // TODO Split this file up along the lines of the split between the different
 // headers
 // in meataxe64
@@ -590,13 +591,18 @@ Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1) {
   return 0;
 }
 
-Obj MTX64_DNzl(Obj self, Obj m) {
+Obj MTX64_DNzl(Obj self, Obj m, Obj row) {
   DSPACE ds;
   Dfmt *mp;
   CHECK_MTX64_Matrix(m);
+  CHECK_MTX64_Row(row,m);
   SetDSpaceOfMTX64_Matrix(m, &ds);
   mp = DataOfMTX64_Matrix(m);
-  return INTOBJ_INT(DNzl(&ds, mp));
+  mp = DPAdv(&ds,INT_INTOBJ(row),mp);
+  UInt res = DNzl(&ds, mp);
+  if (res == ZEROROW)
+      return Fail;
+  return INTOBJ_INT(res);
 }
 
 // Slab functions -- slightly higher level matrix operations
@@ -707,6 +713,14 @@ Obj MTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos) {
 }
 
 // Unlike the meataxe64 library function, we update the weight of our bitstring
+
+Obj MTX64_EmptyBitString(Obj self, Obj len) {
+    CHECK_NONNEG_SMALLINT(len);
+    Obj bs =MTX64_MakeBitString(INT_INTOBJ(len));
+    DataOfBitStringObject(bs)[0] = INT_INTOBJ(len);
+    DataOfBitStringObject(bs)[1] = 0;
+    return bs;
+}
 
 Obj MTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   CHECK_MTX64_BitString(bs);
@@ -1203,32 +1217,25 @@ Obj MTX64_BSColPutS(Obj self, Obj bitstring, Obj m, Obj x) {
   return 0;
 }
 
-Obj MTX64_PaddedBitString(Obj self, Obj bs, Obj newlen, Obj pad) {
-    CHECK_MTX64_BitString(bs);
-    CHECK_NONNEG_SMALLINTS(newlen, pad);
-    UInt ipad = INT_INTOBJ(pad);
-    if (ipad > 1)
-        ErrorMayQuit("Can only pad a bitstring with 0 or 1",0,0);
-    UInt inewlen = INT_INTOBJ(newlen);
-    UInt len = DataOfBitStringObject(bs)[0];
-    if (inewlen < len )
-        ErrorMayQuit("Bitstring is already longer than that",0,0);
-    Obj nbs = MTX64_MakeBitString(inewlen);
-    DataOfBitStringObject(nbs)[0] = inewlen;
-    if (ipad) {
-        memset((void *)(DataOfBitStringObject(nbs)+2), 0xFF, Size_Bits_BitString(inewlen));
-        DataOfBitStringObject(nbs)[1] = DataOfBitStringObject(bs)[1] + inewlen -len;
-    } else
-        DataOfBitStringObject(nbs)[1] = DataOfBitStringObject(bs)[1];
-    memcpy(DataOfBitStringObject(nbs)+2, DataOfBitStringObject(bs)+2, Size_Bits_BitString(len));
-    
-    // make sure the last word didn't get damaged
-    if (ipad) {
-        for (UInt i = len; i < inewlen && (i % 64); i++)
-            BSBitSet(DataOfBitStringObject(nbs),i);
-    }
-    return nbs;    
+static void RecountBS(Obj bs) {
+    UInt *d = DataOfBitStringObject(bs);
+    d[1] = COUNT_TRUES_BLOCKS(d+2,(d[0]+63)/64);
 }
+
+Obj MTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
+    CHECK_MTX64_BitString(bs1);
+    CHECK_MTX64_BitString(bs2);
+    CHECK_NONNEG_SMALLINT(shift);
+    UInt len1 = DataOfBitStringObject(bs1)[0];
+    UInt len2 = DataOfBitStringObject(bs2)[0];
+    UInt ishift = INT_INTOBJ(shift);
+    if (len1 + ishift > len2)
+        ErrorMayQuit("BSShiftOr: destination bitstring not long enough", 0, 0);
+    BSShiftOr(DataOfBitStringObject(bs1), ishift, DataOfBitStringObject(bs2));
+    RecountBS(bs2);
+    return 0;
+}
+
 
 typedef Obj (*GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params)                   \
@@ -1268,7 +1275,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSub, 4, "nrows,d1,d2,d"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMad, 4, "nrows,scalar,d1,d2"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMul, 3, "nrows,scalar,d1"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DNzl, 1, "m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DNzl, 2, "m, row"),
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLMultiply, 3, "a, b, c"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLTranspose, 2, "m, t"),
@@ -1280,8 +1287,9 @@ static StructGVarFunc GVarFuncs[] = {
                           "bs, pos"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntryOfBitString, 2,
                           "bs, pos"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_PaddedBitString, 3,
-                          "bs, newlen, pad"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_EmptyBitString, 1, "len"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSShiftOr, 3,
+                          "bs1, shift, bs2"),
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyMatrix, 1, "m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyBitString, 1, "bs"),
