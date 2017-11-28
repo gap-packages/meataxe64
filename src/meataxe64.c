@@ -1114,25 +1114,29 @@ Obj MTX64_ColSelect(Obj self, Obj bitstring, Obj m) {
   return ret;
 }
 
-Obj MTX64_RowSelect(Obj self, Obj bitstring, Obj m) {
+Obj MTX64_RowSelectShifted(Obj self, Obj bitstring, Obj m, Obj shift) {
   CHECK_MTX64_Matrix(m);
   CHECK_MTX64_BitString(bitstring);
+  CHECK_MTX64_Row(shift,m);
+  UInt ishift = INT_INTOBJ(shift);
   UInt nor = HeaderOfMatrix(m)->nor;
   UInt noc = HeaderOfMatrix(m)->noc;
-  if (nor != DataOfBitStringObject(bitstring)[0])
-    ErrorMayQuit("mismatched matrix length: matrix %i, bitstring %i", nor, DataOfBitStringObject(bitstring)[0]);
+  if (nor != ishift + DataOfBitStringObject(bitstring)[0])
+    ErrorMayQuit("mismatched matrix length: matrix %i, bitstring + shift %i", nor,
+                 ishift+ DataOfBitStringObject(bitstring)[0]);
   UInt nos = DataOfBitStringObject(bitstring)[1];
   Obj fld = CALL_1ARGS(FieldOfMTX64Matrix, m);
   Obj sel = NEW_MTX64_Matrix(fld, nos, noc);
-  Obj nonsel = NEW_MTX64_Matrix(fld, nor-nos, noc);
+  Obj nonsel = NEW_MTX64_Matrix(fld, nor-ishift-nos, noc);
   if (noc != 0) {
       DSPACE ds;
       SetDSpaceOfMTX64_Matrix(m, &ds);
       UInt *bs = DataOfBitStringObject(bitstring);
       Dfmt *d = DataOfMTX64_Matrix(m);
+      d = DPAdv(&ds,ishift,d);
       Dfmt *selp = DataOfMTX64_Matrix(sel);
       Dfmt *nonselp = DataOfMTX64_Matrix(nonsel);
-      for (UInt i = 0; i < nor; i++) {
+      for (UInt i = 0; i < nor-ishift; i++) {
           if (BSBitRead(bs, i)) {
               memcpy(selp, d, ds.nob);
               selp = DPAdv(&ds, 1, selp);
@@ -1310,7 +1314,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ReadMatrix, 1, "fn"),
 
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ColSelect, 2, "bs, m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_RowSelect, 2, "bs, m"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_RowSelectShifted, 3, "bs, m, shift"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_RowCombine, 3, "bs, m1, m2"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSColRifZ, 2, "bs, m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSColPutS, 3, "bs, m, x"),

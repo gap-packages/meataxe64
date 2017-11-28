@@ -690,3 +690,6 @@ InstallMethod(\<,  "for meataxe bitstrings",
 end);
 
 
+BindGlobal("MTX64_RowSelect", function(bs,m)
+    return MTX64_RowSelectShifted(bs,m,0);
+end);
