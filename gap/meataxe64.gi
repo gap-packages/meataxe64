@@ -281,8 +281,7 @@ BindGlobal( "MTX64_InsertVector",
     if Is8BitVectorRep(v) and fail <> MTX64_InsertVec8Bit(m,v,row) then
         return;
     fi;    
-    if (TNUM_OBJ_INT(v) = T_PLIST_FFE or TNUM_OBJ_INT(v) = T_PLIST_FFE+1)
-        and fail <> MTX64_InsertVecFFE(m, v, row) then
+    if IS_VECFFE(v) and fail <> MTX64_InsertVecFFE(m, v, row) then
         return;
     fi;
     f := FieldOfMTX64Matrix(m);    
