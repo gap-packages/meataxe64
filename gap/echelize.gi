@@ -15,25 +15,22 @@ DeclareInfoClass("InfoMTX64_NG");
 # cleanerNeeded -- Boolean  if true the cleaner must be calculated and returned
 # remnantNeeded -- Boolean  if true the remnant must be calculated and returned
 #                           felds not needed MAY be returned.
-# pivotsNeeded -- Boolean  if true, the row and column pivots must be returned
-#
 # failIfSingular -- Boolean  if true return fail if the matrix is non-singular
 #
+# chop2         -- if the number of rows AND the number of columns are less than this
+#                   then use Dformat
+# chop1         -- if the number of rows OR the number of columns are less than this then 
+#                     use Dformat
+# sq            -- if columns/rows is more than sq then we chop 1x2 otherwise 2x1
+# trim          -- if an initial block of >= 1/trim of the rows or columns is zero
+#                  trim them away are recurse
 #
 
-MTX64_EchelizeInner := fail;
+MTX64_EchelizeInner := fail; # forward declaration for mutually recursive private functions
 
-
-MTX64_NumZeroRows := function(m)
-    local  nor, i;
-    nor := MTX64_Matrix_NumRows(m);
-    for i in [0..nor-1] do
-        if MTX64_DNzl(m, i) <> fail then
-            return i;
-        fi;
-    od;
-    return nor;
-end;
+#
+# This is the case where we chop 1 x 2 (two blocks side by side)
+#
 
 
 MTX64_EchelizeLR := function(mat, optrec)
@@ -69,21 +66,26 @@ MTX64_EchelizeLR := function(mat, optrec)
             MTX64_DPaste(res.multiplier*a2,0,n,splitAt-n,ret.remnant);
         fi;
         ret.cleaner := MTX64_NewMatrix(f, 0, n);
+        Info(InfoMTX64_NG, 2, "Returning rank ", n," all from left part");        
         return ret;
     fi;
+    Info(InfoMTX64_NG,3,"Left part gave rank ",res.rank);    
     a2s := MTX64_RowSelect(res.rowSelect, a2);
     a2np := a2s[2] + res.cleaner*a2s[1];
     res2 := MTX64_EchelizeInner(a2np, optrec);
+    Info(InfoMTX64_NG,3,"Right part gave rank ",res2.rank);    
     ret.rank := res.rank + res2.rank;
+    if optrec.failIfSingular and (ret.rank < n or ret.rank < m) then
+        Info(InfoMTX64_NG,3,"Matrix is singular, returning fail");
+        return fail;
+    fi;
     rs := MTX64_BSCombine(res.rowSelect, res2.rowSelect);
     ret.colSelect := MTX64_EmptyBitString(m);
     MTX64_BSShiftOr(res.colSelect,0,ret.colSelect);
     MTX64_BSShiftOr(res2.colSelect,splitAt,ret.colSelect);
     ret.rowSelect := rs[1];
-    if not (optrec.multiplierNeeded or optrec.remnantNeeded or optrec.cleanerNeeded) then
-        return ret;
-    fi;
     if optrec.remnantNeeded then
+        Info(InfoMTX64_NG,3,"Back cleaning for remnant");
         a2p := res.multiplier*a2s[1];
         a2ps := MTX64_ColSelect(res2.colSelect, a2p);
         a2np := a2ps[2] + a2ps[1]*res2.remnant;
@@ -98,9 +100,11 @@ MTX64_EchelizeLR := function(mat, optrec)
         MTX64_BSColPutS(rs[2],k1s[1],One(f));        
     fi;
     if optrec.cleanerNeeded then
+        Info(InfoMTX64_NG,3,"Assembling cleaner");        
         ret.cleaner := k1s[2] + res2.cleaner*k1s[1];
     fi;
     if optrec.multiplierNeeded then
+        Info(InfoMTX64_NG,3,"Assembling multiplier");        
         kl := res2.multiplier*k1s[1];
         ku := MTX64_BSColRifZ(rs[2],res.multiplier);
         ku := ku + a2ps[1]*kl;
@@ -109,9 +113,13 @@ MTX64_EchelizeLR := function(mat, optrec)
         MTX64_DCpy(ku,ret.multiplier,0,res.rank);
         MTX64_DPaste(kl, res.rank, res2.rank, 0, ret.multiplier);        
     fi;
+    Info(InfoMTX64_NG,2,"Returning rank ",ret.rank);        
     return ret;
 end;
 
+#
+# This is the case where we chop 2 x 1 (that is 2 blocks one on top of the other)
+#
         
 MTX64_EchelizeUD := function(mat, optrec)
     local  f, n, m, ret, splitAt, a1, a2, optrec2, 
@@ -127,7 +135,7 @@ MTX64_EchelizeUD := function(mat, optrec)
     a1 := MTX64_NewMatrix(f, splitAt, m);
     MTX64_DCpy(mat, a1, 0, splitAt);
     a2 := MTX64_NewMatrix(f, n-splitAt, m);
-    MTX64_DCpy(mat, a2, splitAt, n-splitAt);    
+    MTX64_DCpy(mat, a2, splitAt, n-splitAt);        
     optrec2 := ShallowCopy(optrec);
     optrec2.remnantNeeded := true;
     if optrec.cleanerNeeded then
@@ -137,7 +145,9 @@ MTX64_EchelizeUD := function(mat, optrec)
     res := MTX64_EchelizeInner(a1,optrec2);
     if res.rank = m then
         ret.rank := m;
-        ret.multiplier := res.multiplier;
+        if optrec2.multiplierNeeded then
+            ret.multiplier := res.multiplier;
+        fi;        
         ret.colSelect := res.colSelect;
         ret.rowSelect := MTX64_EmptyBitString(n);
         MTX64_BSShiftOr(res.rowSelect, 0, ret.rowSelect);
@@ -147,13 +157,17 @@ MTX64_EchelizeUD := function(mat, optrec)
             MTX64_DCpy(res.cleaner, ret.cleaner, 0, splitAt-m);
             MTX64_DPaste(a2*res.multiplier, splitAt-m, n - splitAt, 0, ret.cleaner);
         fi;
+        Info(InfoMTX64_NG, 2, "Returning rank ", m," all from top part");        
         return ret;
     fi;
+    Info(InfoMTX64_NG,3,"Top part gave rank ",res.rank);    
     a2s := MTX64_ColSelect(res.colSelect, a2);
     a2np := a2s[2] + a2s[1]*res.remnant;
     res2 := MTX64_EchelizeInner(a2np, optrec);
+    Info(InfoMTX64_NG,3,"Bottom part gave rank ",res2.rank);    
     ret.rank := res.rank + res2.rank;
     if optrec.failIfSingular and (ret.rank < n or ret.rank < m) then
+        Info(InfoMTX64_NG,3,"Matrix is singular, returning fail");
         return fail;
     fi;
         
@@ -162,21 +176,21 @@ MTX64_EchelizeUD := function(mat, optrec)
     MTX64_BSShiftOr(res.rowSelect,0,ret.rowSelect);
     MTX64_BSShiftOr(res2.rowSelect,splitAt,ret.rowSelect);
     ret.colSelect := cs[1];
-    if not (optrec.multiplierNeeded or optrec.remnantNeeded or optrec.cleanerNeeded) then
-        return ret;
-    fi;
     if optrec.remnantNeeded or optrec.multiplierNeeded then
         a1s := MTX64_ColSelect(res2.colSelect, res.remnant);
     fi;
     if optrec.remnantNeeded then
+        Info(InfoMTX64_NG,3,"Back cleaning for remnant");
         r1 := a1s[2] + a1s[1]*res2.remnant;
         ret.remnant := MTX64_RowCombine(cs[2],r1,res2.remnant);
     fi;
     if optrec.cleanerNeeded or optrec.multiplierNeeded then
+        Info(InfoMTX64_NG,3,"Forward cleaning in keeptrack");        
         k1 := a2s[1]*res.multiplier;
         k1s := MTX64_RowSelect(res2.rowSelect, k1);
     fi;
     if optrec.cleanerNeeded then
+        Info(InfoMTX64_NG,3,"Assembling cleaner");        
         ku := MTX64_NewMatrix(f, splitAt-res.rank, ret.rank);
         MTX64_DPaste(res.cleaner,0,splitAt-res.rank,0,ku);
         kl := MTX64_NewMatrix(f, n-splitAt-res2.rank, ret.rank);
@@ -188,6 +202,7 @@ MTX64_EchelizeUD := function(mat, optrec)
         MTX64_DPaste(kl, splitAt-res.rank, n-splitAt-res2.rank, 0, ret.cleaner);
     fi;
     if optrec.multiplierNeeded then
+        Info(InfoMTX64_NG,3,"Assembling multiplier");        
         mu := MTX64_NewMatrix(f,res.rank,ret.rank);
         MTX64_DPaste(res.multiplier, 0, res.rank, 0, mu);
         ml := MTX64_NewMatrix(f,res2.rank, ret.rank);
@@ -196,32 +211,51 @@ MTX64_EchelizeUD := function(mat, optrec)
         mu := mu + a1s[1]*ml;
         ret.multiplier := MTX64_RowCombine(cs[2],mu,ml);
     fi;
+    Info(InfoMTX64_NG,2,"Returning rank ",ret.rank);        
     return ret;
 end;
 
-MTX64_NumZeroColumns := function(mat)
-    local  n, m, best, i, x;
+
+#
+# In one pass obtain the number of initial zero rows and 
+# the number of initial zero columns
+#
+
+MTX64_NumZeroRowsCols := function(mat)
+    local  n, m, best, zr, i, x;
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
     best := m;    
+    zr := n;    
     for i in [0..n-1] do
         x := MTX64_DNzl(mat,i);
-        if x = 0 then
-            return 0;
-        fi;
-        if x <> fail and x < best then
-            best := x;
+        if x <> fail then
+            if zr > i then
+                zr := i;            
+            fi;
+            if x = 0 then
+                return [zr,0];            
+            fi;
+            if x < best then
+                best := x;
+            fi;
         fi;
     od;
-    return best;
+    return [zr,best];
 end;
 
-    
+#
+# This is the entry point for the work and for the recursive calls
+# Strategy is decided here (trim, base case, chop 1 x 2 or chop 2 x 1)
+# Special cases like zero matrices (which includes all n x 0 and 0 x m matrices)
+# are also handled here
+#
+#
 
         
 MTX64_EchelizeInner := function(mat, optrec) 
     local  f, n, zeroRows, colSelect, multiplier, remnant, cleaner, a, 
-           res, rs, k, zeroCols, cs, m,
+           res, rs, k, zeroCols, cs, m, z,
            r;
     f := FieldOfMTX64Matrix(mat);
     n := MTX64_Matrix_NumRows(mat);
@@ -229,9 +263,10 @@ MTX64_EchelizeInner := function(mat, optrec)
     if optrec.failIfSingular and n <> m then
         return fail;
     fi;    
-    Info(InfoMTX64_NG,1, "Starting computation 2 on ",n,"*",m," matrix over GF(",MTX64_FieldOrder(f),")");
+    Info(InfoMTX64_NG,1, "Starting echelize on ",n,"*",m," matrix over GF(",MTX64_FieldOrder(f),")");
     # look for a block of zero rows at the top of matrix 
-    zeroRows := MTX64_NumZeroRows(mat);
+    z := MTX64_NumZeroRowsCols(mat);
+    zeroRows := z[1];    
     if zeroRows = n then
         #
         # This catches the cases of no rows and no columns as well
@@ -244,13 +279,14 @@ MTX64_EchelizeInner := function(mat, optrec)
                    cleaner := MTX64_NewMatrix(f,n,0));
     fi;    
     if zeroRows > 0 then
-        Info(InfoMTX64_NG,2,"Found ",zeroRows," initial zero rows");    
+        Info(InfoMTX64_NG,3,"Found ",zeroRows," initial zero rows");    
         if optrec.failIfSingular then
             return fail;
         fi;
     fi;
     
-    if zeroRows > n/10  then
+    if zeroRows > n/optrec.trim  then
+        Info(InfoMTX64_NG,2,"Trimming ",zeroRows," initial zero rows");    
         a := MTX64_NewMatrix(f,n-zeroRows,m);
         MTX64_DCpy(mat,a,zeroRows,n-zeroRows);
         res := MTX64_EchelizeInner(a, optrec);
@@ -262,17 +298,19 @@ MTX64_EchelizeInner := function(mat, optrec)
             MTX64_DPaste(res.cleaner, zeroRows, n-zeroRows-res.rank, 0, k);
             res.cleaner := k;
         fi;
+        Info(InfoMTX64_NG,2,"Returning rank ",res.rank);        
         return res;
     fi;
     
-    zeroCols := MTX64_NumZeroColumns(mat);
+    zeroCols := z[2];
     
     if zeroCols > 0 then
-        Info(InfoMTX64_NG,2,"Found ",zeroCols," initial zero cols");    
+        Info(InfoMTX64_NG,3,"Found ",zeroCols," initial zero cols");    
     fi;
     
     
-    if zeroCols > m/10 then
+    if zeroCols > m/optrec.trim then
+        Info(InfoMTX64_NG,2,"Trimming ",zeroCols," initial zero cols");    
         a := MTX64_NewMatrix(f,n,m-zeroCols);
         MTX64_DCut(mat, 0, n, zeroCols, a);
         res := MTX64_EchelizeInner(a, optrec);
@@ -284,6 +322,7 @@ MTX64_EchelizeInner := function(mat, optrec)
             MTX64_DPaste(res.remnant, 0,res.rank, zeroCols, r);
             res.remnant := r;
         fi;
+        Info(InfoMTX64_NG,2,"Returning rank ",res.rank);        
         return res;
     fi;
     
@@ -303,15 +342,15 @@ end;
         
        
 
-BindGlobal("MTX64_Echelize_DefaultOptions", rec(
-                              chop2 := 256,
-                                               chop1 := 64,
-                                               sq := 5/4,
-                              aspect  := 2,
-                              multiplierNeeded := true,
-                              cleanerNeeded := true,
-                              remnantNeeded := true,
-                              failIfSingular := false));
+BindGlobal("MTX64_Echelize_DefaultOptions", rec( 
+        chop2 := 256,
+                         chop1 := 64,
+                         sq := 5/4,
+                         trim := 10,
+                         multiplierNeeded := true,
+                         cleanerNeeded := true,
+                         remnantNeeded := true,
+                         failIfSingular := false));
 
 
 InstallGlobalFunction(MTX64_Echelize, function(mat, opt...)
