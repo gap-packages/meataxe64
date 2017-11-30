@@ -228,9 +228,10 @@ InstallMethod(QUO, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFi
     return MTX64_FieldDiv(MTX64_FieldOfElement(x), x, y);    
 end);
 
-InstallMethod(Inverse,  "meataxe64 field element",  
+InstallMethod(InverseOp,  "meataxe64 field element",  
         [IsMTX64FiniteFieldElement],
     x ->  MTX64_FieldInv(MTX64_FieldOfElement(x), x));
+
 
 
 FFEfromFELT := function(felt)
