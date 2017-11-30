@@ -419,12 +419,148 @@ MakeEchTestMatrix := function(f, arg...)
     ConvertToMatrixRep(m2);
     return MTX64_Matrix(KroneckerProduct(m1,m2));
 end;
+   
+    
+MTX64_SEMT := function(mat)
+    local  f, m, n, res, pivotcols, heads, i, ret, bs;    
+    f := FieldOfMTX64Matrix(mat);
+    n := MTX64_Matrix_NumRows(mat);
+    m := MTX64_Matrix_NumCols(mat);
+    res := MTX64_Echelize(mat);    
+    pivotcols := MTX64_PositionsBitString(res.colSelect);
+    heads := ListWithIdenticalEntries(m,0);
+    for i in [1..res.rank] do
+        heads[pivotcols[i]] := i;
+    od;
+    ret := rec(heads := heads);
+    bs := MTX64_ComplementBitString(res.colSelect);
+    ret.vectors := MTX64_BSColRifZ(bs, -res.remnant);
+    MTX64_BSColPutS(bs, ret.vectors, One(f));
+    ret.coeffs := MTX64_BSColRifZ(res.rowSelect, -res.multiplier);
+    ret.relations := MTX64_BSColRifZ(res.rowSelect, res.cleaner);
+    MTX64_BSColPutS(res.rowSelect, ret.relations, One(f));
+    return ret;
+end;
+
+MTX64_SEM := function(mat)
+    local  f, m, n, res, pivotcols, heads, i, ret, bs;    
+    f := FieldOfMTX64Matrix(mat);
+    n := MTX64_Matrix_NumRows(mat);
+    m := MTX64_Matrix_NumCols(mat);
+    res := MTX64_Echelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
+    pivotcols := MTX64_PositionsBitString(res.colSelect);
+    heads := ListWithIdenticalEntries(m,0);
+    for i in [1..res.rank] do
+        heads[pivotcols[i]] := i;
+    od;
+    ret := rec(heads := heads);
+    bs := MTX64_ComplementBitString(res.colSelect);
+    ret.vectors := MTX64_BSColRifZ(bs, -res.remnant);
+    MTX64_BSColPutS(bs, ret.vectors, One(f));
+    return ret;
+end;
+
+InstallOtherMethod(SemiEchelonMatTransformationDestructive, [IsMTX64Matrix], MTX64_SEMT);
+InstallOtherMethod(SemiEchelonMatTransformation, [IsMTX64Matrix], MTX64_SEMT);
+InstallOtherMethod(SemiEchelonMatDestructive, [IsMTX64Matrix], MTX64_SEM);
+InstallOtherMethod(SemiEchelonMat, [IsMTX64Matrix], MTX64_SEM);
+
+        
+MTX64_SolutionsMat := function(a, bs)
+    local  res, bss, bp, c, n, solvables, i, x;
+
+    res := MTX64_Echelize(a, rec(cleanerNeeded := false));
+    bss := MTX64_ColSelect(res.colSelect, bs);
+    bp := bss[1];
+    c := bss[2] + bss[1]*res.remnant;
+    n := MTX64_Matrix_NumRows(c);
+    solvables := MTX64_EmptyBitString(n);
+    for i in [0..n-1] do
+        if MTX64_DNzl(c,i) = fail then
+            MTX64_SetEntryOfBitString(solvables,i);
+        fi;
+    od;
+    x := MTX64_RowSelect(solvables,bss[1])[1]*res.multiplier;
+    x := MTX64_BSColRifZ(res.rowSelect,x);
+    return [solvables,x];
+end;
+
+InstallOtherMethod(SolutionMat, [IsMTX64Matrix, IsMTX64Matrix],
+        function(m,v)
+    local  res;
+    res := MTX64_SolutionsMat(m,[v]);
+    if MTX64_GetEntryOfBitString(res[1],0) = 1 then
+        return res[2];
+    else
+        return fail;
+    fi;
+end);
+
+InstallOtherMethod(TriangulizedMat, [IsMTX64Matrix],
+        function(m)
+    local  res, bs, sem, tm;
+    res := MTX64_Echelize(m, rec(cleanerNeeded := false, multiplierNeeded := false));
+    bs := MTX64_ComplementBitString(res.colSelect);
+    sem := MTX64_BSColRifZ(bs, -res.remnant);
+    MTX64_BSColPutS(bs, sem, One(FieldOfMTX64Matrix(m)));
+    tm := ZeroMutable(m);
+    MTX64_DCpy(sem, tm, 0, res.rank);
+    return tm;
+end);
+
+InstallOtherMethod(BaseMat, [IsMTX64Matrix],
+        function(m)    
+    local  res;
+    res := MTX64_Echelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
+                   remnantNeeded := false));
+    return MTX64_RowSelect(res.rowSelect, m)[1];
+end);
+
+InstallOtherMethod(BaseMatDestructive, [IsMTX64Matrix],
+        function(m)    
+    local  res;
+    res := MTX64_Echelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
+                   remnantNeeded := false));
+    return MTX64_RowSelect(res.rowSelect, m)[1];
+end);
+
+InstallOtherMethod(SumIntersectionMat, [IsMTX64Matrix, IsMTX64Matrix],
+        function(m1,m2)
+    local  f, n1, m, n2, mat, res, sumend, i, sum, int;
+    f := FieldOfMTX64Matrix(m1);
+    n1 := MTX64_Matrix_NumRows(m1);
+    m := MTX64_Matrix_NumCols(m1);
+    if f <> FieldOfMTX64Matrix(m2) or m <> MTX64_Matrix_NumCols(m2) then
+        Error("Matrices incompatible");
+    fi;
+    n2 := MTX64_Matrix_NumRows(m2);
+    mat := MTX64_NewMatrix(f,n1+n2,2*m);
+    MTX64_DPaste(m1,0,n1,0,mat);
+    MTX64_DPaste(m1,0,n1,m,mat);
+    MTX64_DPaste(m2,n1,n2,0,mat);
+    res := SemiEchelonMatDestructive(mat);
+    sumend := 0;
+    for i in [m,m-1..1] do
+        if res.heads[i] <> 0 then
+            sumend := res.heads[i];
+            break;
+        fi;
+    od;
+    sum := MTX64_Submatrix(res.vectors, 1, sumend, 1, m);
+    int := MTX64_Submatrix(res.vectors, sumend+1, MTX64_Matrix_NumRows(res.vectors)-sumend, m+1, m);
+    return [sum, int];
+end);
+    
+            
+        
+        
+        
+        
+
+    
+    
 
    
     
-    
-        
-        
-        
         
         
