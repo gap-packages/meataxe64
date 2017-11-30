@@ -728,6 +728,48 @@ Obj MTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   return INTOBJ_INT(BSBitRead(DataOfBitStringObject(bs), INT_INTOBJ(pos)));
 }
 
+Obj MTX64_ComplementBitString(Obj self, Obj bs) {
+    CHECK_MTX64_BitString(bs);
+    UInt len = DataOfBitStringObject(bs)[0];
+    UInt wt = DataOfBitStringObject(bs)[1];
+    Obj c = MTX64_MakeBitString(len);
+    DataOfBitStringObject(c)[0] = len;
+    if (wt < len) {
+        UInt *bsp = DataOfBitStringObject(bs)+2;
+        UInt *cp = DataOfBitStringObject(c)+2;
+        for (UInt i = 0; i < len/64; i++)
+            *cp++ = ~*bsp++;
+        if (len % 64) {
+            UInt  mask = (1<<(len % 64)) -1;
+            *cp = (~*bsp) & mask;
+        }
+        DataOfBitStringObject(c)[1] = len - wt;
+    }
+    return c;
+}
+        
+
+Obj MTX64_PositionsBitString(Obj self, Obj bs) {
+    CHECK_MTX64_BitString(bs);
+    UInt len = DataOfBitStringObject(bs)[0];
+    UInt wt = DataOfBitStringObject(bs)[1];
+    if (wt == 0) {
+        Obj res = NEW_PLIST(T_PLIST_EMPTY,0);
+        SET_LEN_PLIST(res,0);
+        return res;
+    }
+    Obj res = NEW_PLIST(T_PLIST_CYC_SSORT, wt);
+    UInt i = 1;
+    UInt *bsp = DataOfBitStringObject(bs);
+    for (UInt j = 0; j < len; j++) {
+        if (BSBitRead(bsp,j)) {
+            SET_ELM_PLIST(res,i++,INTOBJ_INT(j+1));
+        }
+    }
+    SET_LEN_PLIST(res,wt);
+    return res;
+}
+
 // Unlike the meataxe64 library function, we update the weight of our bitstring
 
 Obj MTX64_EmptyBitString(Obj self, Obj len) {
@@ -1341,6 +1383,8 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSColRifZ, 2, "bs, m"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSColPutS, 3, "bs, m, x"),
     GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSCombine, 2, "bs1, bs2"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_PositionsBitString, 1, "bs"),
+    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ComplementBitString, 1, "bs"),
 
     {0} /* Finish with an empty entry */
 
