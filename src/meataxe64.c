@@ -241,6 +241,11 @@ static inline void CHECK_MTX64_MATRIX_FELT(Obj m, Obj x) {
     ErrorMayQuit("MTX64: element is not over same field as matrix", 0, 0);
 }
 
+static inline void CHECK_MUT(Obj o) {
+    if (!IS_MUTABLE_OBJ(o))
+        ErrorMayQuit("MTX64: object must be mutable",0,0);
+}
+
 static inline void CHECK_NONNEG_SMALLINT(Obj a) {
   if (!IS_INTOBJ(a) || INT_INTOBJ(a) < 0)
     ErrorMayQuit("Meataxe64: argument should be a non-negative integer < 2^60",
@@ -454,6 +459,7 @@ void SetEntryMTX64(Obj m, UInt row, UInt col, FELT entry) {
 
 Obj MTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry) {
   CHECK_MTX64_Matrix(m);
+  CHECK_MUT(m);
   CHECK_MTX64_Coords(row, col, m);
   UInt irow = INT_INTOBJ(row);
   UInt icol = INT_INTOBJ(col);
@@ -473,6 +479,7 @@ Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows) {
   DSPACE ds;
   Dfmt *sp, *dp;
   CHECK_MTX64_Matrices(src, dst, 1);
+  CHECK_MUT(dst);
   CHECK_MTX64_RowRange(startrow, nrows, src);
   CHECK_MTX64_RowCount(nrows, dst);
   UInt sr = INT_INTOBJ(startrow);
@@ -490,6 +497,7 @@ Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol,
   DSPACE ms, cs;
   Dfmt *mp, *cp;
   CHECK_MTX64_Matrices(m, clip, 0);
+  CHECK_MUT(clip);
   CHECK_MTX64_RowRange(startrow, nrows, m);
   CHECK_MTX64_RowCount(nrows, clip);
   UInt sr = INT_INTOBJ(startrow);
@@ -510,6 +518,7 @@ Obj MTX64_DPaste(Obj self, Obj clip, Obj startrow, Obj nrows, Obj startcol,
   DSPACE ms, cs;
   Dfmt *mp, *cp;
   CHECK_MTX64_Matrices(m, clip, 0);
+  CHECK_MUT(m);
   CHECK_MTX64_RowRange(startrow, nrows, m);
   CHECK_NONNEG_SMALLINT(startcol);
   CHECK_MTX64_RowCount(nrows, clip);
@@ -535,6 +544,7 @@ Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2, Obj d) {
   CHECK_MTX64_RowCount(nrows, d1);
   CHECK_MTX64_RowCount(nrows, d2);
   CHECK_MTX64_RowCount(nrows, d);
+  CHECK_MUT(d);
   SetDSpaceOfMTX64_Matrix(d1, &ds);
   d1p = DataOfMTX64_Matrix(d1);
   d2p = DataOfMTX64_Matrix(d2);
@@ -551,6 +561,7 @@ Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2, Obj d) {
   CHECK_MTX64_RowCount(nrows, d1);
   CHECK_MTX64_RowCount(nrows, d2);
   CHECK_MTX64_RowCount(nrows, d);
+  CHECK_MUT(d);
   SetDSpaceOfMTX64_Matrix(d1, &ds);
   d1p = DataOfMTX64_Matrix(d1);
   d2p = DataOfMTX64_Matrix(d2);
@@ -568,6 +579,7 @@ Obj MTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2) {
   CHECK_MTX64_RowCount(nrows, d2);
   CHECK_MTX64_FELT(scalar);
   CHECK_MTX64_MATRIX_FELT(d1, scalar);
+  CHECK_MUT(d2);
   SetDSpaceOfMTX64_Matrix(d1, &ds);
   d1p = DataOfMTX64_Matrix(d1);
   d2p = DataOfMTX64_Matrix(d2);
@@ -582,6 +594,7 @@ Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1) {
   FELT x;
   CHECK_MTX64_Matrix(d1);
   CHECK_MTX64_RowCount(nrows, d1);
+  CHECK_MUT(d1);
   CHECK_MTX64_FELT(scalar);
   CHECK_MTX64_MATRIX_FELT(d1, scalar);
   SetDSpaceOfMTX64_Matrix(d1, &ds);
@@ -617,6 +630,7 @@ static void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
 
 Obj MTX64_SLEchelizeDestructive(Obj self, Obj a) {
   CHECK_MTX64_Matrix(a);
+  CHECK_MUT(a);
   Matrix_Header *h = HeaderOfMatrix(a);
   UInt nrows = h->nor;
   UInt ncols = h->noc;
@@ -657,6 +671,7 @@ Obj MTX64_SLEchelizeDestructive(Obj self, Obj a) {
 Obj MTX64_SLMultiply(Obj self, Obj a, Obj b, Obj c) {
   CHECK_MTX64_Matrices(a, b, 0);
   CHECK_MTX64_Matrices(a, c, 0);
+  CHECK_MUT(c);
   Matrix_Header *ha = HeaderOfMatrix(a);
   Matrix_Header *hb = HeaderOfMatrix(b);
   Matrix_Header *hc = HeaderOfMatrix(c);
@@ -676,6 +691,7 @@ Obj MTX64_SLMultiply(Obj self, Obj a, Obj b, Obj c) {
 
 Obj MTX64_SLTranspose(Obj self, Obj mat, Obj tra) {
   CHECK_MTX64_Matrices(mat, tra, 0);
+  CHECK_MUT(tra);
   Matrix_Header *h = HeaderOfMatrix(mat);
   UInt nora = h->nor;
   UInt noca = h->noc;
@@ -724,8 +740,9 @@ Obj MTX64_EmptyBitString(Obj self, Obj len) {
 
 Obj MTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   CHECK_MTX64_BitString(bs);
-  if (!IS_INTOBJ(pos) || INT_INTOBJ(pos) < 0 ||
-      IS_INTOBJ(pos) >= DataOfBitStringObject(bs)[0])
+  CHECK_MUT(bs);
+  CHECK_NONNEG_SMALLINT(pos);
+  if (INT_INTOBJ(pos) >= DataOfBitStringObject(bs)[0])
     ErrorMayQuit(
         "MTX64_SetEntryOfBitString: position not an integer or out of range", 0,
         0);
@@ -853,6 +870,7 @@ static Obj MTX64_GetFFEfromFELTTable;
 Obj MTX64_InsertVecFFE(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MTX64_Row(rownum, d);
+  CHECK_MUT(d);
   Obj fld = CALL_1ARGS(FieldOfMTX64Matrix, d);
   UInt q = DataOfFieldObject(fld)->fdef;
   UInt len = LEN_PLIST(v);
@@ -917,6 +935,7 @@ GAP_STATIC_ASSERT(
 
 Obj MTX64_InsertVecGF2(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
+  CHECK_MUT(d);
   CHECK_MTX64_Row(rownum, d);
   Obj fld = CALL_1ARGS(FieldOfMTX64Matrix, d);
   UInt q = DataOfFieldObject(fld)->fdef;
@@ -1001,6 +1020,7 @@ static Obj MTX64_Get8BitExportTable;
 
 Obj MTX64_InsertVec8Bit(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
+  CHECK_MUT(d);
   CHECK_MTX64_Row(rownum, d);
   if (!IS_VEC8BIT_REP(v))
     ErrorMayQuit("MTX64_InsertVec8Bit: bad vector format", 0, 0);
@@ -1207,6 +1227,7 @@ Obj MTX64_BSColRifZ(Obj self, Obj bitstring, Obj m) {
 
 Obj MTX64_BSColPutS(Obj self, Obj bitstring, Obj m, Obj x) {
   CHECK_MTX64_Matrix(m);
+  CHECK_MUT(m);
   CHECK_MTX64_BitString(bitstring);
   CHECK_MTX64_MATRIX_FELT(m, x);
   UInt nor = HeaderOfMatrix(m)->nor;
@@ -1229,6 +1250,7 @@ static void RecountBS(Obj bs) {
 Obj MTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
     CHECK_MTX64_BitString(bs1);
     CHECK_MTX64_BitString(bs2);
+    CHECK_MUT(bs2);
     CHECK_NONNEG_SMALLINT(shift);
     UInt len1 = DataOfBitStringObject(bs1)[0];
     UInt len2 = DataOfBitStringObject(bs2)[0];
