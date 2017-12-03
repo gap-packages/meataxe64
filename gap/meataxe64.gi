@@ -419,26 +419,12 @@ end);
 InstallMethod( ShallowCopy, "for a meataxe matrix", [IsMTX64Matrix], MTX64_ShallowCopyMatrix);
 
 InstallOtherMethod(\*, "for meataxe64 matrices", IsIdenticalObj, [IsMTX64Matrix, IsMTX64Matrix], 
-        function(m1,m2)
-    local m;    
-    if MTX64_Matrix_NumCols(m1) <> MTX64_Matrix_NumRows(m2) then
-        Error("Incompatible matrices");
-    fi;
-    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), MTX64_Matrix_NumRows(m1), MTX64_Matrix_NumCols(m2));
-    MTX64_SLMultiply(m1,m2,m);
-    return m;
-end);
+        MTX64_SLMultiply);
 
 InstallMethod(\*, "for meataxe64 matrix and FELT", [IsMTX64Matrix, IsMTX64FiniteFieldElement],
         function(m,x)
     local  copy;
-    if FieldOfMTX64Matrix(m) <> MTX64_FieldOfElement(x) then
-        #
-        # Could possibly write a family predicate for this
-        #
-        Error("incompatible fields");
-    fi;
-    copy := ShallowCopy(m);    
+    copy := ZeroMutable(m);        
     MTX64_DSMul(MTX64_Matrix_NumRows(m), x, copy);
     return copy;
 end);
@@ -476,12 +462,7 @@ end);
 
 InstallOtherMethod(TransposedMatMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
-        function(m)
-    local t;    
-    t := MTX64_NewMatrix(FieldOfMTX64Matrix(m), MTX64_Matrix_NumCols(m), MTX64_Matrix_NumRows(m));
-    MTX64_SLTranspose(m,t);
-    return t;
-end);
+    MTX64_SLTranspose);
 
 InstallOtherMethod(TransposedMatImmutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
@@ -504,8 +485,8 @@ InstallMethod(InverseMutable, "for a meataxe64 matrix",
     if len <> MTX64_Matrix_NumRows(m) then
         Error("not square");
     fi;
-    res := MTX64_SLEchelize(m);
-    if res.rank <> len then
+    res := MTX64_SLEchelize(m, rec(failIfSingular := true, remnantNeeded := false, cleanerNeeded := false));
+    if res = fail or res.rank <> len then
         Error("not invertible");
     fi;
     return -res.multiplier;    
@@ -535,31 +516,17 @@ end);
 InstallMethod(\+, "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
-    local  nrows, ncols, m;
+    local  nrows;
     nrows := MTX64_Matrix_NumRows(m1);
-    ncols := MTX64_Matrix_NumCols(m1);
-    if nrows <> MTX64_Matrix_NumRows(m2) or 
-        ncols <> MTX64_Matrix_NumCols(m2) then
-        Error("matrices not the same size");
-    fi;
-    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), nrows, ncols);
-    MTX64_DAdd(nrows, m1,m2,m);
-    return m;
+    return MTX64_DAdd(nrows, m1,m2);
 end);
 
 InstallMethod(\-, "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
-    local  nrows, ncols, m;
+    local  nrows;
     nrows := MTX64_Matrix_NumRows(m1);
-    ncols := MTX64_Matrix_NumCols(m1);
-    if nrows <> MTX64_Matrix_NumRows(m2) or 
-        ncols <> MTX64_Matrix_NumCols(m2) then
-        Error("matrices not the same size");
-    fi;
-    m := MTX64_NewMatrix(FieldOfMTX64Matrix(m1), nrows, ncols);
-    MTX64_DSub(nrows, m1,m2,m);
-    return m;
+    return MTX64_DSub(nrows, m1,m2);
 end);
 
 InstallMethod(AdditiveInverseMutable, "for meataxe64 matrices",
@@ -693,3 +660,7 @@ end);
 BindGlobal("MTX64_RowSelect", function(bs,m)
     return MTX64_RowSelectShifted(bs,m,0);
 end);
+
+
+InstallOtherMethod(IsZero, [IsMTX64Matrix],
+        m -> ForAll([0..MTX64_Matrix_NumRows-1], i-> fail = MTX64_DNzl(m,i)));
