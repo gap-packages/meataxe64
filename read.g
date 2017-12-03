@@ -5,3 +5,5 @@
 #
 ReadPackage( "meataxe64", "gap/meataxe64.gi");
 ReadPackage( "meataxe64", "gap/echelize.gi");
+ReadPackage( "meataxe64", "gap/vecobj.gi");
+

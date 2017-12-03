@@ -11,3 +11,4 @@ Unbind(_PATH_SO);
 
 ReadPackage( "meataxe64", "gap/meataxe64.gd");
 ReadPackage( "meataxe64", "gap/echelize.gd");
+ReadPackage( "meataxe64", "gap/matobj.gd");
