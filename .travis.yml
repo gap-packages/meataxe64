@@ -9,10 +9,6 @@ addons:
   apt_packages:
     - libgmp-dev
     - libreadline-dev
-    - libgmp-dev:i386
-    - libreadline-dev:i386
-    - gcc-multilib
-    - g++-multilib
 
 matrix:
   include:
@@ -21,7 +17,6 @@ matrix:
     - env: CFLAGS="-O2"
       compiler: gcc
     - env: CFLAGS=""  # test build w/o optimization
-    - env: ABI=32
 
 branches:
   only:
