@@ -424,7 +424,7 @@ InstallOtherMethod(\*, "for meataxe64 matrices", IsIdenticalObj, [IsMTX64Matrix,
 InstallMethod(\*, "for meataxe64 matrix and FELT", [IsMTX64Matrix, IsMTX64FiniteFieldElement],
         function(m,x)
     local  copy;
-    copy := ZeroMutable(m);        
+    copy := ShallowCopy(m);        
     MTX64_DSMul(MTX64_Matrix_NumRows(m), x, copy);
     return copy;
 end);
@@ -439,10 +439,6 @@ end);
 
 InstallOtherMethod(\[\], "for a meataxe64 matrix and two indices", [IsMTX64Matrix, IsPosInt, IsPosInt], 
         function(m, i, j)
-    if i > MTX64_Matrix_NumRows(m) or 
-       j > MTX64_Matrix_NumCols(m) then
-        Error("Indices out of range");
-    fi;
     return MTX64_GetEntry(m, i-1, j-1);
 end);
 
@@ -450,13 +446,6 @@ end);
 InstallOtherMethod(\[\]\:\=, "for a meataxe64 matrix and two indices and a FELT", 
         [IsMTX64Matrix and IsMutable, IsPosInt, IsPosInt, IsMTX64FiniteFieldElement], 
         function(m, i, j, x)
-    if i > MTX64_Matrix_NumRows(m) or 
-       j > MTX64_Matrix_NumCols(m) then
-        Error("Indices out of range");
-    fi;
-    if MTX64_FieldOfElement(x) <> FieldOfMTX64Matrix(m) then
-        Error("ELement in wrong field");
-    fi;
     MTX64_SetEntry(m, i-1, j-1, x);
 end);
 
