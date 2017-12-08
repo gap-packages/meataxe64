@@ -120,7 +120,97 @@ end;
 #
 # This is the case where we chop 2 x 1 (that is 2 blocks one on top of the other)
 #
+
+MTX64_CleanExtendInner := function( ech, mat, optrec)
+    local  m, f, n1, n2, n, r1, matp, r2, mats, matnp, ech2, 
+           newcleaner, rs, cs, rem1,
+           a1s, k1, k1s, ku, kl, k1b, mu, 
+           ml;
+    m := MTX64_Matrix_NumCols(mat);
+    f := FieldOfMTX64Matrix(mat);    
+    n1 := MTX64_LengthOfBitString(ech.rowSelect);
+    n2 := MTX64_Matrix_NumRows(mat);    
+    n :=  n1 + n2;    
+    r1 := ech.rank;
+    Info(InfoMTX64_NG,3,"MTX64_CleanExtend: Existing rank ",r1);    
+    if r1 = m then
+        matp := mat;        
+        r2 := 0;
+        Info(InfoMTX64_NG, 2, "MTX64_CleanExtend: Space already has maximum rank ",m);        
+    else
+        mats := MTX64_ColSelect(ech.colSelect, mat);
+        matnp := mats[2] + mats[1]*ech.remnant;
+        ech2 := MTX64_EchelizeInner(matnp, optrec);
+        matp := mats[1];        
+        r2 := ech2.rank;
+        Info(InfoMTX64_NG,3,"MTX64_CleanExtend: extension adds rank ",r2);    
+    fi;
+    ech.rank := r1+r2;    
+    if r2 = 0 then
+        if optrec.cleanerNeeded then
+            newcleaner := MTX64_NewMatrix(f,n-ech.rank,ech.rank);
+            MTX64_DCpy(ech.cleaner, newcleaner, 0, n1-ech.rank);
+            MTX64_DPaste(matp*ech.multiplier, n1-ech.rank, n - n1, 0, newcleaner);
+            ech.cleaner := newcleaner;            
+        fi;
+        rs := MTX64_EmptyBitString(n);
+        MTX64_BSShiftOr(ech.rowSelect, 0, rs);
+        ech.rowSelect := rs;        
+        Info(InfoMTX64_NG,3,"MTX64_CleanExtend: returning with no new pivots ");            
+        return MTX64_EmptyBitString(n2);
+    fi;
         
+    if optrec.failIfSingular and (ech.rank < n or n <> m) then
+        Info(InfoMTX64_NG,3,"Matrix is singular, returning fail");
+        return fail;
+    fi;
+        
+    cs := MTX64_BSCombine(ech.colSelect, ech2.colSelect);
+    rs := MTX64_EmptyBitString(n);
+    MTX64_BSShiftOr(ech.rowSelect,0,rs);
+    MTX64_BSShiftOr(ech2.rowSelect,n1,rs);    
+    ech.colSelect := cs[1];
+    ech.rowSelect := rs;    
+    if optrec.remnantNeeded or optrec.multiplierNeeded then
+        a1s := MTX64_ColSelect(ech2.colSelect, ech.remnant);
+    fi;
+    if optrec.remnantNeeded then
+        Info(InfoMTX64_NG,3,"Back cleaning for remnant");
+        rem1 := a1s[2] + a1s[1]*ech2.remnant;
+        ech.remnant := MTX64_RowCombine(cs[2],rem1,ech2.remnant);
+    fi;
+    if optrec.cleanerNeeded or optrec.multiplierNeeded then
+        Info(InfoMTX64_NG,3,"Forward cleaning in keeptrack");        
+        k1 := mats[1]*ech.multiplier;
+        k1s := MTX64_RowSelect(ech2.rowSelect, k1);
+    fi;
+    if optrec.cleanerNeeded then
+        Info(InfoMTX64_NG,3,"Assembling cleaner");        
+        ku := MTX64_NewMatrix(f, n1-r1, ech.rank);
+        MTX64_DPaste(ech.cleaner,0,n1-r1,0,ku);
+        kl := MTX64_NewMatrix(f, n2-r2, ech.rank);
+        k1b := k1s[2] + ech2.cleaner*k1s[1];        
+        MTX64_DPaste(k1b,0,n2-r2,0,kl);
+        MTX64_DPaste(ech2.cleaner,0,n2-r2,r1,kl);
+        ech.cleaner := MTX64_NewMatrix(f, n-ech.rank, ech.rank);
+        MTX64_DCpy(ku,ech.cleaner,0,n1-r1);
+        MTX64_DPaste(kl, n1-r1, n2-r2, 0,ech.cleaner);
+    fi;
+    if optrec.multiplierNeeded then
+        Info(InfoMTX64_NG,3,"Assembling multiplier");        
+        mu := MTX64_NewMatrix(f,r1,ech.rank);
+        MTX64_DPaste(ech.multiplier, 0, r1, 0, mu);
+        ml := MTX64_NewMatrix(f,r2, ech.rank);
+        MTX64_DPaste(ech2.multiplier*k1s[1],0,r2,0,ml);       
+        MTX64_DPaste(ech2.multiplier,0, r2, r1,ml);        
+        mu := mu + a1s[1]*ml;
+        ech.multiplier := MTX64_RowCombine(cs[2],mu,ml);
+    fi;
+    return ech2.rowSelect;
+end;
+
+
+    
 MTX64_EchelizeUD := function(mat, optrec)
     local  f, n, m, ret, splitAt, a1, a2, optrec2, 
            res,  a2s, a2np, res2, cs, a1s, r1, k1, 
@@ -143,76 +233,12 @@ MTX64_EchelizeUD := function(mat, optrec)
     fi;    
     optrec2.failIfSingular := false;      
     res := MTX64_EchelizeInner(a1,optrec2);
-    if res.rank = m then
-        ret.rank := m;
-        if optrec2.multiplierNeeded then
-            ret.multiplier := res.multiplier;
-        fi;        
-        ret.colSelect := res.colSelect;
-        ret.rowSelect := MTX64_EmptyBitString(n);
-        MTX64_BSShiftOr(res.rowSelect, 0, ret.rowSelect);
-        ret.remnant := res.remnant;        
-        if optrec.cleanerNeeded then
-            ret.cleaner := MTX64_NewMatrix(f,n-m,m);
-            MTX64_DCpy(res.cleaner, ret.cleaner, 0, splitAt-m);
-            MTX64_DPaste(a2*res.multiplier, splitAt-m, n - splitAt, 0, ret.cleaner);
-        fi;
-        Info(InfoMTX64_NG, 2, "Returning rank ", m," all from top part");        
-        return ret;
-    fi;
-    Info(InfoMTX64_NG,3,"Top part gave rank ",res.rank);    
-    a2s := MTX64_ColSelect(res.colSelect, a2);
-    a2np := a2s[2] + a2s[1]*res.remnant;
-    res2 := MTX64_EchelizeInner(a2np, optrec);
-    Info(InfoMTX64_NG,3,"Bottom part gave rank ",res2.rank);    
-    ret.rank := res.rank + res2.rank;
-    if optrec.failIfSingular and (ret.rank < n or ret.rank < m) then
-        Info(InfoMTX64_NG,3,"Matrix is singular, returning fail");
+    ret := MTX64_CleanExtendInner(res, a2, optrec);
+    if ret = fail then
         return fail;
     fi;
-        
-    cs := MTX64_BSCombine(res.colSelect, res2.colSelect);
-    ret.rowSelect := MTX64_EmptyBitString(n);
-    MTX64_BSShiftOr(res.rowSelect,0,ret.rowSelect);
-    MTX64_BSShiftOr(res2.rowSelect,splitAt,ret.rowSelect);
-    ret.colSelect := cs[1];
-    if optrec.remnantNeeded or optrec.multiplierNeeded then
-        a1s := MTX64_ColSelect(res2.colSelect, res.remnant);
-    fi;
-    if optrec.remnantNeeded then
-        Info(InfoMTX64_NG,3,"Back cleaning for remnant");
-        r1 := a1s[2] + a1s[1]*res2.remnant;
-        ret.remnant := MTX64_RowCombine(cs[2],r1,res2.remnant);
-    fi;
-    if optrec.cleanerNeeded or optrec.multiplierNeeded then
-        Info(InfoMTX64_NG,3,"Forward cleaning in keeptrack");        
-        k1 := a2s[1]*res.multiplier;
-        k1s := MTX64_RowSelect(res2.rowSelect, k1);
-    fi;
-    if optrec.cleanerNeeded then
-        Info(InfoMTX64_NG,3,"Assembling cleaner");        
-        ku := MTX64_NewMatrix(f, splitAt-res.rank, ret.rank);
-        MTX64_DPaste(res.cleaner,0,splitAt-res.rank,0,ku);
-        kl := MTX64_NewMatrix(f, n-splitAt-res2.rank, ret.rank);
-        k1b := k1s[2] + res2.cleaner*k1s[1];        
-        MTX64_DPaste(k1b,0,n-splitAt-res2.rank,0,kl);
-        MTX64_DPaste(res2.cleaner,0,n-splitAt-res2.rank,res.rank,kl);
-        ret.cleaner := MTX64_NewMatrix(f, n-ret.rank, ret.rank);
-        MTX64_DCpy(ku,ret.cleaner,0,splitAt-res.rank);
-        MTX64_DPaste(kl, splitAt-res.rank, n-splitAt-res2.rank, 0, ret.cleaner);
-    fi;
-    if optrec.multiplierNeeded then
-        Info(InfoMTX64_NG,3,"Assembling multiplier");        
-        mu := MTX64_NewMatrix(f,res.rank,ret.rank);
-        MTX64_DPaste(res.multiplier, 0, res.rank, 0, mu);
-        ml := MTX64_NewMatrix(f,res2.rank, ret.rank);
-        MTX64_DPaste(res2.multiplier*k1s[1],0,res2.rank,0,ml);       
-        MTX64_DPaste(res2.multiplier,0, res2.rank, res.rank,ml);        
-        mu := mu + a1s[1]*ml;
-        ret.multiplier := MTX64_RowCombine(cs[2],mu,ml);
-    fi;
-    Info(InfoMTX64_NG,2,"Returning rank ",ret.rank);        
-    return ret;
+    Info(InfoMTX64_NG,2,"Returning rank ",res.rank);        
+    return res;
 end;
 
 
@@ -351,6 +377,21 @@ BindGlobal("MTX64_Echelize_DefaultOptions", rec(
                          cleanerNeeded := true,
                          remnantNeeded := true,
                          failIfSingular := false));
+
+BindGlobal("MTX64_CleanExtendDefaultOpts",   MTX64_Echelize_DefaultOptions);
+
+MTX64_CleanExtend := function(ech, mat)
+    local  optrec;
+    
+    optrec := MTX64_CleanExtendDefaultOpts;
+    if not IsBound(ech.cleaner) and not IsBound(ech.multiplier) then
+        optrec := ShallowCopy(optrec);
+        optrec.cleanerNeeded := false;
+        optrec.multiplierNeeded := false;
+    fi;
+    return MTX64_CleanExtendInner(ech, mat, optrec);
+end;
+
 
 
 InstallGlobalFunction(MTX64_Echelize, function(mat, opt...)
