@@ -462,7 +462,7 @@ Obj MTX64_GetEntry(Obj self, Obj m, Obj row, Obj col) {
   UInt irow = INT_INTOBJ(row);
   UInt icol = INT_INTOBJ(col);
   Obj f = FieldOfMatrix(m);
-  return MakeMtx64Felt(f, GetEntryMTX64(m, icol, irow));
+  return MakeMtx64Felt(f, GetEntryMTX64(m, irow, icol));
 }
 
 void SetEntryMTX64(Obj m, UInt row, UInt col, FELT entry) {
@@ -739,7 +739,7 @@ Obj MTX64_WeightOfBitString(Obj self, Obj bs) {
 Obj MTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   CHECK_MTX64_BitString(bs);
   if (!IS_INTOBJ(pos) || INT_INTOBJ(pos) < 0 ||
-      IS_INTOBJ(pos) >= DataOfBitStringObject(bs)[0])
+      INT_INTOBJ(pos) >= DataOfBitStringObject(bs)[0])
     ErrorMayQuit(
         "MTX64_GetEntryOfBitString: position not an integer or out of range", 0,
         0);
