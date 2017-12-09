@@ -8,7 +8,6 @@
  *
  * The slab level functions are designed for matrix dimensions in the range from
  * a few hundred to a few tens of thousands, although there are no hard limits.
- *
  */
 
 #include "src/compiled.h" /* GAP headers */
@@ -19,7 +18,8 @@
 // headers in meataxe64
 
 #include "mtx64/field.h"
-// field.h has to precede the others. Need a comment here to stop clang-format reordering
+// field.h has to precede the others. Need a comment here to stop clang-format
+// reordering
 #include "mtx64/bitstring.h"
 #include "mtx64/io.h"
 #include "mtx64/slab.h"
@@ -30,8 +30,7 @@
 #error Meataxe package requires x86_64
 #endif
 
-/* 
-   This defines four types of object of interest, a FIELD (a large
+/* This defines four types of object of interest, a FIELD (a large
    structure), a FELT (a 64 bit value representing a field element, a
    DSpace (a small structure that gathers some information about a
    bunch of vectors) and a a DFmt object, which is a char pointer to a
@@ -56,10 +55,9 @@
    TODO -- more comments
 
    For now we also deal with meataxe64 bitstrings. There are used to indicate
-   sets of rows or columns of a matrix (for instance pivot rows in echelonisation).
-   We again store these in T_DATOBJ objects, all with the same type
-
- */
+   sets of rows or columns of a matrix (for instance pivot rows in
+   echelonisation).
+   We again store these in T_DATOBJ objects, all with the same type  */
 
 /* As usual, we construct types in GAP and import them, so these C variables are
    just copies of the corresponding GAP variables */
@@ -166,9 +164,7 @@ static inline void CHECK_MTX64_FELT(Obj x) {
 
 static Obj FieldOfMTX64FELT;
 
-static inline Obj FieldOfFELT(Obj f) {
-    return CALL_1ARGS(FieldOfMTX64FELT,f);
-}
+static inline Obj FieldOfFELT(Obj f) { return CALL_1ARGS(FieldOfMTX64FELT, f); }
 
 /* Functions that deal with the layout of a matrix in a bag */
 
@@ -201,10 +197,11 @@ static inline Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
   return m;
 }
 
+// Import GAP level function that gets this information (from the family)
 static Obj FieldOfMTX64Matrix;
 
 static inline Obj FieldOfMatrix(Obj m) {
-    return CALL_1ARGS(FieldOfMTX64Matrix, m);
+  return CALL_1ARGS(FieldOfMTX64Matrix, m);
 }
 
 static inline Dfmt *DataOfMTX64_Matrix(Obj m) {
@@ -216,11 +213,6 @@ static inline UInt IS_MTX64_Matrix(Obj m) {
 }
 
 // argument checking utilities
-
-
-// We need to call out to GAP to get (via the family), the field
-// of a FELT or Matrix. TODO maybe simplify this.
-
 
 static inline void CHECK_MTX64_Matrix(Obj m) {
   if (!IS_MTX64_Matrix(m))
@@ -242,7 +234,7 @@ static inline void CHECK_MTX64_Matrices(Obj m1, Obj m2, UInt level) {
 
 // Assumes they have been checked individually
 static inline void CHECK_MTX64_MATRIX_FELT(Obj m, Obj x) {
-    if (FieldOfFELT(x) != FieldOfMatrix(m))
+  if (FieldOfFELT(x) != FieldOfMatrix(m))
     ErrorMayQuit("MTX64: element is not over same field as matrix", 0, 0);
 }
 
@@ -266,6 +258,7 @@ static inline void CHECK_NONNEG_SMALLINTS(Obj a, Obj b) {
 
 // We assume that we have already checked that m is matrix
 // Check that row and col are valid row and column numbers for this mx
+// 0-based
 static inline void CHECK_MTX64_Coords(Obj row, Obj col, Obj m) {
   CHECK_NONNEG_SMALLINTS(row, col);
   if (INT_INTOBJ(row) >= HeaderOfMatrix(m)->nor ||
@@ -274,7 +267,7 @@ static inline void CHECK_MTX64_Coords(Obj row, Obj col, Obj m) {
 }
 
 // We assume that we have already checked that m is matrix
-// Just check a row number
+// Just check a 0-based row number
 static inline void CHECK_MTX64_Row(Obj row, Obj m) {
   CHECK_NONNEG_SMALLINT(row);
   if (INT_INTOBJ(row) >= HeaderOfMatrix(m)->nor)
@@ -290,6 +283,7 @@ static inline void CHECK_MTX64_RowCount(Obj row, Obj m) {
 
 // We assume that we have already checked that m is matrix
 // Check a starting row/number of rows pair represent a valid row range
+// 0-based
 static inline void CHECK_MTX64_RowRange(Obj startrow, Obj nrows, Obj m) {
   CHECK_NONNEG_SMALLINTS(startrow, nrows);
   if (INT_INTOBJ(startrow) + INT_INTOBJ(nrows) > HeaderOfMatrix(m)->nor)
@@ -302,7 +296,7 @@ static inline void CHECK_MTX64_RowRange(Obj startrow, Obj nrows, Obj m) {
 
 // fields
 
-static Obj MTX64_CREATE_FIELD(Obj self, Obj field_order) {
+static Obj FuncMTX64_CREATE_FIELD(Obj self, Obj field_order) {
   // This is capitalised because we can't check here whether
   // the order is a prime power and the underlying functions will exit
   // if it isn't. We do what checking we can.
@@ -314,28 +308,27 @@ static Obj MTX64_CREATE_FIELD(Obj self, Obj field_order) {
   return MakeMtx64Field(q);
 }
 
-Obj MTX64_FieldOrder(Obj self, Obj field) {
+static Obj FuncMTX64_FieldOrder(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *_f = DataOfFieldObject(field);
   return INTOBJ_INT(_f->fdef);
 }
 
-Obj MTX64_FieldCharacteristic(Obj self, Obj field) {
+static Obj FuncMTX64_FieldCharacteristic(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *_f = DataOfFieldObject(field);
   return INTOBJ_INT(_f->charc);
 }
 
-Obj MTX64_FieldDegree(Obj self, Obj field) {
+static Obj FuncMTX64_FieldDegree(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *_f = DataOfFieldObject(field);
   return INTOBJ_INT(_f->pow);
 }
 
-
 // field elements
 
-Obj MTX64_CreateFieldElement(Obj self, Obj field, Obj elt) {
+static Obj FuncMTX64_CreateFieldElement(Obj self, Obj field, Obj elt) {
   UInt ielt;
   CHECK_MTX64_Field(field);
   if (!IS_POS_INT(elt) && elt != INTOBJ_INT(0))
@@ -349,14 +342,14 @@ Obj MTX64_CreateFieldElement(Obj self, Obj field, Obj elt) {
   return MakeMtx64Felt(field, ielt);
 }
 
-Obj MTX64_ExtractFieldElement(Obj self, Obj elt) {
+static Obj FuncMTX64_ExtractFieldElement(Obj self, Obj elt) {
   CHECK_MTX64_FELT(elt);
   return ObjInt_UInt(GetFELTFromFELTObject(elt));
 }
 
 // GAP bindings for meataxe64 field element functions
 
-Obj MTX64_FieldAdd(Obj self, Obj f, Obj a, Obj b) {
+static Obj FuncMTX64_FieldAdd(Obj self, Obj f, Obj a, Obj b) {
   CHECK_MTX64_Field(f);
   CHECK_MTX64_FELT(a);
   CHECK_MTX64_FELT(b);
@@ -366,7 +359,7 @@ Obj MTX64_FieldAdd(Obj self, Obj f, Obj a, Obj b) {
   return MakeMtx64Felt(f, FieldAdd(_f, _a, _b));
 }
 
-Obj MTX64_FieldNeg(Obj self, Obj field, Obj a) {
+static Obj FuncMTX64_FieldNeg(Obj self, Obj field, Obj a) {
   CHECK_MTX64_Field(field);
   CHECK_MTX64_FELT(a);
   FIELD *_f = DataOfFieldObject(field);
@@ -375,7 +368,7 @@ Obj MTX64_FieldNeg(Obj self, Obj field, Obj a) {
   return MakeMtx64Felt(field, FieldNeg(_f, _a));
 }
 
-Obj MTX64_FieldSub(Obj self, Obj field, Obj a, Obj b) {
+static Obj FuncMTX64_FieldSub(Obj self, Obj field, Obj a, Obj b) {
   CHECK_MTX64_Field(field);
   CHECK_MTX64_FELT(a);
   CHECK_MTX64_FELT(b);
@@ -385,7 +378,7 @@ Obj MTX64_FieldSub(Obj self, Obj field, Obj a, Obj b) {
   return MakeMtx64Felt(field, FieldSub(_f, _a, _b));
 }
 
-Obj MTX64_FieldMul(Obj self, Obj field, Obj a, Obj b) {
+static Obj FuncMTX64_FieldMul(Obj self, Obj field, Obj a, Obj b) {
   CHECK_MTX64_Field(field);
   CHECK_MTX64_FELT(a);
   CHECK_MTX64_FELT(b);
@@ -396,14 +389,14 @@ Obj MTX64_FieldMul(Obj self, Obj field, Obj a, Obj b) {
   return MakeMtx64Felt(field, FieldMul(_f, _a, _b));
 }
 
-Obj MTX64_FieldInv(Obj self, Obj field, Obj a) {
+static Obj FuncMTX64_FieldInv(Obj self, Obj field, Obj a) {
   FIELD *_f = DataOfFieldObject(field);
   FELT _a = GetFELTFromFELTObject(a);
 
   return MakeMtx64Felt(field, FieldInv(_f, _a));
 }
 
-Obj MTX64_FieldDiv(Obj self, Obj field, Obj a, Obj b) {
+static Obj FuncMTX64_FieldDiv(Obj self, Obj field, Obj a, Obj b) {
   CHECK_MTX64_Field(field);
   CHECK_MTX64_FELT(a);
   CHECK_MTX64_FELT(b);
@@ -416,18 +409,18 @@ Obj MTX64_FieldDiv(Obj self, Obj field, Obj a, Obj b) {
 
 // GAP callable matrix constructors and inspectors
 
-Obj MTX64_NewMatrix(Obj self, Obj field, Obj nor, Obj noc) {
+static Obj FuncMTX64_NewMatrix(Obj self, Obj field, Obj nor, Obj noc) {
   CHECK_MTX64_Field(field);
   CHECK_NONNEG_SMALLINTS(nor, noc);
   return NEW_MTX64_Matrix(field, INT_INTOBJ(nor), INT_INTOBJ(noc));
 }
 
-Obj MTX64_Matrix_NumRows(Obj self, Obj m) {
+static Obj FuncMTX64_Matrix_NumRows(Obj self, Obj m) {
   CHECK_MTX64_Matrix(m);
   return INTOBJ_INT(HeaderOfMatrix(m)->nor);
 }
 
-Obj MTX64_Matrix_NumCols(Obj self, Obj m) {
+static Obj FuncMTX64_Matrix_NumCols(Obj self, Obj m) {
   CHECK_MTX64_Matrix(m);
   return INTOBJ_INT(HeaderOfMatrix(m)->noc);
 }
@@ -456,7 +449,7 @@ static FELT GetEntryMTX64(Obj m, UInt row, UInt col) {
   return DUnpak(&ds, col, d);
 }
 
-Obj MTX64_GetEntry(Obj self, Obj m, Obj row, Obj col) {
+static Obj FuncMTX64_GetEntry(Obj self, Obj m, Obj row, Obj col) {
   CHECK_MTX64_Matrix(m);
   CHECK_MTX64_Coords(row, col, m);
   UInt irow = INT_INTOBJ(row);
@@ -474,7 +467,7 @@ void SetEntryMTX64(Obj m, UInt row, UInt col, FELT entry) {
   DPak(&ds, col, d, entry);
 }
 
-Obj MTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry) {
+static Obj FuncMTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry) {
   CHECK_MTX64_Matrix(m);
   CHECK_MUT(m);
   CHECK_MTX64_Coords(row, col, m);
@@ -495,7 +488,7 @@ Obj MTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry) {
 // from mtx64/field.h
 //
 
-Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows) {
+static Obj FuncMTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows) {
   DSPACE ds;
   Dfmt *sp, *dp;
   CHECK_MTX64_Matrices(src, dst, 1);
@@ -512,8 +505,8 @@ Obj MTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows) {
   return 0;
 }
 
-Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol,
-               Obj clip) {
+static Obj FuncMTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows,
+                          Obj startcol, Obj clip) {
   DSPACE ms, cs;
   Dfmt *mp, *cp;
   CHECK_MTX64_Matrices(m, clip, 0);
@@ -533,8 +526,8 @@ Obj MTX64_DCut(Obj self, Obj m, Obj startrow, Obj nrows, Obj startcol,
   return 0;
 }
 
-Obj MTX64_DPaste(Obj self, Obj clip, Obj startrow, Obj nrows, Obj startcol,
-                 Obj m) {
+static Obj FuncMTX64_DPaste(Obj self, Obj clip, Obj startrow, Obj nrows,
+                            Obj startcol, Obj m) {
   DSPACE ms, cs;
   Dfmt *mp, *cp;
   CHECK_MTX64_Matrices(m, clip, 0);
@@ -555,13 +548,14 @@ Obj MTX64_DPaste(Obj self, Obj clip, Obj startrow, Obj nrows, Obj startcol,
   return 0;
 }
 
-Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2) {
+static Obj FuncMTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2) {
   DSPACE ds;
   Dfmt *d1p, *d2p, *dp;
   CHECK_MTX64_Matrices(d1, d2, 1);
   CHECK_MTX64_RowCount(nrows, d1);
   CHECK_MTX64_RowCount(nrows, d2);
-  Obj d = NEW_MTX64_Matrix(FieldOfMatrix(d1), INT_INTOBJ(nrows), HeaderOfMatrix(d1)->noc);
+  Obj d = NEW_MTX64_Matrix(FieldOfMatrix(d1), INT_INTOBJ(nrows),
+                           HeaderOfMatrix(d1)->noc);
   SetDSpaceOfMTX64_Matrix(d1, &ds);
   d1p = DataOfMTX64_Matrix(d1);
   d2p = DataOfMTX64_Matrix(d2);
@@ -570,13 +564,14 @@ Obj MTX64_DAdd(Obj self, Obj nrows, Obj d1, Obj d2) {
   return d;
 }
 
-Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2) {
+static Obj FuncMTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2) {
   DSPACE ds;
   Dfmt *d1p, *d2p, *dp;
   CHECK_MTX64_Matrices(d1, d2, 1);
   CHECK_MTX64_RowCount(nrows, d1);
   CHECK_MTX64_RowCount(nrows, d2);
-  Obj d = NEW_MTX64_Matrix(FieldOfMatrix(d1), INT_INTOBJ(nrows), HeaderOfMatrix(d1)->noc);
+  Obj d = NEW_MTX64_Matrix(FieldOfMatrix(d1), INT_INTOBJ(nrows),
+                           HeaderOfMatrix(d1)->noc);
   SetDSpaceOfMTX64_Matrix(d1, &ds);
   d1p = DataOfMTX64_Matrix(d1);
   d2p = DataOfMTX64_Matrix(d2);
@@ -585,7 +580,7 @@ Obj MTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2) {
   return d;
 }
 
-Obj MTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2) {
+static Obj FuncMTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2) {
   DSPACE ds;
   Dfmt *d1p, *d2p;
   FELT x;
@@ -603,7 +598,7 @@ Obj MTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2) {
   return 0;
 }
 
-Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1) {
+static Obj FuncMTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1) {
   DSPACE ds;
   Dfmt *dp;
   FELT x;
@@ -620,7 +615,7 @@ Obj MTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1) {
 }
 
 // we return Fail for zero row.
-Obj MTX64_DNzl(Obj self, Obj m, Obj row) {
+static Obj FuncMTX64_DNzl(Obj self, Obj m, Obj row) {
   DSPACE ds;
   Dfmt *mp;
   CHECK_MTX64_Matrix(m);
@@ -650,7 +645,7 @@ static void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
 // Slab echelize. Currently destroys its argument.
 // Richard plans to develop this further.
 //
-Obj MTX64_SLEchelizeDestructive(Obj self, Obj a) {
+static Obj FuncMTX64_SLEchelizeDestructive(Obj self, Obj a) {
   CHECK_MTX64_Matrix(a);
   CHECK_MUT(a);
   Matrix_Header *h = HeaderOfMatrix(a);
@@ -691,7 +686,7 @@ Obj MTX64_SLEchelizeDestructive(Obj self, Obj a) {
   return result;
 }
 
-Obj MTX64_SLMultiply(Obj self, Obj a, Obj b) {
+static Obj FuncMTX64_SLMultiply(Obj self, Obj a, Obj b) {
   CHECK_MTX64_Matrices(a, b, 0);
   Matrix_Header *ha = HeaderOfMatrix(a);
   Matrix_Header *hb = HeaderOfMatrix(b);
@@ -699,9 +694,9 @@ Obj MTX64_SLMultiply(Obj self, Obj a, Obj b) {
   UInt noca = ha->noc;
   UInt nocb = hb->noc;
   if (noca != hb->nor)
-      ErrorMayQuit("SLMultiply: matrices are incompatible shapes", 0, 0);
+    ErrorMayQuit("SLMultiply: matrices are incompatible shapes", 0, 0);
   Obj field = FieldOfMatrix(a);
-  Obj c = NEW_MTX64_Matrix(field,nora, nocb);
+  Obj c = NEW_MTX64_Matrix(field, nora, nocb);
   FIELD *f = DataOfFieldObject(field);
   Dfmt *ap = DataOfMTX64_Matrix(a);
   Dfmt *bp = DataOfMTX64_Matrix(b);
@@ -710,33 +705,33 @@ Obj MTX64_SLMultiply(Obj self, Obj a, Obj b) {
   return c;
 }
 
-Obj MTX64_SLTranspose(Obj self, Obj mat) {
-    CHECK_MTX64_Matrix(mat);
-    Matrix_Header *h = HeaderOfMatrix(mat);
-    UInt nora = h->nor;
-    UInt noca = h->noc;
-    Obj field = FieldOfMatrix(mat);
-    Obj tra = NEW_MTX64_Matrix(field, noca, nora);
-    FIELD *f = DataOfFieldObject(field);
-    Dfmt *mp = DataOfMTX64_Matrix(mat);
-    Dfmt *tp = DataOfMTX64_Matrix(tra);
-    SLTra(f, mp, tp, nora, noca);
-    return tra;
+static Obj FuncMTX64_SLTranspose(Obj self, Obj mat) {
+  CHECK_MTX64_Matrix(mat);
+  Matrix_Header *h = HeaderOfMatrix(mat);
+  UInt nora = h->nor;
+  UInt noca = h->noc;
+  Obj field = FieldOfMatrix(mat);
+  Obj tra = NEW_MTX64_Matrix(field, noca, nora);
+  FIELD *f = DataOfFieldObject(field);
+  Dfmt *mp = DataOfMTX64_Matrix(mat);
+  Dfmt *tp = DataOfMTX64_Matrix(tra);
+  SLTra(f, mp, tp, nora, noca);
+  return tra;
 }
 
 // GAP Callable Bitstring operations
 
-Obj MTX64_LengthOfBitString(Obj self, Obj bs) {
+static Obj FuncMTX64_LengthOfBitString(Obj self, Obj bs) {
   CHECK_MTX64_BitString(bs);
   return INTOBJ_INT(DataOfBitStringObject(bs)[0]);
 }
 
-Obj MTX64_WeightOfBitString(Obj self, Obj bs) {
+static Obj FuncMTX64_WeightOfBitString(Obj self, Obj bs) {
   CHECK_MTX64_BitString(bs);
   return INTOBJ_INT(DataOfBitStringObject(bs)[1]);
 }
 
-Obj MTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos) {
+static Obj FuncMTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   CHECK_MTX64_BitString(bs);
   if (!IS_INTOBJ(pos) || INT_INTOBJ(pos) < 0 ||
       INT_INTOBJ(pos) >= DataOfBitStringObject(bs)[0])
@@ -746,7 +741,7 @@ Obj MTX64_GetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   return INTOBJ_INT(BSBitRead(DataOfBitStringObject(bs), INT_INTOBJ(pos)));
 }
 
-Obj MTX64_ComplementBitString(Obj self, Obj bs) {
+static Obj FuncMTX64_ComplementBitString(Obj self, Obj bs) {
   CHECK_MTX64_BitString(bs);
   UInt len = DataOfBitStringObject(bs)[0];
   UInt wt = DataOfBitStringObject(bs)[1];
@@ -766,7 +761,7 @@ Obj MTX64_ComplementBitString(Obj self, Obj bs) {
   return c;
 }
 
-Obj MTX64_PositionsBitString(Obj self, Obj bs) {
+static Obj FuncMTX64_PositionsBitString(Obj self, Obj bs) {
   CHECK_MTX64_BitString(bs);
   UInt len = DataOfBitStringObject(bs)[0];
   UInt wt = DataOfBitStringObject(bs)[1];
@@ -789,7 +784,7 @@ Obj MTX64_PositionsBitString(Obj self, Obj bs) {
 
 // Unlike the meataxe64 library function, we update the weight of our bitstring
 
-Obj MTX64_EmptyBitString(Obj self, Obj len) {
+static Obj FuncMTX64_EmptyBitString(Obj self, Obj len) {
   CHECK_NONNEG_SMALLINT(len);
   Obj bs = MTX64_MakeBitString(INT_INTOBJ(len));
   DataOfBitStringObject(bs)[0] = INT_INTOBJ(len);
@@ -797,7 +792,7 @@ Obj MTX64_EmptyBitString(Obj self, Obj len) {
   return bs;
 }
 
-Obj MTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos) {
+static Obj FuncMTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   CHECK_MTX64_BitString(bs);
   CHECK_MUT(bs);
   CHECK_NONNEG_SMALLINT(pos);
@@ -814,7 +809,7 @@ Obj MTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos) {
   return 0;
 }
 
-Obj MTX64_BSCombine(Obj self, Obj bs1, Obj bs2) {
+static Obj FuncMTX64_BSCombine(Obj self, Obj bs1, Obj bs2) {
   CHECK_MTX64_BitString(bs1);
   CHECK_MTX64_BitString(bs2);
   UInt len1 = DataOfBitStringObject(bs1)[0];
@@ -838,7 +833,7 @@ Obj MTX64_BSCombine(Obj self, Obj bs1, Obj bs2) {
 // Now we have a selection of routines needed at the GAP level
 // but not explicitly present in the C library
 
-Obj MTX64_ShallowCopyMatrix(Obj self, Obj m) {
+static Obj FuncMTX64_ShallowCopyMatrix(Obj self, Obj m) {
   GAP_ASSERT(IS_MTX64_Matrix(m)); // method selection should ensure
   Obj f = FieldOfMatrix(m);
   UInt noc = HeaderOfMatrix(m)->noc;
@@ -850,7 +845,7 @@ Obj MTX64_ShallowCopyMatrix(Obj self, Obj m) {
 }
 
 // Order may not be consistent with GAP lists
-Obj MTX64_compareMatrices(Obj self, Obj m1, Obj m2) {
+static Obj FuncMTX64_compareMatrices(Obj self, Obj m1, Obj m2) {
   CHECK_MTX64_Matrices(m1, m2, 2);
   Obj f = FieldOfMatrix(m1);
   UInt noc = HeaderOfMatrix(m1)->noc;
@@ -860,7 +855,7 @@ Obj MTX64_compareMatrices(Obj self, Obj m1, Obj m2) {
   return INTOBJ_INT((res < 0) ? -1 : (res > 0) ? 1 : 0);
 }
 
-Obj MTX64_ShallowCopyBitString(Obj self, Obj bs) {
+static Obj FuncMTX64_ShallowCopyBitString(Obj self, Obj bs) {
   GAP_ASSERT(IS_MTX64_BitString(bs)); // method selection should ensure
   UInt len = DataOfBitStringObject(bs)[0];
   Obj copy = MTX64_MakeBitString(len);
@@ -871,7 +866,7 @@ Obj MTX64_ShallowCopyBitString(Obj self, Obj bs) {
 
 // Order may not be consistent with GAP lists. Differing lengths are OK because
 // the length field at the beginning is compared first
-Obj MTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2) {
+static Obj FuncMTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2) {
   CHECK_MTX64_BitString(bs1);
   CHECK_MTX64_BitString(bs2);
   UInt len = DataOfBitStringObject(bs1)[0];
@@ -892,7 +887,7 @@ Obj MTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2) {
 // Only useful for fields up to 2^16 where GAP uses Zech logs
 //
 
-Obj MTX64_MakeFELTfromFFETable(Obj self, Obj field) {
+static Obj FuncMTX64_MakeFELTfromFFETable(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *f = DataOfFieldObject(field);
   UInt q = f->fdef;
@@ -924,7 +919,7 @@ static Obj MTX64_GetFFEfromFELTTable;
 // the specified row of a meataxe64 matrix
 // rownum is zero based
 
-Obj MTX64_InsertVecFFE(Obj self, Obj d, Obj v, Obj rownum) {
+static Obj FuncMTX64_InsertVecFFE(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MTX64_Row(rownum, d);
   CHECK_MUT(d);
@@ -956,7 +951,7 @@ Obj MTX64_InsertVecFFE(Obj self, Obj d, Obj v, Obj rownum) {
   return INTOBJ_INT(len);
 }
 
-Obj MTX64_ExtractVecFFE(Obj self, Obj d, Obj rownum) {
+static Obj FuncMTX64_ExtractVecFFE(Obj self, Obj d, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MTX64_Row(rownum, d);
   UInt nor = INT_INTOBJ(rownum);
@@ -990,7 +985,7 @@ GAP_STATIC_ASSERT(
     __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__,
     "Meataxe64 GF2 vector conversion expects little-endian system");
 
-Obj MTX64_InsertVecGF2(Obj self, Obj d, Obj v, Obj rownum) {
+static Obj FuncMTX64_InsertVecGF2(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MUT(d);
   CHECK_MTX64_Row(rownum, d);
@@ -1017,7 +1012,7 @@ Obj MTX64_InsertVecGF2(Obj self, Obj d, Obj v, Obj rownum) {
   return INTOBJ_INT(len);
 }
 
-Obj MTX64_ExtractVecGF2(Obj self, Obj d, Obj rownum) {
+static Obj FuncMTX64_ExtractVecGF2(Obj self, Obj d, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MTX64_Row(rownum, d);
   Obj fld = FieldOfMatrix(d);
@@ -1040,7 +1035,7 @@ Obj MTX64_ExtractVecGF2(Obj self, Obj d, Obj rownum) {
 // byte of D-format corresponding to i in GAP 8 bit vector
 // format
 
-Obj MTX64_Make8BitConversion(Obj self, Obj fld) {
+static Obj FuncMTX64_Make8BitConversion(Obj self, Obj fld) {
   CHECK_MTX64_Field(fld);
   UInt q = DataOfFieldObject(fld)->fdef;
   if (q > 256)
@@ -1075,7 +1070,7 @@ Obj MTX64_Make8BitConversion(Obj self, Obj fld) {
 static Obj MTX64_Get8BitImportTable;
 static Obj MTX64_Get8BitExportTable;
 
-Obj MTX64_InsertVec8Bit(Obj self, Obj d, Obj v, Obj rownum) {
+static Obj FuncMTX64_InsertVec8Bit(Obj self, Obj d, Obj v, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MUT(d);
   CHECK_MTX64_Row(rownum, d);
@@ -1104,7 +1099,7 @@ Obj MTX64_InsertVec8Bit(Obj self, Obj d, Obj v, Obj rownum) {
   return INTOBJ_INT(len);
 }
 
-Obj MTX64_ExtractVec8Bit(Obj self, Obj d, Obj rownum) {
+static Obj FuncMTX64_ExtractVec8Bit(Obj self, Obj d, Obj rownum) {
   CHECK_MTX64_Matrix(d);
   CHECK_MTX64_Row(rownum, d);
   Obj fld = FieldOfMatrix(d);
@@ -1127,7 +1122,7 @@ Obj MTX64_ExtractVec8Bit(Obj self, Obj d, Obj rownum) {
 
 // IO
 
-Obj MTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
+static Obj FuncMTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
   CHECK_MTX64_Matrix(mx);
   if (!IsStringConv(fname))
     ErrorMayQuit("MTX64_WriteMatrix: filename must be a string", 0, 0);
@@ -1148,7 +1143,7 @@ Obj MTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
 
 static Obj MTX64_FiniteField;
 
-Obj MTX64_ReadMatrix(Obj self, Obj fname) {
+static Obj FuncMTX64_ReadMatrix(Obj self, Obj fname) {
   if (!IsStringConv(fname))
     ErrorMayQuit("MTX64_ReadMatrix: filename must be a string", 0, 0);
   UInt header[5];
@@ -1166,7 +1161,7 @@ Obj MTX64_ReadMatrix(Obj self, Obj fname) {
 
 // Bitstring and matrix functions
 
-Obj MTX64_ColSelect(Obj self, Obj bitstring, Obj m) {
+static Obj FuncMTX64_ColSelect(Obj self, Obj bitstring, Obj m) {
   CHECK_MTX64_Matrix(m);
   CHECK_MTX64_BitString(bitstring);
   UInt nor = HeaderOfMatrix(m)->nor;
@@ -1191,7 +1186,8 @@ Obj MTX64_ColSelect(Obj self, Obj bitstring, Obj m) {
   return ret;
 }
 
-Obj MTX64_RowSelectShifted(Obj self, Obj bitstring, Obj m, Obj shift) {
+static Obj FuncMTX64_RowSelectShifted(Obj self, Obj bitstring, Obj m,
+                                      Obj shift) {
   CHECK_MTX64_Matrix(m);
   CHECK_MTX64_BitString(bitstring);
   CHECK_MTX64_Row(shift, m);
@@ -1232,7 +1228,7 @@ Obj MTX64_RowSelectShifted(Obj self, Obj bitstring, Obj m, Obj shift) {
   return ret;
 }
 
-Obj MTX64_RowCombine(Obj self, Obj bitstring, Obj m1, Obj m2) {
+static Obj FuncMTX64_RowCombine(Obj self, Obj bitstring, Obj m1, Obj m2) {
   CHECK_MTX64_Matrices(m1, m2, 1);
   CHECK_MTX64_BitString(bitstring);
   UInt noc = HeaderOfMatrix(m1)->noc;
@@ -1263,7 +1259,7 @@ Obj MTX64_RowCombine(Obj self, Obj bitstring, Obj m1, Obj m2) {
   return m;
 }
 
-Obj MTX64_BSColRifZ(Obj self, Obj bitstring, Obj m) {
+static Obj FuncMTX64_BSColRifZ(Obj self, Obj bitstring, Obj m) {
   CHECK_MTX64_Matrix(m);
   CHECK_MTX64_BitString(bitstring);
   UInt nor = HeaderOfMatrix(m)->nor;
@@ -1280,7 +1276,7 @@ Obj MTX64_BSColRifZ(Obj self, Obj bitstring, Obj m) {
   return out;
 }
 
-Obj MTX64_BSColPutS(Obj self, Obj bitstring, Obj m, Obj x) {
+static Obj FuncMTX64_BSColPutS(Obj self, Obj bitstring, Obj m, Obj x) {
   CHECK_MTX64_Matrix(m);
   CHECK_MUT(m);
   CHECK_MTX64_BitString(bitstring);
@@ -1302,7 +1298,7 @@ static void RecountBS(Obj bs) {
   d[1] = COUNT_TRUES_BLOCKS(d + 2, (d[0] + 63) / 64);
 }
 
-Obj MTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
+static Obj FuncMTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
   CHECK_MTX64_BitString(bs1);
   CHECK_MTX64_BitString(bs2);
   CHECK_MUT(bs2);
@@ -1323,80 +1319,73 @@ typedef Obj (*GVarFunc)(/*arguments*/);
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs[] = {
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CREATE_FIELD, 1, "q"),
+    GVAR_FUNC(MTX64_CREATE_FIELD, 1, "q"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldOrder, 1, "f"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldCharacteristic, 1, "f"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDegree, 1, "f"),
+    GVAR_FUNC(MTX64_FieldOrder, 1, "f"),
+    GVAR_FUNC(MTX64_FieldCharacteristic, 1, "f"),
+    GVAR_FUNC(MTX64_FieldDegree, 1, "f"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_CreateFieldElement, 2, "f,x"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractFieldElement, 1, "e"),
+    GVAR_FUNC(MTX64_CreateFieldElement, 2, "f,x"),
+    GVAR_FUNC(MTX64_ExtractFieldElement, 1, "e"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldAdd, 3, "f,a,b"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldNeg, 2, "f,a"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldSub, 3, "f,a,b"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldMul, 3, "f,a,b"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldInv, 2, "f,a"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_FieldDiv, 3, "f,a,b"),
+    GVAR_FUNC(MTX64_FieldAdd, 3, "f,a,b"),
+    GVAR_FUNC(MTX64_FieldNeg, 2, "f,a"),
+    GVAR_FUNC(MTX64_FieldSub, 3, "f,a,b"),
+    GVAR_FUNC(MTX64_FieldMul, 3, "f,a,b"),
+    GVAR_FUNC(MTX64_FieldInv, 2, "f,a"),
+    GVAR_FUNC(MTX64_FieldDiv, 3, "f,a,b"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_NewMatrix, 3, "f,nor,noc"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumRows, 1, "m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Matrix_NumCols, 1, "m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntry, 3, "m,i,j"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntry, 4, "m,i,j,x"),
+    GVAR_FUNC(MTX64_NewMatrix, 3, "f,nor,noc"),
+    GVAR_FUNC(MTX64_Matrix_NumRows, 1, "m"),
+    GVAR_FUNC(MTX64_Matrix_NumCols, 1, "m"),
+    GVAR_FUNC(MTX64_GetEntry, 3, "m,i,j"),
+    GVAR_FUNC(MTX64_SetEntry, 4, "m,i,j,x"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCpy, 4,
-                          "src,dst,startrow,nrows"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DCut, 5,
-                          "m,startrow,nrows,startcol,clip"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DPaste, 5,
-                          "clip,startrow,nrows,startcol,m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DAdd, 3, "nrows,d1,d2"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSub, 3, "nrows,d1,d2"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMad, 4, "nrows,scalar,d1,d2"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DSMul, 3, "nrows,scalar,d1"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_DNzl, 2, "m, row"),
+    GVAR_FUNC(MTX64_DCpy, 4, "src,dst,startrow,nrows"),
+    GVAR_FUNC(MTX64_DCut, 5, "m,startrow,nrows,startcol,clip"),
+    GVAR_FUNC(MTX64_DPaste, 5, "clip,startrow,nrows,startcol,m"),
+    GVAR_FUNC(MTX64_DAdd, 3, "nrows,d1,d2"),
+    GVAR_FUNC(MTX64_DSub, 3, "nrows,d1,d2"),
+    GVAR_FUNC(MTX64_DSMad, 4, "nrows,scalar,d1,d2"),
+    GVAR_FUNC(MTX64_DSMul, 3, "nrows,scalar,d1"),
+    GVAR_FUNC(MTX64_DNzl, 2, "m, row"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLMultiply, 2, "a, b"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLTranspose, 1, "m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SLEchelizeDestructive, 1, "a"),
+    GVAR_FUNC(MTX64_SLMultiply, 2, "a, b"),
+    GVAR_FUNC(MTX64_SLTranspose, 1, "m"),
+    GVAR_FUNC(MTX64_SLEchelizeDestructive, 1, "a"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_LengthOfBitString, 1, "bs"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_WeightOfBitString, 1, "bs"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_SetEntryOfBitString, 2,
-                          "bs, pos"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_GetEntryOfBitString, 2,
-                          "bs, pos"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_EmptyBitString, 1, "len"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSShiftOr, 3, "bs1, shift, bs2"),
+    GVAR_FUNC(MTX64_LengthOfBitString, 1, "bs"),
+    GVAR_FUNC(MTX64_WeightOfBitString, 1, "bs"),
+    GVAR_FUNC(MTX64_SetEntryOfBitString, 2, "bs, pos"),
+    GVAR_FUNC(MTX64_GetEntryOfBitString, 2, "bs, pos"),
+    GVAR_FUNC(MTX64_EmptyBitString, 1, "len"),
+    GVAR_FUNC(MTX64_BSShiftOr, 3, "bs1, shift, bs2"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyMatrix, 1, "m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ShallowCopyBitString, 1, "bs"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareMatrices, 2, "m1, m2"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_compareBitStrings, 2,
-                          "bs1, bs2"),
+    GVAR_FUNC(MTX64_ShallowCopyMatrix, 1, "m"),
+    GVAR_FUNC(MTX64_ShallowCopyBitString, 1, "bs"),
+    GVAR_FUNC(MTX64_compareMatrices, 2, "m1, m2"),
+    GVAR_FUNC(MTX64_compareBitStrings, 2, "bs1, bs2"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_MakeFELTfromFFETable, 1, "q"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVecFFE, 3, "d, v, row"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecFFE, 2, "d, row"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVecGF2, 3, "d, v, row"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVecGF2, 2, "d, row"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_Make8BitConversion, 1, "f"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_InsertVec8Bit, 3, "d, v, row"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ExtractVec8Bit, 2, "d, row"),
+    GVAR_FUNC(MTX64_MakeFELTfromFFETable, 1, "q"),
+    GVAR_FUNC(MTX64_InsertVecFFE, 3, "d, v, row"),
+    GVAR_FUNC(MTX64_ExtractVecFFE, 2, "d, row"),
+    GVAR_FUNC(MTX64_InsertVecGF2, 3, "d, v, row"),
+    GVAR_FUNC(MTX64_ExtractVecGF2, 2, "d, row"),
+    GVAR_FUNC(MTX64_Make8BitConversion, 1, "f"),
+    GVAR_FUNC(MTX64_InsertVec8Bit, 3, "d, v, row"),
+    GVAR_FUNC(MTX64_ExtractVec8Bit, 2, "d, row"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_WriteMatrix, 2, "m, fn"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ReadMatrix, 1, "fn"),
+    GVAR_FUNC(MTX64_WriteMatrix, 2, "m, fn"),
+    GVAR_FUNC(MTX64_ReadMatrix, 1, "fn"),
 
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ColSelect, 2, "bs, m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_RowSelectShifted, 3,
-                          "bs, m, shift"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_RowCombine, 3, "bs, m1, m2"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSColRifZ, 2, "bs, m"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSColPutS, 3, "bs, m, x"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_BSCombine, 2, "bs1, bs2"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_PositionsBitString, 1, "bs"),
-    GVAR_FUNC_TABLE_ENTRY("meataxe64.c", MTX64_ComplementBitString, 1, "bs"),
+    GVAR_FUNC(MTX64_ColSelect, 2, "bs, m"),
+    GVAR_FUNC(MTX64_RowSelectShifted, 3, "bs, m, shift"),
+    GVAR_FUNC(MTX64_RowCombine, 3, "bs, m1, m2"),
+    GVAR_FUNC(MTX64_BSColRifZ, 2, "bs, m"),
+    GVAR_FUNC(MTX64_BSColPutS, 3, "bs, m, x"),
+    GVAR_FUNC(MTX64_BSCombine, 2, "bs1, bs2"),
+    GVAR_FUNC(MTX64_PositionsBitString, 1, "bs"),
+    GVAR_FUNC(MTX64_ComplementBitString, 1, "bs"),
 
     {0} /* Finish with an empty entry */
 
