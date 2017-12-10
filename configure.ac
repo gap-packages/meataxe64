@@ -67,6 +67,17 @@ else
 fi
 
 dnl ##
+dnl ## Detect OSX
+dnl ##
+case $host_os in
+  *darwin* ) OSX=yes;;
+         * ) OSX=no;;
+esac
+
+AM_CONDITIONAL([SYS_IS_OSX], [test "$OSX" = "yes"])
+
+
+dnl ##
 dnl ## Rebuild configure if VERSION file changes
 dnl ##
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/VERSION'])

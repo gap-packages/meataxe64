@@ -69,6 +69,7 @@ OSXifyAsmFile := function(infile, outfile)
         fi;
         res := getLabel(l);
         if res in globs then
+            Add(olines, Concatenation(res,":"));            
             Add(olines, ReplacedString(l, res, Concatenation("_", res)));
         else
             Add(olines,l);            
@@ -76,8 +77,7 @@ OSXifyAsmFile := function(infile, outfile)
     od;
     FileString(outfile, JoinStringsWithSeparator(olines,"\n"));
 end;
-
-            
         
-           
-        
+OSXifyAsmFile("src/mtx64/tfarm0.s","src/mtx64/osx-tfarm0.s"); 
+OSXifyAsmFile("src/mtx64/pcrits.s","src/mtx64/osx-pcrits.s"); 
+QUIT_GAP();
