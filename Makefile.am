@@ -9,6 +9,8 @@ ACLOCAL_AMFLAGS = -I m4
 BINARCHDIR = bin/$(GAPARCH)
 GAPINSTALLLIB = $(BINARCHDIR)/meataxe64.so
 
+meataxe64_la_LIBADD = -lpthread
+
 lib_LTLIBRARIES = meataxe64.la
 
 #
