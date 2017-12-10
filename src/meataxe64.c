@@ -14,6 +14,8 @@
 #include "src/vec8bit.h" /* GAP headers -- we need the internals of these objects */
 #include "src/vecgf2.h" /* GAP headers    for efficient vector conversion */
 
+#include "functions.h" /* headers from other files in this package */
+
 // TODO Split this file up along the lines of the split between the different
 // headers in meataxe64
 
@@ -1394,6 +1396,7 @@ static StructGVarFunc GVarFuncs[] = {
 /******************************************************************************
 *F  InitKernel( <module> )  . . . . . . . . initialise kernel data structures
 */
+
 static Int InitKernel(StructInitInfo *module) {
   /* init filters and functionsi */
   InitHdlrFuncsFromTable(GVarFuncs);
@@ -1424,8 +1427,7 @@ static Int InitKernel(StructInitInfo *module) {
   // Construct fields, respecting caching
   ImportFuncFromLibrary("MTX64_FiniteField", &MTX64_FiniteField);
 
-  /* return success */
-  return 0;
+  return InitFunctions.initKernel( &InitFunctions);
 }
 
 /******************************************************************************
@@ -1434,9 +1436,7 @@ static Int InitKernel(StructInitInfo *module) {
 static Int InitLibrary(StructInitInfo *module) {
   /* init filters and functions */
   InitGVarFuncsFromTable(GVarFuncs);
-
-  /* return success */
-  return 0;
+  return InitFunctions.initLibrary( &InitFunctions);
 }
 
 /******************************************************************************
