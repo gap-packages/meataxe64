@@ -16,9 +16,6 @@
 
 #include "functions.h" /* headers from other files in this package */
 
-#ifdef HAVE_BSD_STDLIB_H
-#include <bsd/stdlib.h>
-#endif
 
 // TODO Split this file up along the lines of the split between the different
 // headers in meataxe64
@@ -1319,6 +1316,41 @@ static Obj FuncMTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
   return 0;
 }
 
+// rather tediously it seems I need to roll my own random numbers a bit.
+// too hard to seed the MT stuff in integer.c and the very nice arc4random functions
+// don't seem to work on Linux (although I may be being stupid)
+
+static inline UInt random64() {
+    GAP_STATIC_ASSERT(RAND_MAX+1 >= 1UL<<31,"Random generates too few bits");
+        return (random()<<62)|(random()<<31)|random();
+}
+
+static inline UInt random_uniform(UInt q) {
+    UInt x;
+    if (q <= RAND_MAX) {        
+        do {
+            x = random();
+        } while (x >= (RAND_MAX/q)*q);
+     } else if (q <= ((UInt)RAND_MAX)*((UInt)RAND_MAX)) {
+        do {
+            x = random() *RAND_MAX + random();
+        } while (x >= (((UInt)RAND_MAX)*((UInt)RAND_MAX)/q)*q);
+     } else {
+        do {
+            x = random64();
+        } while ( x >= (0xFFFFFFFFFFFFFFFFL/q)*q);
+     }
+    return x % q;
+}
+
+static inline void random_buf(void * buf, size_t len) {
+    for (UInt i = 0; i < len/8; i++)        
+        ((UInt *)buf)[i] = random64();
+    for (UInt i = 0; i < len % 8; i++)
+        ((UInt1 *)buf)[(len/8)*8 + i] = random() % 256;   
+}
+
+
 static Obj FuncMTX64_RandomMat(Obj self, Obj field, Obj nrows, Obj ncols) {
     CHECK_MTX64_Field(field);
     CHECK_NONNEG_SMALLINT(nrows);
@@ -1335,88 +1367,84 @@ static Obj FuncMTX64_RandomMat(Obj self, Obj field, Obj nrows, Obj ncols) {
         switch(f->paktyp) {
         case 0:
             for (UInt j = 0; j < noc; j++) {
-                UInt x;
-                do 
-                    x = (((UInt)arc4random_uniform((q >> 32) + 1)) << 32) + arc4random();
-                while (x >= q);
-                ((UInt *)mp)[j] = x;
+                ((UInt *)mp)[j] = random_uniform(q);
             }
             break;
         case 1:
             for (UInt j = 0; j < noc; j++) 
-                ((uint32_t *)mp)[j] = arc4random_uniform((uint32_t)q);
+                ((uint32_t *)mp)[j] = random_uniform(q);
             break;
         case 2:
             if (q == (1<<16)) {
-                arc4random_buf(mp, ds.nob);
+                random_buf(mp, ds.nob);
             } else {
                 for (UInt j = 0; j < noc; j++) 
-                    ((uint16_t *)mp)[j] = (uint16_t)arc4random_uniform((uint32_t)q);
+                    ((uint16_t *)mp)[j] = (uint16_t)random_uniform(q);
             }
             break;
         case 3:
             if (q == 256) {
-                arc4random_buf(mp, ds.nob);
+                random_buf(mp, ds.nob);
             } else {
                 for (UInt j = 0; j < noc; j++) 
-                    ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform((uint32_t)q);
+                    ((uint8_t *)mp)[j] = (uint8_t)random_uniform(q);
             }
             break;
         case 4:
             if (q == 16) {
-                arc4random_buf(mp, noc/2);
+                random_buf(mp, noc/2);
             } else {
                 for (UInt j = 0; j < noc/2; j++) 
-                    ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform((uint32_t)q*q);
+                    ((uint8_t *)mp)[j] = (uint8_t)random_uniform(q*q);
             }
             if (noc % 2) {
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(q);
+                mp[ds.nob-1] = (uint8_t)random_uniform(q);
             }
             break;
         case 5:
             for (UInt j = 0; j < noc/3; j++) 
-                ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform(125);
+                ((uint8_t *)mp)[j] = (uint8_t)random_uniform(125);
             switch (noc %3) {
             case 0:
                 break;
             case 1:
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(5);
+                mp[ds.nob-1] = (uint8_t)random_uniform(5);
                 break;
             case 2:
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(25);
+                mp[ds.nob-1] = (uint8_t)random_uniform(25);
                 break;
             }
             break;
         case 6:
-            arc4random_buf(mp, noc/4);
+            random_buf(mp, noc/4);
             if (noc % 4) {
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(1<< 2*(noc % 4));
+                mp[ds.nob-1] = (uint8_t)random_uniform(1<< 2*(noc % 4));
             }
             break;
         case 7:
             for (UInt j = 0; j < noc/5; j++) 
-                ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform(243);
+                ((uint8_t *)mp)[j] = (uint8_t)random_uniform(243);
             switch (noc %5) {
             case 0:
                 break;
             case 1:
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(3);
+                mp[ds.nob-1] = (uint8_t)random_uniform(3);
                 break;
             case 2:
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(9);
+                mp[ds.nob-1] = (uint8_t)random_uniform(9);
                 break;
             case 3:
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(27);
+                mp[ds.nob-1] = (uint8_t)random_uniform(27);
                 break;
             case 4:
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(81);
+                mp[ds.nob-1] = (uint8_t)random_uniform(81);
                 break;
             }
             break;
         case 8:
-            arc4random_buf(mp, noc/8);
+            random_buf(mp, noc/8);
             if (noc % 8) {
-                mp[ds.nob-1] = (uint8_t)arc4random_uniform(1<< (noc % 8));
+                mp[ds.nob-1] = (uint8_t)random_uniform(1<< (noc % 8));
             }
             break;
         }
