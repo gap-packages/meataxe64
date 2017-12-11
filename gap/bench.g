@@ -24,10 +24,11 @@ BenchTill := function(lim, f, arg...)
 end;
 
 MulTests := function(q,n)
-    local  t, m1, m2, f1, f2, f3, res1, resp;
-    t := TmpDirectory();    
-    m1 := MTX64_Matrix(RandomMat(n,n,GF(q)));
-    m2 := MTX64_Matrix(RandomMat(n,n,GF(q)));
+    local  t, f, m1, m2, f1, f2, f3, res1, resp;
+    t := TmpDirectory();   
+    f := MTX64_FiniteField(q);    
+    m1 := MTX64_RandomMat(f,n,n);
+    m2 := MTX64_RandomMat(f,n,n);
     f1 := TmpName();
     f2 := TmpName();
     f3 := TmpName();
@@ -42,14 +43,14 @@ fields := [2,3,4,5,7,8,13,17,31, 61, 81, 128, 181];
 dims :=  [2000,5000,10000,20000,50000,100000,200000];
 
 AllMulTests := function(lim)
-    local  data, q, n;
+    local  data, q, n, ndata;
     data := [];    
     for q in fields do
-        data[q] := [];        
         for n in dims do
-            data[q][n] := MulTests(q,n);
+            ndata := MulTests(q,n);
+            Add(data,[q,n,ndata]);            
             Print(q," ",n,"\n");            
-            if data[q][n].single[1].wallTime > lim*10^9 then
+            if ndata.single[1].wallTime > lim*10^9 then
                 break;
             fi;
         od;
@@ -80,13 +81,14 @@ Analyse := function(reclist)
 end;
 
        
-        
+Distill := data->List(data, x-> [x[1],x[2],rec(single := Analyse(x[3].single),
+                   parallel := Analyse(x[3].parallel))]);
+
+    
        
      
         
     
             
             
-    
-    
     
