@@ -1315,6 +1315,112 @@ static Obj FuncMTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
   return 0;
 }
 
+static Obj FuncMTX64_RandomMat(Obj self, Obj field, Obj nrows, Obj ncols) {
+    CHECK_MTX64_Field(field);
+    CHECK_NONNEG_SMALLINT(nrows);
+    UInt nor = INT_INTOBJ(nrows);
+    CHECK_NONNEG_SMALLINT(ncols);
+    UInt noc = INT_INTOBJ(ncols);
+    Obj m = NEW_MTX64_Matrix(field, nor, noc);
+    FIELD *f = DataOfFieldObject(field);
+    Dfmt *mp = DataOfMTX64_Matrix(m);
+    UInt q = f->fdef;
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(m, &ds);
+    for (UInt i = 0; i < nor; i++) {
+        switch(f->paktyp) {
+        case 0:
+            for (UInt j = 0; j < noc; j++) {
+                UInt x;
+                do 
+                    x = (((UInt)arc4random_uniform((q >> 32) + 1)) << 32) + arc4random();
+                while (x >= q);
+                ((UInt *)mp)[j] = x;
+            }
+            break;
+        case 1:
+            for (UInt j = 0; j < noc; j++) 
+                ((uint32_t *)mp)[j] = arc4random_uniform((uint32_t)q);
+            break;
+        case 2:
+            if (q == (1<<16)) {
+                arc4random_buf(mp, ds.nob);
+            } else {
+                for (UInt j = 0; j < noc; j++) 
+                    ((uint16_t *)mp)[j] = (uint16_t)arc4random_uniform((uint32_t)q);
+            }
+            break;
+        case 3:
+            if (q == 256) {
+                arc4random_buf(mp, ds.nob);
+            } else {
+                for (UInt j = 0; j < noc; j++) 
+                    ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform((uint32_t)q);
+            }
+            break;
+        case 4:
+            if (q == 16) {
+                arc4random_buf(mp, noc/2);
+            } else {
+                for (UInt j = 0; j < noc/2; j++) 
+                    ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform((uint32_t)q*q);
+            }
+            if (noc % 2) {
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(q);
+            }
+            break;
+        case 5:
+            for (UInt j = 0; j < noc/3; j++) 
+                ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform(125);
+            switch (noc %3) {
+            case 0:
+                break;
+            case 1:
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(5);
+                break;
+            case 2:
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(25);
+                break;
+            }
+            break;
+        case 6:
+            arc4random_buf(mp, noc/4);
+            if (noc % 4) {
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(1<< 2*(noc % 4));
+            }
+            break;
+        case 7:
+            for (UInt j = 0; j < noc/5; j++) 
+                ((uint8_t *)mp)[j] = (uint8_t)arc4random_uniform(243);
+            switch (noc %5) {
+            case 0:
+                break;
+            case 1:
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(3);
+                break;
+            case 2:
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(9);
+                break;
+            case 3:
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(27);
+                break;
+            case 4:
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(81);
+                break;
+            }
+            break;
+        case 8:
+            arc4random_buf(mp, noc/8);
+            if (noc % 8) {
+                mp[ds.nob-1] = (uint8_t)arc4random_uniform(1<< (noc % 8));
+            }
+            break;
+        }
+        mp = DPAdv(&ds,1,mp);
+    }
+    return m;
+}
+
 typedef Obj (*GVarFunc)(/*arguments*/);
 #define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params)                   \
   { #name, nparam, params, (GVarFunc) name, srcfile ":Func" #name }
@@ -1367,6 +1473,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_ShallowCopyBitString, 1, "bs"),
     GVAR_FUNC(MTX64_compareMatrices, 2, "m1, m2"),
     GVAR_FUNC(MTX64_compareBitStrings, 2, "bs1, bs2"),
+    GVAR_FUNC(MTX64_RandomMat, 3, "f, nor, noc"),
 
     GVAR_FUNC(MTX64_MakeFELTfromFFETable, 1, "q"),
     GVAR_FUNC(MTX64_InsertVecFFE, 3, "d, v, row"),
