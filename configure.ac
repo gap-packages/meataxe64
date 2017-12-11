@@ -52,6 +52,9 @@ dnl ## Detect pointer size to distinguish 32 and 64 bit builds
 dnl ##
 AC_CHECK_SIZEOF([void **])
 
+dnl ## C library functions
+AC_CHECK_FUNCS([arc4random])
+
 dnl ##
 dnl ## Detect Windows resp. Cygwin
 dnl ##
