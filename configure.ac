@@ -53,6 +53,7 @@ dnl ##
 AC_CHECK_SIZEOF([void **])
 
 dnl ## C library functions
+AC_CHECK_HEADERS(["bsd/stdlib.h"])
 AC_CHECK_FUNCS([arc4random])
 
 dnl ##

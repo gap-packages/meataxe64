@@ -16,6 +16,10 @@
 
 #include "functions.h" /* headers from other files in this package */
 
+#ifdef HAVE_BSD_STDLIB_H
+#include <bsd/stdlib.h>
+#endif
+
 // TODO Split this file up along the lines of the split between the different
 // headers in meataxe64
 
