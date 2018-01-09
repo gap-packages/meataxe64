@@ -583,6 +583,7 @@ static Obj FuncMTX64_DSub(Obj self, Obj nrows, Obj d1, Obj d2) {
   return d;
 }
 
+
 static Obj FuncMTX64_DSMad(Obj self, Obj nrows, Obj scalar, Obj d1, Obj d2) {
   DSPACE ds;
   Dfmt *d1p, *d2p;
@@ -616,6 +617,7 @@ static Obj FuncMTX64_DSMul(Obj self, Obj nrows, Obj scalar, Obj d1) {
   DSMul(&ds, x, INT_INTOBJ(nrows), dp);
   return 0;
 }
+
 
 // we return Fail for zero row.
 static Obj FuncMTX64_DNzl(Obj self, Obj m, Obj row) {
@@ -706,6 +708,90 @@ static Obj FuncMTX64_SLMultiply(Obj self, Obj a, Obj b) {
   Dfmt *cp = DataOfMTX64_Matrix(c);
   SLMul(f, ap, bp, cp, nora, noca, nocb);
   return c;
+}
+
+static Obj FuncMTX64_SLMultiplyStrassen(Obj self, Obj a, Obj b) {
+  CHECK_MTX64_Matrices(a, b, 0);
+  Matrix_Header *ha = HeaderOfMatrix(a);
+  Matrix_Header *hb = HeaderOfMatrix(b);
+  UInt n = ha->nor;
+  if (n != ha->noc || n != hb->nor || n != hb->noc || n % 2) {
+      ErrorMayQuit("Matrices must be square, even sized and the same size",0,0);
+  }
+  Obj field = FieldOfMatrix(a);
+  UInt n2 = n/2;
+  Obj a11 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj a12 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj a21 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj a22 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj b11 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj b12 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj b21 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj b22 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj c11 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj c12 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj c21 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj c22 = NEW_MTX64_Matrix(field, n2,n2);
+  Obj c = NEW_MTX64_Matrix(field, n, n);
+  DSPACE ds, ds2;
+  SetDSpaceOfMTX64_Matrix(a, &ds);
+  SetDSpaceOfMTX64_Matrix(a11, &ds2);
+  Dfmt *ap = DataOfMTX64_Matrix(a);
+  Dfmt *bp = DataOfMTX64_Matrix(b);
+  Dfmt *a11p = DataOfMTX64_Matrix(a11);
+  Dfmt *a12p = DataOfMTX64_Matrix(a12);
+  Dfmt *a21p = DataOfMTX64_Matrix(a21);
+  Dfmt *a22p = DataOfMTX64_Matrix(a22);
+  Dfmt *b11p = DataOfMTX64_Matrix(b11);
+  Dfmt *b12p = DataOfMTX64_Matrix(b12);
+  Dfmt *b21p = DataOfMTX64_Matrix(b21);
+  Dfmt *b22p = DataOfMTX64_Matrix(b22);
+  Dfmt *c11p = DataOfMTX64_Matrix(c11);
+  Dfmt *c12p = DataOfMTX64_Matrix(c12);
+  Dfmt *c21p = DataOfMTX64_Matrix(c21);
+  Dfmt *c22p = DataOfMTX64_Matrix(c22);
+  Dfmt *cp = DataOfMTX64_Matrix(c);
+  FIELD *f = DataOfFieldObject(field);
+  DCut( &ds, n2, 0, ap, &ds2, a11p);
+  DCut( &ds, n2, n2, ap, &ds2, a12p);
+  ap = DPAdv(&ds, n2, ap);
+  DCut( &ds, n2, 0, ap, &ds2, a21p);
+  DCut( &ds, n2, n2, ap, &ds2, a22p);
+  DCut( &ds, n2, 0, bp, &ds2, b11p);
+  DCut( &ds, n2, n2, bp, &ds2, b12p);
+  bp = DPAdv(&ds, n2, bp);
+  DCut( &ds, n2, 0, bp, &ds2, b21p);
+  DCut( &ds, n2, n2, bp, &ds2, b22p);
+  
+  DSub(&ds2, n2, a11p, a21p, c11p);
+  DAdd(&ds2, n2, a21p, a22p, a21p);
+  DSub(&ds2, n2, b12p, b11p, c22p);
+  DSub(&ds2, n2, b22p, b12p, b12p);
+  SLMul(f, c11p, b12p, c21p, n2, n2, n2);
+  DSub(&ds2, n2, a21p, a11p, c12p);
+  SLMul(f, a11p, b11p, c11p, n2, n2, n2);
+  DSub(&ds2, n2, b22p, c22p, b11p);
+  SLMul(f, a21p, c22p, a11p, n2, n2, n2);
+  DSub(&ds2, n2, b11p, b21p, c22p);
+  SLMul(f, a22p, c22p, a21p, n2, n2, n2);
+  DSub(&ds2, n2, a12p, c12p, a22p);
+  SLMul(f, c12p, b11p, c22p, n2, n2, n2);
+  DAdd(&ds2, n2, c11p, c22p, c22p);
+  SLMul(f, a12p, b21p, c12p, n2, n2, n2);
+  DAdd(&ds2, n2, c11p, c12p, c11p);
+  DAdd(&ds2, n2, c22p, a11p, c12p);
+  DAdd(&ds2, n2, c22p, c21p, c22p);
+  DSub(&ds2, n2, c22p, a21p, c21p);
+  DAdd(&ds2, n2, c22p, a11p, c22p);
+  SLMul(f, a22p, b22p, a12p, n2, n2, n2);
+  DAdd(&ds2, n2, c12p, a12p, c12p);
+
+  DPaste(&ds2, c11p, n2, 0, &ds, cp);
+  DPaste(&ds2, c12p, n2, n2, &ds, cp);
+  cp = DPAdv(&ds, n2, cp);
+  DPaste(&ds2, c21p, n2, 0, &ds, cp);
+  DPaste(&ds2, c22p, n2, n2, &ds, cp);
+  return c;  
 }
 
 static Obj FuncMTX64_SLTranspose(Obj self, Obj mat) {
@@ -1321,7 +1407,7 @@ static Obj FuncMTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {
 // don't seem to work on Linux (although I may be being stupid)
 
 static inline UInt random64() {
-    GAP_STATIC_ASSERT(RAND_MAX+1 >= 1UL<<31,"Random generates too few bits");
+    GAP_STATIC_ASSERT((UInt)RAND_MAX+1 >= 1UL<<31,"Random generates too few bits");
         return (random()<<62)|(random()<<31)|random();
 }
 
@@ -1491,6 +1577,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_DNzl, 2, "m, row"),
 
     GVAR_FUNC(MTX64_SLMultiply, 2, "a, b"),
+    GVAR_FUNC(MTX64_SLMultiplyStrassen, 2, "a, b"),
     GVAR_FUNC(MTX64_SLTranspose, 1, "m"),
     GVAR_FUNC(MTX64_SLEchelizeDestructive, 1, "a"),
 
