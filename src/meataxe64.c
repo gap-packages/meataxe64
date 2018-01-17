@@ -710,8 +710,136 @@ static Obj FuncMTX64_SLMultiply(Obj self, Obj a, Obj b) {
   return c;
 }
 
-static Obj FuncMTX64_SLMultiplyStrassen(Obj self, Obj a, Obj b) {
+
+
+static void allocateAndChop(Obj m, Obj parts[2][2], UInt n2, Obj field) {
+  parts[0][0] = NEW_MTX64_Matrix(field, n2,n2);
+  parts[0][1] = NEW_MTX64_Matrix(field, n2,n2);
+  parts[1][0] = NEW_MTX64_Matrix(field, n2,n2);
+  parts[1][1] = NEW_MTX64_Matrix(field, n2,n2);
+  DSPACE ds;
+  DSPACE ds2;
+  SetDSpaceOfMTX64_Matrix(m, &ds);
+  SetDSpaceOfMTX64_Matrix(parts[0][0], &ds2);
+  Dfmt *mp = DataOfMTX64_Matrix(m);
+  Dfmt *m11p = DataOfMTX64_Matrix(parts[0][0]);
+  Dfmt *m12p = DataOfMTX64_Matrix(parts[0][1]);
+  Dfmt *m21p = DataOfMTX64_Matrix(parts[1][0]);
+  Dfmt *m22p = DataOfMTX64_Matrix(parts[1][1]);
+  DCut( &ds, n2, 0, mp, &ds2, m11p);
+  DCut( &ds, n2, n2, mp, &ds2, m12p);
+  mp = DPAdv(&ds, n2, mp);
+  DCut( &ds, n2, 0, mp, &ds2, m21p);
+  DCut( &ds, n2, n2, mp, &ds2, m22p);
+  return;
+}
+
+static void addForStrassen(Obj x, Obj y, Obj s, UInt n) {
+    Dfmt *xp = DataOfMTX64_Matrix(x);
+    Dfmt *yp = DataOfMTX64_Matrix(y);
+    Dfmt *sp = DataOfMTX64_Matrix(s);
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(x, &ds);
+    DAdd(&ds, n, xp, yp, sp);
+    return;
+}
+
+static void subForStrassen(Obj x, Obj y, Obj s, UInt n) {
+    Dfmt *xp = DataOfMTX64_Matrix(x);
+    Dfmt *yp = DataOfMTX64_Matrix(y);
+    Dfmt *sp = DataOfMTX64_Matrix(s);
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(x, &ds);
+    DSub(&ds, n, xp, yp, sp);
+    return;
+}
+
+                           
+static Obj SLMultiplyStrassen(Obj a, Obj b, Obj c, Obj field, UInt n, UInt reclevel) {
+    if (!reclevel) {
+        // base case
+        if (!c)
+            c = NEW_MTX64_Matrix(field, n, n);
+        Dfmt *ap = DataOfMTX64_Matrix(a);
+        Dfmt *bp = DataOfMTX64_Matrix(b);
+        Dfmt *cp = DataOfMTX64_Matrix(c);
+        SLMul(DataOfFieldObject(field), ap, bp, cp, n, n, n);
+        return c;
+    }
+    UInt n2 = n/2;
+    // chop up a
+    Obj aparts[2][2];
+    allocateAndChop(a, aparts, n2, field);
+    a = 0; // allow GC to collect a
+
+  // chop up b
+    Obj bparts[2][2];
+    allocateAndChop(b, bparts, n2, field);
+    b = 0; // allow GC to collect a
+
+  // allocate chopped sections of c
+    Obj cparts[2][2];
+    cparts[0][0] = NEW_MTX64_Matrix(field, n2,n2);
+    cparts[0][1] = NEW_MTX64_Matrix(field, n2,n2);
+    cparts[1][0] = NEW_MTX64_Matrix(field, n2,n2);
+    cparts[1][1] = NEW_MTX64_Matrix(field, n2,n2);
+
+    // do the work
+    subForStrassen(aparts[0][0], aparts[1][0], cparts[0][0], n2);
+    addForStrassen(aparts[1][0], aparts[1][1], aparts[1][0], n2);
+    subForStrassen(bparts[0][1], bparts[0][0], cparts[1][1], n2);
+    subForStrassen(bparts[1][1], bparts[0][1], bparts[0][1], n2);
+    SLMultiplyStrassen(cparts[0][0], bparts[0][1], cparts[1][0], field, n2, reclevel-1);
+    subForStrassen(aparts[1][0], aparts[0][0], cparts[0][1], n2);
+    SLMultiplyStrassen(aparts[0][0], bparts[0][0], cparts[0][0], field, n2, reclevel-1);
+    subForStrassen(bparts[1][1], cparts[1][1], bparts[0][0], n2);
+    SLMultiplyStrassen(aparts[1][0], cparts[1][1], aparts[0][0], field, n2, reclevel-1);
+    subForStrassen(bparts[0][0], bparts[1][0], cparts[1][1], n2);
+    SLMultiplyStrassen(aparts[1][1], cparts[1][1], aparts[1][0], field, n2, reclevel-1);
+    subForStrassen(aparts[0][1], cparts[0][1], aparts[1][1], n2);
+    SLMultiplyStrassen(cparts[0][1], bparts[0][0], cparts[1][1], field, n2, reclevel-1);
+    addForStrassen(cparts[0][0], cparts[1][1], cparts[1][1], n2);
+    SLMultiplyStrassen(aparts[0][1], bparts[1][0], cparts[0][1], field, n2, reclevel-1);
+    addForStrassen(cparts[0][0], cparts[0][1], cparts[0][0], n2);
+    addForStrassen(cparts[1][1], aparts[0][0], cparts[0][1], n2);
+    addForStrassen(cparts[1][1], cparts[1][0], cparts[1][1], n2);
+    subForStrassen(cparts[1][1], aparts[1][0], cparts[1][0], n2);
+    addForStrassen(cparts[1][1], aparts[0][0], cparts[1][1], n2);
+    SLMultiplyStrassen(aparts[1][1], bparts[1][1], aparts[0][1], field, n2, reclevel-1);
+    addForStrassen(cparts[0][1], aparts[0][1], cparts[0][1], n2);
+
+  // release these objects before allocating c
+    aparts[0][0] = 0;
+    aparts[0][1] = 0;
+    aparts[1][0] = 0;
+    aparts[1][1] = 0;
+    bparts[0][0] = 0;
+    bparts[0][1] = 0;
+    bparts[1][0] = 0;
+    bparts[1][1] = 0;
+    if (!c)
+        c = NEW_MTX64_Matrix(field, n, n);
+
+    // reassemble c
+    DSPACE ds, ds2;
+  SetDSpaceOfMTX64_Matrix(c, &ds);
+  SetDSpaceOfMTX64_Matrix(cparts[0][0], &ds2);
+  Dfmt *cp = DataOfMTX64_Matrix(c);
+  Dfmt *c11p = DataOfMTX64_Matrix(cparts[0][0]);
+  Dfmt *c12p = DataOfMTX64_Matrix(cparts[0][1]);
+  Dfmt *c21p = DataOfMTX64_Matrix(cparts[1][0]);
+  Dfmt *c22p = DataOfMTX64_Matrix(cparts[1][1]);
+  DPaste(&ds2, c11p, n2, 0, &ds, cp);
+  DPaste(&ds2, c12p, n2, n2, &ds, cp);
+  cp = DPAdv(&ds, n2, cp);
+  DPaste(&ds2, c21p, n2, 0, &ds, cp);
+  DPaste(&ds2, c22p, n2, n2, &ds, cp);
+  return c;  
+}
+
+static Obj FuncMTX64_SLMultiplyStrassen(Obj self, Obj a, Obj b, Obj level) {
   CHECK_MTX64_Matrices(a, b, 0);
+  CHECK_NONNEG_SMALLINT(level);
   Matrix_Header *ha = HeaderOfMatrix(a);
   Matrix_Header *hb = HeaderOfMatrix(b);
   UInt n = ha->nor;
@@ -719,79 +847,7 @@ static Obj FuncMTX64_SLMultiplyStrassen(Obj self, Obj a, Obj b) {
       ErrorMayQuit("Matrices must be square, even sized and the same size",0,0);
   }
   Obj field = FieldOfMatrix(a);
-  UInt n2 = n/2;
-  Obj a11 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj a12 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj a21 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj a22 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj b11 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj b12 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj b21 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj b22 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj c11 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj c12 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj c21 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj c22 = NEW_MTX64_Matrix(field, n2,n2);
-  Obj c = NEW_MTX64_Matrix(field, n, n);
-  DSPACE ds, ds2;
-  SetDSpaceOfMTX64_Matrix(a, &ds);
-  SetDSpaceOfMTX64_Matrix(a11, &ds2);
-  Dfmt *ap = DataOfMTX64_Matrix(a);
-  Dfmt *bp = DataOfMTX64_Matrix(b);
-  Dfmt *a11p = DataOfMTX64_Matrix(a11);
-  Dfmt *a12p = DataOfMTX64_Matrix(a12);
-  Dfmt *a21p = DataOfMTX64_Matrix(a21);
-  Dfmt *a22p = DataOfMTX64_Matrix(a22);
-  Dfmt *b11p = DataOfMTX64_Matrix(b11);
-  Dfmt *b12p = DataOfMTX64_Matrix(b12);
-  Dfmt *b21p = DataOfMTX64_Matrix(b21);
-  Dfmt *b22p = DataOfMTX64_Matrix(b22);
-  Dfmt *c11p = DataOfMTX64_Matrix(c11);
-  Dfmt *c12p = DataOfMTX64_Matrix(c12);
-  Dfmt *c21p = DataOfMTX64_Matrix(c21);
-  Dfmt *c22p = DataOfMTX64_Matrix(c22);
-  Dfmt *cp = DataOfMTX64_Matrix(c);
-  FIELD *f = DataOfFieldObject(field);
-  DCut( &ds, n2, 0, ap, &ds2, a11p);
-  DCut( &ds, n2, n2, ap, &ds2, a12p);
-  ap = DPAdv(&ds, n2, ap);
-  DCut( &ds, n2, 0, ap, &ds2, a21p);
-  DCut( &ds, n2, n2, ap, &ds2, a22p);
-  DCut( &ds, n2, 0, bp, &ds2, b11p);
-  DCut( &ds, n2, n2, bp, &ds2, b12p);
-  bp = DPAdv(&ds, n2, bp);
-  DCut( &ds, n2, 0, bp, &ds2, b21p);
-  DCut( &ds, n2, n2, bp, &ds2, b22p);
-  
-  DSub(&ds2, n2, a11p, a21p, c11p);
-  DAdd(&ds2, n2, a21p, a22p, a21p);
-  DSub(&ds2, n2, b12p, b11p, c22p);
-  DSub(&ds2, n2, b22p, b12p, b12p);
-  SLMul(f, c11p, b12p, c21p, n2, n2, n2);
-  DSub(&ds2, n2, a21p, a11p, c12p);
-  SLMul(f, a11p, b11p, c11p, n2, n2, n2);
-  DSub(&ds2, n2, b22p, c22p, b11p);
-  SLMul(f, a21p, c22p, a11p, n2, n2, n2);
-  DSub(&ds2, n2, b11p, b21p, c22p);
-  SLMul(f, a22p, c22p, a21p, n2, n2, n2);
-  DSub(&ds2, n2, a12p, c12p, a22p);
-  SLMul(f, c12p, b11p, c22p, n2, n2, n2);
-  DAdd(&ds2, n2, c11p, c22p, c22p);
-  SLMul(f, a12p, b21p, c12p, n2, n2, n2);
-  DAdd(&ds2, n2, c11p, c12p, c11p);
-  DAdd(&ds2, n2, c22p, a11p, c12p);
-  DAdd(&ds2, n2, c22p, c21p, c22p);
-  DSub(&ds2, n2, c22p, a21p, c21p);
-  DAdd(&ds2, n2, c22p, a11p, c22p);
-  SLMul(f, a22p, b22p, a12p, n2, n2, n2);
-  DAdd(&ds2, n2, c12p, a12p, c12p);
-
-  DPaste(&ds2, c11p, n2, 0, &ds, cp);
-  DPaste(&ds2, c12p, n2, n2, &ds, cp);
-  cp = DPAdv(&ds, n2, cp);
-  DPaste(&ds2, c21p, n2, 0, &ds, cp);
-  DPaste(&ds2, c22p, n2, n2, &ds, cp);
-  return c;  
+  return SLMultiplyStrassen(a,b,NULL,field, n, INT_INTOBJ(level));
 }
 
 static Obj FuncMTX64_SLTranspose(Obj self, Obj mat) {
@@ -1577,7 +1633,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_DNzl, 2, "m, row"),
 
     GVAR_FUNC(MTX64_SLMultiply, 2, "a, b"),
-    GVAR_FUNC(MTX64_SLMultiplyStrassen, 2, "a, b"),
+    GVAR_FUNC(MTX64_SLMultiplyStrassen, 3, "a, b, level"),
     GVAR_FUNC(MTX64_SLTranspose, 1, "m"),
     GVAR_FUNC(MTX64_SLEchelizeDestructive, 1, "a"),
 
