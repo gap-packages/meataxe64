@@ -422,12 +422,11 @@ end);
 
 InstallOtherMethod(NullspaceMat, [IsMTX64Matrix],
         function(m)
-    local  res, k;
-    res := MTX64_Echelize(m, rec(multiplierNeeded := false, remnantNeeded := false));
-    k := res.cleaner;
-    k := MTX64_BSColRifZ(res.rowSelect,k);
-    MTX64_BSColPutS(res.rowSelect, k, One(FieldOfMTX64Matrix(m)));
-    return k;
+    local  res, r;
+    res := MTX64_Echelize(TransposedMat(m), rec(cleanerNeeded := false, multiplierNeeded := false));
+    r := MTX64_BSColRifZ(res.colSelect,MutableTransposedMat(res.remnant));   
+    MTX64_BSColPutS(res.colSelect, r, One(FieldOfMTX64Matrix(m)));
+    return r;
 end);
 
     
