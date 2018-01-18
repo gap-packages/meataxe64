@@ -712,7 +712,7 @@ static Obj FuncMTX64_SLMultiply(Obj self, Obj a, Obj b) {
 
 
 
-static void allocateAndChop(Obj m, Obj parts[2][2], UInt n2, Obj field) {
+static void allocateAndChop(Obj m, Obj parts[2][2], UInt n2, UInt n2a, Obj field) {
   parts[0][0] = NEW_MTX64_Matrix(field, n2,n2);
   parts[0][1] = NEW_MTX64_Matrix(field, n2,n2);
   parts[1][0] = NEW_MTX64_Matrix(field, n2,n2);
@@ -729,8 +729,8 @@ static void allocateAndChop(Obj m, Obj parts[2][2], UInt n2, Obj field) {
   DCut( &ds, n2, 0, mp, &ds2, m11p);
   DCut( &ds, n2, n2, mp, &ds2, m12p);
   mp = DPAdv(&ds, n2, mp);
-  DCut( &ds, n2, 0, mp, &ds2, m21p);
-  DCut( &ds, n2, n2, mp, &ds2, m22p);
+  DCut( &ds, n2a, 0, mp, &ds2, m21p);
+  DCut( &ds, n2a, n2, mp, &ds2, m22p);
   return;
 }
 
@@ -754,6 +754,15 @@ static void subForStrassen(Obj x, Obj y, Obj s, UInt n) {
     return;
 }
 
+static UInt splitPoint(Obj field, UInt n) {
+    /*     UInt cauldron = DataOfFieldObject(field)->cauldron;
+    UInt alcove = DataOfFieldObject(field)->alcove;
+    UInt grid = cauldron;
+    while (grid % alcove)
+        grid += cauldron;
+        return  (((n/2) + grid -1)/grid)*grid; */
+    return (n+1)/2;
+}
                            
 static Obj SLMultiplyStrassen(Obj a, Obj b, Obj c, Obj field, UInt n, UInt reclevel) {
     if (!reclevel) {
@@ -766,15 +775,21 @@ static Obj SLMultiplyStrassen(Obj a, Obj b, Obj c, Obj field, UInt n, UInt recle
         SLMul(DataOfFieldObject(field), ap, bp, cp, n, n, n);
         return c;
     }
-    UInt n2 = n/2;
+    UInt n2 =splitPoint(field, n);
+    UInt n2a = n-n2;
+    if (n2 == 0 || n2a == 0) {
+        printf("Too small to cut %lli\n", n);
+        return SLMultiplyStrassen(a,b,c,field,n,0);
+    }   
+    
     // chop up a
     Obj aparts[2][2];
-    allocateAndChop(a, aparts, n2, field);
+    allocateAndChop(a, aparts, n2, n2a, field);
     a = 0; // allow GC to collect a
 
   // chop up b
     Obj bparts[2][2];
-    allocateAndChop(b, bparts, n2, field);
+    allocateAndChop(b, bparts, n2, n2a, field);
     b = 0; // allow GC to collect a
 
   // allocate chopped sections of c
@@ -802,9 +817,9 @@ static Obj SLMultiplyStrassen(Obj a, Obj b, Obj c, Obj field, UInt n, UInt recle
     SLMultiplyStrassen(aparts[0][1], bparts[1][0], cparts[0][1], field, n2, reclevel-1);
     addForStrassen(cparts[0][0], cparts[0][1], cparts[0][0], n2);
     addForStrassen(cparts[1][1], aparts[0][0], cparts[0][1], n2);
-    addForStrassen(cparts[1][1], cparts[1][0], cparts[1][1], n2);
-    subForStrassen(cparts[1][1], aparts[1][0], cparts[1][0], n2);
-    addForStrassen(cparts[1][1], aparts[0][0], cparts[1][1], n2);
+    addForStrassen(cparts[1][1], cparts[1][0], cparts[1][1], n2a);
+    subForStrassen(cparts[1][1], aparts[1][0], cparts[1][0], n2a);
+    addForStrassen(cparts[1][1], aparts[0][0], cparts[1][1], n2a);
     SLMultiplyStrassen(aparts[1][1], bparts[1][1], aparts[0][1], field, n2, reclevel-1);
     addForStrassen(cparts[0][1], aparts[0][1], cparts[0][1], n2);
 
@@ -832,8 +847,8 @@ static Obj SLMultiplyStrassen(Obj a, Obj b, Obj c, Obj field, UInt n, UInt recle
   DPaste(&ds2, c11p, n2, 0, &ds, cp);
   DPaste(&ds2, c12p, n2, n2, &ds, cp);
   cp = DPAdv(&ds, n2, cp);
-  DPaste(&ds2, c21p, n2, 0, &ds, cp);
-  DPaste(&ds2, c22p, n2, n2, &ds, cp);
+  DPaste(&ds2, c21p, n2a, 0, &ds, cp);
+  DPaste(&ds2, c22p, n2a, n2, &ds, cp);
   return c;  
 }
 
@@ -843,8 +858,8 @@ static Obj FuncMTX64_SLMultiplyStrassen(Obj self, Obj a, Obj b, Obj level) {
   Matrix_Header *ha = HeaderOfMatrix(a);
   Matrix_Header *hb = HeaderOfMatrix(b);
   UInt n = ha->nor;
-  if (n != ha->noc || n != hb->nor || n != hb->noc || n % 2) {
-      ErrorMayQuit("Matrices must be square, even sized and the same size",0,0);
+  if (n != ha->noc || n != hb->nor || n != hb->noc ) {
+      ErrorMayQuit("Matrices must be square",0,0);
   }
   Obj field = FieldOfMatrix(a);
   return SLMultiplyStrassen(a,b,NULL,field, n, INT_INTOBJ(level));
