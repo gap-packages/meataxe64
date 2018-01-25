@@ -478,7 +478,7 @@ static Obj FuncMTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry) {
   CHECK_MTX64_MATRIX_FELT(m, entry);
   UInt irow = INT_INTOBJ(row);
   UInt icol = INT_INTOBJ(col);
-  SetEntryMTX64(m, icol, irow, GetFELTFromFELTObject(entry));
+  SetEntryMTX64(m, irow, icol, GetFELTFromFELTObject(entry));
   return 0;
 }
 
