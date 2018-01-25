@@ -22,7 +22,7 @@ BindGlobal("MTX64_FieldEltType", MemoizePosIntFunction(function(q)
     fam!.q := q;
     fam!.field := MTX64_FiniteField(q);    
     return NewType(fam, IsMTX64FiniteFieldElement and IsDataObjectRep);
-end, rec(flush := true)));
+end, rec(flush := false)));
 
 BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
     local fam, type;
@@ -30,7 +30,7 @@ BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
     fam!.q := q;
     fam!.field := MTX64_FiniteField(q);    
     return NewType(fam, IsMutable and IsMTX64Matrix and IsDataObjectRep);
-end, rec(flush := true)));
+end, rec(flush := false)));
 
 BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
 BIND_GLOBAL("FieldOfMTX64FELT", e -> FamilyObj(e)!.field);
@@ -47,7 +47,7 @@ InstallMethod( MTX64_FiniteField, "for a size",
     fi;
     return MTX64_CREATE_FIELD(q);
 end,
-  rec(flush := true)) );
+  rec(flush := false)) );
 
 InstallMethod( MTX64_FiniteField, "for a characteristic, and a degree",
                [ IsPosInt, IsPosInt ],
