@@ -9,29 +9,12 @@
  * The slab level functions are designed for matrix dimensions in the range from
  * a few hundred to a few tens of thousands, although there are no hard limits.
  */
-
-#include "src/compiled.h" /* GAP headers */
+#include "meataxe64.h"
 #include "src/vec8bit.h" /* GAP headers -- we need the internals of these objects */
 #include "src/vecgf2.h" /* GAP headers    for efficient vector conversion */
 
-#include "functions.h" /* headers from other files in this package */
-
-
-// TODO Split this file up along the lines of the split between the different
-// headers in meataxe64
-
-#include "mtx64/field.h"
-// field.h has to precede the others. Need a comment here to stop clang-format
-// reordering
 #include "mtx64/bitstring.h"
 #include "mtx64/io.h"
-#include "mtx64/slab.h"
-#include <assert.h>
-
-// meataxe64 is architecture specific
-#ifndef __x86_64__
-#error Meataxe package requires x86_64
-#endif
 
 /* This defines four types of object of interest, a FIELD (a large
    structure), a FELT (a 64 bit value representing a field element, a
@@ -79,118 +62,34 @@ static Obj IsMTX64BitString;
 static Obj IsMTX64FiniteFieldElement;
 static Obj IsMTX64Matrix;
 
-/* Functions that deal with the organisation of bitstring data in a bag */
-
-static inline uint64_t *DataOfBitStringObject(Obj bs) {
-  return (uint64_t *)(ADDR_OBJ(bs) + 1);
-}
-
-static inline UInt Size_Bits_BitString(UInt len) {
-  return 8 * ((len + 63) / 64);
-}
-
-static inline UInt Size_Data_BitString(UInt len) {
-  return 2 * sizeof(uint64_t) + Size_Bits_BitString(len);
-}
-
-static inline UInt Size_Bag_BitString(UInt len) {
-  return sizeof(Obj) + Size_Data_BitString(len);
-}
-
-static inline Obj MTX64_MakeBitString(UInt len) {
+Obj MTX64_MakeBitString(UInt len)
+{
   Obj bs = NewBag(T_DATOBJ, Size_Bag_BitString(len));
   SET_TYPE_DATOBJ(bs, TYPE_MTX64_BitString);
   return bs;
 }
 
-static inline UInt IS_MTX64_BitString(Obj bs) {
+UInt IS_MTX64_BitString(Obj bs) {
   return (IS_DATOBJ(bs) && DoFilter(IsMTX64BitString, bs));
 }
 
-static inline void CHECK_MTX64_BitString(Obj bs) {
-  if (!IS_MTX64_BitString(bs))
-    ErrorMayQuit("Invalid argument, expecting a meataxe64 bitstring", 0, 0);
-}
-
-/* Functions that deal with the layout of a FIELD in a bag */
-
-static inline FIELD *DataOfFieldObject(Obj f) {
-  return (FIELD *)(ADDR_OBJ(f) + 1);
-}
-
-// We just trust the field order to be a prime power here
-// that check can happen at GAP level. FieldSet will exit
-// if it is not
-static Obj MakeMtx64Field(UInt field_order) {
-  Obj field = NewBag(T_DATOBJ, FIELDLEN + sizeof(Obj));
-  SET_TYPE_DATOBJ(field, TYPE_MTX64_Field);
-  FieldSet(field_order, DataOfFieldObject(field));
-  return field;
-}
-
-static inline UInt IS_MTX64_Field(Obj f) {
+UInt IS_MTX64_Field(Obj f) {
   return (IS_DATOBJ(f) && DoFilter(IsMTX64FiniteField, f));
 }
 
-static inline void CHECK_MTX64_Field(Obj f) {
-  if (!IS_MTX64_Field(f))
-    ErrorMayQuit("Invalid argument, expecting a meataxe64 field", 0, 0);
-}
-
-/* Functions that deal with the layout of a FELT in a bag */
-
-static inline FELT GetFELTFromFELTObject(Obj f) {
-  return *(FELT *)(ADDR_OBJ(f) + 1);
-}
-
-static inline void SetFELTOfFELTObject(Obj f, FELT x) {
-  *(FELT *)(ADDR_OBJ(f) + 1) = x;
-}
-
-static Obj MakeMtx64Felt(Obj field, FELT x) {
-  Obj f = NewBag(T_DATOBJ, sizeof(FELT) + sizeof(Obj));
-  UInt q = DataOfFieldObject(field)->fdef;
-  Obj type = CALL_1ARGS(TYPE_MTX64_Felt, INTOBJ_INT(q));
-  SET_TYPE_DATOBJ(f, type);
-  SetFELTOfFELTObject(f, x);
-  return f;
-}
-
-static inline UInt IS_MTX64_FELT(Obj x) {
+UInt IS_MTX64_FELT(Obj x) {
   return (IS_DATOBJ(x) && DoFilter(IsMTX64FiniteFieldElement, x));
 }
 
-static inline void CHECK_MTX64_FELT(Obj x) {
-  if (!IS_MTX64_FELT(x))
-    ErrorMayQuit("Invalid argument, expecting a meataxe64 field element", 0, 0);
+Obj FieldOfMatrix(Obj m) {
+  return CALL_1ARGS(FieldOfMTX64Matrix, m);
 }
 
-static Obj FieldOfMTX64FELT;
-
-static inline Obj FieldOfFELT(Obj f) { return CALL_1ARGS(FieldOfMTX64FELT, f); }
-
-/* Functions that deal with the layout of a matrix in a bag */
-
-typedef struct {
-  UInt noc;
-  UInt nor;
-} Matrix_Header;
-
-static inline Matrix_Header *HeaderOfMatrix(Obj mx) {
-  return (Matrix_Header *)(ADDR_OBJ(mx) + 1);
+UInt IS_MTX64_Matrix(Obj m) {
+  return (IS_DATOBJ(m) && DoFilter(IsMTX64Matrix, m));
 }
 
-static inline UInt Size_Data_Matrix(Obj f, UInt noc, UInt nor) {
-  DSPACE ds;
-  DSSet(DataOfFieldObject(f), noc, &ds);
-  return ds.nob * nor;
-}
-
-static inline UInt Size_Bag_Matrix(Obj f, UInt noc, UInt nor) {
-  return sizeof(Obj) + sizeof(Matrix_Header) + Size_Data_Matrix(f, noc, nor);
-}
-
-static inline Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
+Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
   Obj m;
   m = NewBag(T_DATOBJ, Size_Bag_Matrix(f, noc, nor));
   SET_TYPE_DATOBJ(
@@ -200,100 +99,32 @@ static inline Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
   return m;
 }
 
-// Import GAP level function that gets this information (from the family)
-static Obj FieldOfMTX64Matrix;
-
-static inline Obj FieldOfMatrix(Obj m) {
-  return CALL_1ARGS(FieldOfMTX64Matrix, m);
+// We just trust the field order to be a prime power here
+// that check can happen at GAP level. FieldSet will exit
+// if it is not
+Obj MakeMtx64Field(UInt field_order) {
+  Obj field = NewBag(T_DATOBJ, FIELDLEN + sizeof(Obj));
+  SET_TYPE_DATOBJ(field, TYPE_MTX64_Field);
+  FieldSet(field_order, DataOfFieldObject(field));
+  return field;
 }
 
-static inline Dfmt *DataOfMTX64_Matrix(Obj m) {
-  return (Dfmt *)(HeaderOfMatrix(m) + 1);
+
+Obj MakeMtx64Felt(Obj field, FELT x) {
+  Obj f = NewBag(T_DATOBJ, sizeof(FELT) + sizeof(Obj));
+  UInt q = DataOfFieldObject(field)->fdef;
+  Obj type = CALL_1ARGS(TYPE_MTX64_Felt, INTOBJ_INT(q));
+  SET_TYPE_DATOBJ(f, type);
+  SetFELTOfFELTObject(f, x);
+  return f;
 }
 
-static inline UInt IS_MTX64_Matrix(Obj m) {
-  return (IS_DATOBJ(m) && DoFilter(IsMTX64Matrix, m));
-}
+static Obj FieldOfMTX64FELT;
 
-// argument checking utilities
+Obj FieldOfFELT(Obj f) { return CALL_1ARGS(FieldOfMTX64FELT, f); }
 
-static inline void CHECK_MTX64_Matrix(Obj m) {
-  if (!IS_MTX64_Matrix(m))
-    ErrorMayQuit("Invalid argument, expecting a meataxe64 matrix", 0, 0);
-}
+/* Functions that deal with the layout of a matrix in a bag */
 
-// level = 0 same field, level = 1 same field and width, level = 2
-// same field and shape
-static inline void CHECK_MTX64_Matrices(Obj m1, Obj m2, UInt level) {
-  if (!IS_MTX64_Matrix(m1) || !IS_MTX64_Matrix(m2))
-    ErrorMayQuit("Invalid argument, expecting a meataxe64 matrix", 0, 0);
-  if (FAMILY_OBJ(m1) != FAMILY_OBJ(m2))
-    ErrorMayQuit("Meataxe64 matrices not over the same field", 0, 0);
-  if (level >= 1 && HeaderOfMatrix(m1)->noc != HeaderOfMatrix(m2)->noc)
-    ErrorMayQuit("Meataxe64 matrices not same width", 0, 0);
-  if (level >= 2 && HeaderOfMatrix(m1)->nor != HeaderOfMatrix(m2)->nor)
-    ErrorMayQuit("Meataxe64 matrices not same shape", 0, 0);
-}
-
-// Assumes they have been checked individually
-static inline void CHECK_MTX64_MATRIX_FELT(Obj m, Obj x) {
-  if (FieldOfFELT(x) != FieldOfMatrix(m))
-    ErrorMayQuit("MTX64: element is not over same field as matrix", 0, 0);
-}
-
-// Can't help feeling this should exist somewhere more general
-static inline void CHECK_MUT(Obj o) {
-  if (!IS_MUTABLE_OBJ(o))
-    ErrorMayQuit("MTX64: object must be mutable", 0, 0);
-}
-
-// We need this a lot
-static inline void CHECK_NONNEG_SMALLINT(Obj a) {
-  if (!IS_INTOBJ(a) || INT_INTOBJ(a) < 0)
-    ErrorMayQuit("Meataxe64: argument should be a non-negative integer < 2^60",
-                 0, 0);
-}
-
-static inline void CHECK_NONNEG_SMALLINTS(Obj a, Obj b) {
-  CHECK_NONNEG_SMALLINT(a);
-  CHECK_NONNEG_SMALLINT(b);
-}
-
-// We assume that we have already checked that m is matrix
-// Check that row and col are valid row and column numbers for this mx
-// 0-based
-static inline void CHECK_MTX64_Coords(Obj row, Obj col, Obj m) {
-  CHECK_NONNEG_SMALLINTS(row, col);
-  if (INT_INTOBJ(row) >= HeaderOfMatrix(m)->nor ||
-      INT_INTOBJ(col) >= HeaderOfMatrix(m)->noc)
-    ErrorMayQuit("Meataxe64: index out of range", 0, 0);
-}
-
-// We assume that we have already checked that m is matrix
-// Just check a 0-based row number
-static inline void CHECK_MTX64_Row(Obj row, Obj m) {
-  CHECK_NONNEG_SMALLINT(row);
-  if (INT_INTOBJ(row) >= HeaderOfMatrix(m)->nor)
-    ErrorMayQuit("Meataxe64: row out of range", 0, 0);
-}
-
-// Check a row count -- slightly different in that n is allowed
-static inline void CHECK_MTX64_RowCount(Obj row, Obj m) {
-  CHECK_NONNEG_SMALLINT(row);
-  if (INT_INTOBJ(row) > HeaderOfMatrix(m)->nor)
-    ErrorMayQuit("Meataxe64: matrix has too few rows", 0, 0);
-}
-
-// We assume that we have already checked that m is matrix
-// Check a starting row/number of rows pair represent a valid row range
-// 0-based
-static inline void CHECK_MTX64_RowRange(Obj startrow, Obj nrows, Obj m) {
-  CHECK_NONNEG_SMALLINTS(startrow, nrows);
-  if (INT_INTOBJ(startrow) + INT_INTOBJ(nrows) > HeaderOfMatrix(m)->nor)
-    ErrorMayQuit("Meataxe64: row range too large for matrix: %i %i",
-                 INT_INTOBJ(startrow) + INT_INTOBJ(nrows),
-                 HeaderOfMatrix(m)->nor);
-}
 
 /* GAP Callable low-level creation and access functions */
 
@@ -430,13 +261,6 @@ static Obj FuncMTX64_Matrix_NumCols(Obj self, Obj m) {
 
 // GAP bindings for matrix (Dfmt) functions
 
-// This is used to populate a DSpace structure on the fly. Since it
-// contains a C pointer to the field, we can't keep it alive through a GC
-
-static inline void SetDSpaceOfMTX64_Matrix(Obj m, DSPACE *ds) {
-  Obj field = FieldOfMatrix(m);
-  DSSet(DataOfFieldObject(field), HeaderOfMatrix(m)->noc, ds);
-}
 
 // Matrix entry access
 // These functions have 0-based row and column adressing.
@@ -630,96 +454,6 @@ static Obj FuncMTX64_DNzl(Obj self, Obj m, Obj row) {
   if (res == ZEROROW)
     return Fail;
   return INTOBJ_INT(res);
-}
-
-// Slab functions -- slightly higher level matrix operations
-//  use HPMI
-
-// A utlity for cleaning up return matrices.
-static void SetShapeAndResize(Obj mat, UInt nor, UInt noc) {
-  Matrix_Header *h = HeaderOfMatrix(mat);
-  Obj f = FieldOfMatrix(mat);
-  h->nor = nor;
-  h->noc = noc;
-  ResizeBag(mat, Size_Bag_Matrix(f, noc, nor));
-}
-
-//
-// Slab echelize. Currently destroys its argument.
-// Richard plans to develop this further.
-//
-static Obj FuncMTX64_SLEchelizeDestructive(Obj self, Obj a) {
-  CHECK_MTX64_Matrix(a);
-  CHECK_MUT(a);
-  Matrix_Header *h = HeaderOfMatrix(a);
-  UInt nrows = h->nor;
-  UInt ncols = h->noc;
-  UInt rklimit = (nrows > ncols) ? ncols : nrows; // minimum
-  Obj rs = MTX64_MakeBitString(nrows);
-  Obj cs = MTX64_MakeBitString(ncols);
-  FELT det;
-  Obj field = FieldOfMatrix(a);
-  Obj m = NEW_MTX64_Matrix(field, rklimit, rklimit);
-  Obj r = NEW_MTX64_Matrix(field, nrows, ncols);   // this may be a bit too high
-  Obj c = NEW_MTX64_Matrix(field, ncols, rklimit); // this is a bit too high, as
-                                                   // both bounds cannot be
-                                                   // achieved at once
-  // Done with garbage collection here
-  uint64_t rank;
-  uint64_t *rsp = DataOfBitStringObject(rs), *csp = DataOfBitStringObject(cs);
-  Dfmt *mat = DataOfMTX64_Matrix(a), *multiply = DataOfMTX64_Matrix(m),
-       *remnant = DataOfMTX64_Matrix(r), *cleaner = DataOfMTX64_Matrix(c);
-  DSPACE ds;
-  DSSet(DataOfFieldObject(field), ncols, &ds);
-  rank = SLEch(&ds, mat, rsp, csp, &det, multiply, cleaner, remnant, nrows);
-  // Garbage collection OK again here
-  // Resize all the output matrices
-  SetShapeAndResize(m, rank, rank);
-  SetShapeAndResize(c, nrows - rank, rank);
-  SetShapeAndResize(r, rank, ncols - rank);
-  // make return record
-  Obj result = NEW_PREC(7);
-  AssPRec(result, RNamName("rank"), INTOBJ_INT(rank));
-  AssPRec(result, RNamName("det"), MakeMtx64Felt(field, det));
-  AssPRec(result, RNamName("multiplier"), m);
-  AssPRec(result, RNamName("cleaner"), c);
-  AssPRec(result, RNamName("remnant"), r);
-  AssPRec(result, RNamName("rowSelect"), rs);
-  AssPRec(result, RNamName("colSelect"), cs);
-  return result;
-}
-
-static Obj FuncMTX64_SLMultiply(Obj self, Obj a, Obj b) {
-  CHECK_MTX64_Matrices(a, b, 0);
-  Matrix_Header *ha = HeaderOfMatrix(a);
-  Matrix_Header *hb = HeaderOfMatrix(b);
-  UInt nora = ha->nor;
-  UInt noca = ha->noc;
-  UInt nocb = hb->noc;
-  if (noca != hb->nor)
-    ErrorMayQuit("SLMultiply: matrices are incompatible shapes", 0, 0);
-  Obj field = FieldOfMatrix(a);
-  Obj c = NEW_MTX64_Matrix(field, nora, nocb);
-  FIELD *f = DataOfFieldObject(field);
-  Dfmt *ap = DataOfMTX64_Matrix(a);
-  Dfmt *bp = DataOfMTX64_Matrix(b);
-  Dfmt *cp = DataOfMTX64_Matrix(c);
-  SLMul(f, ap, bp, cp, nora, noca, nocb);
-  return c;
-}
-
-static Obj FuncMTX64_SLTranspose(Obj self, Obj mat) {
-  CHECK_MTX64_Matrix(mat);
-  Matrix_Header *h = HeaderOfMatrix(mat);
-  UInt nora = h->nor;
-  UInt noca = h->noc;
-  Obj field = FieldOfMatrix(mat);
-  Obj tra = NEW_MTX64_Matrix(field, noca, nora);
-  FIELD *f = DataOfFieldObject(field);
-  Dfmt *mp = DataOfMTX64_Matrix(mat);
-  Dfmt *tp = DataOfMTX64_Matrix(tra);
-  SLTra(f, mp, tp, nora, noca);
-  return tra;
 }
 
 // GAP Callable Bitstring operations
@@ -1490,10 +1224,6 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_DSMul, 3, "nrows,scalar,d1"),
     GVAR_FUNC(MTX64_DNzl, 2, "m, row"),
 
-    GVAR_FUNC(MTX64_SLMultiply, 2, "a, b"),
-    GVAR_FUNC(MTX64_SLTranspose, 1, "m"),
-    GVAR_FUNC(MTX64_SLEchelizeDestructive, 1, "a"),
-
     GVAR_FUNC(MTX64_LengthOfBitString, 1, "bs"),
     GVAR_FUNC(MTX64_WeightOfBitString, 1, "bs"),
     GVAR_FUNC(MTX64_SetEntryOfBitString, 2, "bs, pos"),
@@ -1565,8 +1295,8 @@ static Int InitKernel(StructInitInfo *module) {
 
   // Construct fields, respecting caching
   ImportFuncFromLibrary("MTX64_FiniteField", &MTX64_FiniteField);
-
-  return InitFunctions.initKernel( &InitFunctions);
+  return InitSlab.initKernel(&InitSlab) || 
+      InitFunctions.initKernel(&InitFunctions);
 }
 
 /******************************************************************************
@@ -1575,7 +1305,8 @@ static Int InitKernel(StructInitInfo *module) {
 static Int InitLibrary(StructInitInfo *module) {
   /* init filters and functions */
   InitGVarFuncsFromTable(GVarFuncs);
-  return InitFunctions.initLibrary( &InitFunctions);
+  return InitSlab.initLibrary(&InitSlab) || 
+      InitFunctions.initLibrary(&InitFunctions);
 }
 
 /******************************************************************************
