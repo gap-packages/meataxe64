@@ -29,6 +29,7 @@ meataxe64_la_SOURCES = \
    src/meataxe64.c \
    src/functions.c \
    src/slab.c \
+   src/bitstring.c \
    src/mtx64/field.c \
    src/mtx64/conex.c \
    src/mtx64/pcritc.c \
