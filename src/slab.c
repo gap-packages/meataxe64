@@ -144,7 +144,6 @@ static Obj SLMultiplyStrassenSquare(Obj a, Obj b, Obj c, Obj field, UInt n,
   UInt n2 = splitPoint(field, n);
   UInt n2a = n - n2;
   if (n2 == 0 || n2a == 0) {
-    printf("Too small to cut %lli\n", n);
     return SLMultiplyStrassenSquare(a, b, c, field, n, 0);
   }
 
@@ -265,7 +264,7 @@ static Obj SLMultiplyStrassenNonSquare(Obj a, Obj b, Obj c, Obj field, UInt n,
   UInt k2 = splitPoint(field, k);
   UInt k2a = k - k2;
   if (n2 == 0 || n2a == 0 || m2 == 0 || m2a == 0 || k2 == 0 || k2a == 0) {
-      printf("Too small to cut %lli %lli %lli\n", n, m, k);
+      // printf("Too small to cut %lli %lli %lli\n", n, m, k);
     return SLMultiplyStrassenNonSquare(a, b, c, field, n, m, k, 0);
   }
 

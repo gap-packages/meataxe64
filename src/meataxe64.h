@@ -1,5 +1,6 @@
 #ifndef MTX64_MEATAXE64_H
 #define MTX64_MEATAXE64_H
+#include <stdio.h>
 #include "src/compiled.h" /* GAP headers */
 
 
