@@ -393,8 +393,9 @@ MTX64_CleanExtend := function(ech, mat)
 end;
 
 
+InstallGlobalFunction(MTX64_Echelize, MTX64_SLEchelize);
 
-InstallGlobalFunction(MTX64_Echelize, function(mat, opt...)
+InstallGlobalFunction(MTX64_GAPEchelize, function(mat, opt...)
     local  optrec, n;
     optrec := ShallowCopy(MTX64_Echelize_DefaultOptions);
     if Length(opt) > 0 then
@@ -406,12 +407,12 @@ InstallGlobalFunction(MTX64_Echelize, function(mat, opt...)
 end);
 
 InstallOtherMethod(RankMat, [IsMTX64Matrix],
-        m -> MTX64_Echelize(m, rec(multiplierNeeded := false, 
+        m -> MTX64_GAPEchelize(m, rec(multiplierNeeded := false, 
                                                        cleanerNeeded := false, remnantNeeded := false)).rank);
 InstallMethod(InverseMutable, [IsMTX64Matrix], 1, 
         function(m)
     local res;
-    res := MTX64_Echelize(m, rec(failIfSingular := true, cleanerNeeded := false, remnantNeeded := false));
+    res := MTX64_GAPEchelize(m, rec(failIfSingular := true, cleanerNeeded := false, remnantNeeded := false));
     if res = fail then
         return res;
     else 
@@ -423,7 +424,8 @@ end);
 InstallOtherMethod(NullspaceMat, [IsMTX64Matrix],
         function(m)
     local  res, r;
-    res := MTX64_Echelize(TransposedMat(m), rec(cleanerNeeded := false, multiplierNeeded := false));
+    res := MTX64_GAPEchelize(TransposedMat(m), 
+                   rec(cleanerNeeded := false, multiplierNeeded := false));
     r := MTX64_BSColRifZ(res.colSelect,MutableTransposedMat(res.remnant));   
     MTX64_BSColPutS(res.colSelect, r, One(FieldOfMTX64Matrix(m)));
     return r;
@@ -487,7 +489,7 @@ MTX64_SEM := function(mat)
     f := FieldOfMTX64Matrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
-    res := MTX64_Echelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
+    res := MTX64_GAPEchelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
     pivotcols := MTX64_PositionsBitString(res.colSelect);
     heads := ListWithIdenticalEntries(m,0);
     for i in [1..res.rank] do
@@ -509,7 +511,7 @@ InstallOtherMethod(SemiEchelonMat, [IsMTX64Matrix], MTX64_SEM);
 MTX64_SolutionsMat := function(a, bs)
     local  res, bss, bp, c, n, solvables, i, x;
 
-    res := MTX64_Echelize(a, rec(cleanerNeeded := false));
+    res := MTX64_Echelize(a);
     bss := MTX64_ColSelect(res.colSelect, bs);
     bp := bss[1];
     c := bss[2] + bss[1]*res.remnant;
@@ -539,7 +541,7 @@ end);
 InstallOtherMethod(TriangulizedMat, [IsMTX64Matrix],
         function(m)
     local  res, bs, sem, tm;
-    res := MTX64_Echelize(m, rec(cleanerNeeded := false, multiplierNeeded := false));
+    res := MTX64_GAPEchelize(m, rec(cleanerNeeded := false, multiplierNeeded := false));
     bs := MTX64_ComplementBitString(res.colSelect);
     sem := MTX64_BSColRifZ(bs, -res.remnant);
     MTX64_BSColPutS(bs, sem, One(FieldOfMTX64Matrix(m)));
@@ -551,7 +553,7 @@ end);
 InstallOtherMethod(BaseMat, [IsMTX64Matrix],
         function(m)    
     local  res;
-    res := MTX64_Echelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
+    res := MTX64_GAPEchelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
                    remnantNeeded := false));
     return MTX64_RowSelect(res.rowSelect, m)[1];
 end);
@@ -559,7 +561,7 @@ end);
 InstallOtherMethod(BaseMatDestructive, [IsMTX64Matrix],
         function(m)    
     local  res;
-    res := MTX64_Echelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
+    res := MTX64_GAPEchelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
                    remnantNeeded := false));
     return MTX64_RowSelect(res.rowSelect, m)[1];
 end);
