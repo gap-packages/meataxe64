@@ -1,7 +1,10 @@
-time zmu a1 a1 a2
-time zmu a1 a1 a2
-time zmu a1 a1 a2
-time zmu a1 a1 a2
-time zmu a1 a1 a2
-
-
+zrd a1 $1 200 200 1
+zrd a2 $1 200 202 2
+zrd a3 $1 202 200 3
+zrd a4 $1 198 200 4
+zrd a5 $1 200 198 5
+perfsech a1 2000
+perfsech a2 2000
+perfsech a3 2000
+perfsech a4 2000
+perfsech a5 2000

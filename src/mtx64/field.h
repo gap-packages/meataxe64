@@ -142,6 +142,10 @@ extern FELT FieldDiv(const FIELD * f, FELT a, FELT b);
 
 extern void DSSet(const FIELD * f, uint64_t noc, DSPACE * ds);
 extern void PSSet(const FIELD * f, uint64_t noc, DSPACE * ds);
+extern int  MakeMexG(DSPACE * ds, uint64_t * cols, uint64_t nocol,
+                     uint64_t * mex);
+extern int  MakeMexM(DSPACE * ds, uint64_t firstcol, uint64_t nocol,
+                     uint64_t * mex);
 extern FELT DUnpak(const DSPACE * ds, uint64_t col, const Dfmt * d);
 extern void DPak(const DSPACE * ds, uint64_t col, Dfmt * d, FELT a);
 extern void DAdd(const DSPACE * ds, uint64_t nor,

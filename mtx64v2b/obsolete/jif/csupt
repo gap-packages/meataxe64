@@ -1,0 +1,8 @@
+cd $SRC
+cp ../supt/perfmad.c .
+gcc $1 -O3 -Wall -pthread perfmad.c -L$BIN -lmtx -o $BIN/perfmad
+cp ../supt/perfadd.c .
+gcc $1 -O3 -Wall -pthread perfadd.c -L$BIN -lmtx -o $BIN/perfadd
+cp ../supt/perfmul.c .
+gcc $1 -O3 -Wall -pthread perfmul.c -L$BIN -lmtx -o $BIN/perfmul
+

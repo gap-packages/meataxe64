@@ -1,0 +1,43 @@
+cd $SRC
+cp ../src2/perfmad.c .
+gcc $1 -O3 -Wall -pthread perfmad.c -L$BIN -lmtx -o $BIN/perfmad
+cp ../src2/perfadd.c .
+gcc $1 -O3 -Wall -pthread perfadd.c -L$BIN -lmtx -o $BIN/perfadd
+cp ../src2/perfmul.c .
+gcc $1 -O3 -Wall -pthread perfmul.c -L$BIN -lmtx -o $BIN/perfmul
+cp ../src2/perfsmul.c .
+gcc $1 -O3 -Wall -pthread perfsmul.c -L$BIN -lmtx -o $BIN/perfsmul
+cp ../src2/perfsech.c .
+gcc $1 -O3 -Wall -pthread perfsech.c -L$BIN -lmtx -o $BIN/perfsech
+cp ../src2/proj15.c .
+gcc $1 -O3 -Wall -pthread proj15.c -L$BIN -lmtx -o $BIN/proj15
+cp ../src2/zad1.c .
+gcc $1 -O3 -Wall -pthread zad1.c -L$BIN -lmtx -o $BIN/zad1
+cp ../src2/ze21.c .
+gcc $1 -O3 -Wall -pthread ze21.c -L$BIN -lmtx -o $BIN/ze21
+cp ../src2/ze31.c .
+gcc $1 -O3 -Wall -pthread ze31.c -L$BIN -lmtx -o $BIN/ze31
+cp ../src2/zec1.c .
+gcc $1 -O3 -Wall -pthread zec1.c -L$BIN -lmtx -o $BIN/zec1
+cp ../src2/zfr1.c .
+gcc $1 -O3 -Wall -pthread zfr1.c -L$BIN -lmtx -o $BIN/zfr1
+cp ../src2/ziv1.c .
+gcc $1 -O3 -Wall -pthread ziv1.c -L$BIN -lmtx -o $BIN/ziv1
+cp ../src2/zmu1.c .
+gcc $1 -O3 -Wall -pthread zmu1.c -L$BIN -lmtx -o $BIN/zmu1
+cp ../src2/znu1.c .
+gcc $1 -O3 -Wall -pthread znu1.c -L$BIN -lmtx -o $BIN/znu1
+cp ../src2/zpe1.c .
+gcc $1 -O3 -Wall -pthread zpe1.c -L$BIN -lmtx -o $BIN/zpe1
+cp ../src2/zpt1.c .
+gcc $1 -O3 -Wall -pthread zpt1.c -L$BIN -lmtx -o $BIN/zpt1
+cp ../src2/zrn1.c .
+gcc $1 -O3 -Wall -pthread zrn1.c -L$BIN -lmtx -o $BIN/zrn1
+cp ../src2/zs21.c .
+gcc $1 -O3 -Wall -pthread zs21.c -L$BIN -lmtx -o $BIN/zs21
+cp ../src2/zsb1.c .
+gcc $1 -O3 -Wall -pthread zsb1.c -L$BIN -lmtx -o $BIN/zsb1
+cp ../src2/zsp1.c .
+gcc $1 -O3 -Wall -pthread zsp1.c -L$BIN -lmtx -o $BIN/zsp1
+cp ../src2/ztr1.c .
+gcc $1 -O3 -Wall -pthread ztr1.c -L$BIN -lmtx -o $BIN/ztr1

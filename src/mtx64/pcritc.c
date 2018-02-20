@@ -16,7 +16,7 @@ void hpmiset(FIELD * f)
     uint64_t bias;
     f->cauldron=0;
     f->recbox=1024;
-    if(f->mact[1]=='1') f->recbox=2048;
+    if(f->mact[1]=='1') f->recbox=3072;
     if(f->mact[1]=='2') f->recbox=5000;
     if(f->charc==2)
     {

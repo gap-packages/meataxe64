@@ -1,4 +1,5 @@
 cd $SRC
+gcc -c $1 -pthread -Wall -O3 dfmtf.c -o $BIN/dfmtf.o
 gcc -c $1 -pthread -Wall -O3 field.c -o $BIN/field.o
 gcc -c $1 -pthread -Wall -O3 conex.c -o $BIN/conex.o
 gcc -c $1 -pthread -Wall -O3 pcritc.c -o $BIN/pcritc.o
@@ -17,6 +18,7 @@ gcc -c $1 -pthread -Wall -O3 mtra.c -o $BIN/mtra.o
 gcc -c $1 -pthread -Wall -O3 mmul.c -o $BIN/mmul.o
 gcc -c $1 -pthread -Wall -O3 mpef.c -o $BIN/mpef.o
 gcc -c $1 -pthread -Wall -O3 mech.c -o $BIN/mech.o
+gcc -c $1 -pthread -Wall -O3 mfuns.c -o $BIN/mfuns.o
 gcc -c $1 -pthread -Wall -O3 linf.c -o $BIN/linf.o
 gcc -c $1 -pthread -Wall -O3 util.c -o $BIN/util.o
 gcc -c $1 -pthread -Wall -O3 fasp.c -o $BIN/fasp.o
@@ -32,4 +34,4 @@ gcc -c $1 -pthread -Wall -O3 funs3.c -o $BIN/funs3.o
 gcc -c $1 -pthread -Wall -O3 funs4.c -o $BIN/funs4.o
 gcc -c $1 -pthread -Wall -O3 funs5.c -o $BIN/funs5.o
 rm -f $BIN/libmtx.a
-ar rc $BIN/libmtx.a $BIN/tfarm0.o $BIN/tfarm1.o $BIN/tfarm2.o $BIN/field.o $BIN/io.o $BIN/pmul.o $BIN/slab.o $BIN/proggies.o $BIN/pcritc.o $BIN/pcrits.o $BIN/bitstring.o $BIN/hpmi.o $BIN/tabmake.o $BIN/linf.o $BIN/conex.o $BIN/fasp.o $BIN/fchp.o $BIN/fech.o $BIN/fmul.o $BIN/funs1.o $BIN/funs2.o $BIN/funs3.o $BIN/funs4.o $BIN/funs5.o $BIN/mmul.o $BIN/mpef.o $BIN/ftra.o $BIN/mtra.o $BIN/mech.o $BIN/util.o $BIN/fpef.o $BIN/fsmu.o
+ar rc $BIN/libmtx.a $BIN/tfarm0.o $BIN/tfarm1.o $BIN/tfarm2.o $BIN/field.o $BIN/io.o $BIN/pmul.o $BIN/slab.o $BIN/proggies.o $BIN/pcritc.o $BIN/pcrits.o $BIN/bitstring.o $BIN/hpmi.o $BIN/tabmake.o $BIN/linf.o $BIN/conex.o $BIN/fasp.o $BIN/fchp.o $BIN/fech.o $BIN/fmul.o $BIN/funs1.o $BIN/funs2.o $BIN/funs3.o $BIN/funs4.o $BIN/funs5.o $BIN/mmul.o $BIN/mpef.o $BIN/ftra.o $BIN/mtra.o $BIN/mech.o $BIN/util.o $BIN/fpef.o $BIN/fsmu.o $BIN/mfuns.o $BIN/dfmtf.o

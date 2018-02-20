@@ -14,12 +14,10 @@ extern void SLTra(const FIELD *f, const Dfmt *a, Dfmt *b,
 
 uint64_t SLEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
              FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor);
-uint64_t SLEchS(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
-             FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor);
-uint64_t SLSize (FIELD * f, uint64_t nor, uint64_t noc);
-uint64_t SLSizeM(FIELD * f, uint64_t nor, uint64_t noc);
-uint64_t SLSizeC(FIELD * f, uint64_t nor, uint64_t noc);
-uint64_t SLSizeR(FIELD * f, uint64_t nor, uint64_t noc);
+uint64_t SLSize (const FIELD * f, uint64_t nor, uint64_t noc);
+uint64_t SLSizeM(const FIELD * f, uint64_t nor, uint64_t noc);
+uint64_t SLSizeC(const FIELD * f, uint64_t nor, uint64_t noc);
+uint64_t SLSizeR(const FIELD * f, uint64_t nor, uint64_t noc);
 
 /* internal interface - called from linf */
 

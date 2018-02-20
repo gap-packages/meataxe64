@@ -1,8 +1,0 @@
-zrd a1 $1 $2 $3 1
-zec1 a1 b2 b3 b4 b5 b6 > junk
-zec a1 a2 a3 a4 a5 a6
-diff b2 a2
-diff b3 a3
-diff b4 a4
-diff b5 a5
-diff b6 a6

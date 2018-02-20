@@ -1,0 +1,14 @@
+#!/bin/bash
+rm -f pid.txt
+rm -f log.txt
+sh $BIN/run1.sh $* &
+echo "Starting $*" `date` > reclog
+while :
+do
+    sleep 10
+    date >> reclog
+    if ! ps -p `cat pid.txt` -o "%cpu= rss=" | tee -a reclog | grep "" > /dev/null; then
+       exit;
+    fi
+    sleep 20
+done
