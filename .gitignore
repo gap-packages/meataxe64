@@ -43,7 +43,7 @@
 /src/stamp-h1
 
 *.la
-src/*.lo
+*.lo
 
 /tmp/
 /gh-pages/
