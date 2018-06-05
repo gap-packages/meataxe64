@@ -61,8 +61,9 @@ meataxe64_la_SOURCES = \
    src/mtx64/util.c \
    $(ASM_SOURCES)
 
-meataxe64_la_CPPFLAGS = $(GAP_CPPFLAGS) -DCONFIG_H
-meataxe64_la_LDFLAGS = -module -avoid-version
+meataxe64_la_CPPFLAGS = $(GAP_CPPFLAGS)
+meataxe64_la_CFLAGS = $(GAP_CFLAGS)
+meataxe64_la_LDFLAGS = $(GAP_LDFLAGS) -module -avoid-version
 if SYS_IS_CYGWIN
 meataxe64_la_LDFLAGS += -no-undefined -version-info 0:0:0 
 meataxe64_la_LDFLAGS += -Wl,$(GAPROOT)/bin/$(GAPARCH)/gap.dll
