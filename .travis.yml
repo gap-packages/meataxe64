@@ -1,4 +1,4 @@
-dist: trusty
+sudo: required
 language: c
 env:
   global:
@@ -6,23 +6,48 @@ env:
     - COVDIR=coverage
 
 addons:
+  apt:
+    update: true
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-5
+      - g++-5
+      - gcc-7
+      - g++-7
+      - binutils-gold
+      - binutils-2.26
   apt_packages:
-    - libgmp-dev
-    - libreadline-dev
+      - libgmp3-dev
+      - autotools-dev
+      - automake
 
 matrix:
   include:
-    - env: CFLAGS="-O2"
+    - env: CFLAGS="-O2" CC=clang CXX=clang++
       compiler: clang
-    - env: CFLAGS="-O2"
+    - env: CFLAGS="-O2" CC=gcc CXX=g++
       compiler: gcc
-    - env: CFLAGS=""  # test build w/o optimization
+    - env: CFLAGS="-O2" CC=gcc-5 CXX=g++-5
+      compiler: gcc-5
+    - env: CFLAGS="-O2" CC=gcc-7 CXX=g++-7
+      compiler: gcc-5
+    - env: CFLAGS="" AS=as-2.26  # test build w/o optimization
 
 branches:
   only:
     - master
 
 before_script:
+# We need to use binutils-2.26, because otherwise
+# linking fails with object files generated from
+# tfarm0.s
+  - export PATH=/usr/lib/binutils-2.26/bin:${PATH}
+  - ld --version
+  - as --version
+  - as-2.26 --version
+  - gcc --version
+  - export GAPROOT="$HOME/gap"
   - scripts/build_gap.sh
 script:
   - scripts/build_pkg.sh
