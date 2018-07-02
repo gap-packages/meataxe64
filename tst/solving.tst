@@ -8,7 +8,7 @@ gap> extract_roundtrip := function(n, q)
 >    fi;
 >    return true;
 >    end;;
-gap> for i in [1..3] do extract_roundtrip(Random([2..100]), Random(Primes) ^ Random([1..3])); GASMAN("collect"); od;;
+gap> for i in [1..50] do extract_roundtrip(Random([2..50]), Random(Primes) ^ Random([1..3])); od;;
 
 #
 gap> echelize := function(m, n, q)
