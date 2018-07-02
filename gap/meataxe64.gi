@@ -16,7 +16,7 @@ BindGlobal( "MTX64_BitStringFamily", NewFamily("MTX64_BitStringFamily"));
 BindGlobal( "MTX64_BitStringType",
         NewType(MTX64_BitStringFamily, IsMutable and IsMTX64BitString and IsDataObjectRep) );
 
-BindGlobal("MTX64_FieldEltType", MemoizePosIntFunction(function(q)
+BindGlobal("MTX64_FieldEltType", MemoizeFunction(function(q)
     local fam, type;
     fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_ElementFamily"));
     fam!.q := q;
@@ -24,7 +24,7 @@ BindGlobal("MTX64_FieldEltType", MemoizePosIntFunction(function(q)
     return NewType(fam, IsMTX64FiniteFieldElement and IsDataObjectRep);
 end, rec(flush := false)));
 
-BIND_GLOBAL("MTX64_MatrixType",MemoizePosIntFunction(function(q)
+BIND_GLOBAL("MTX64_MatrixType",MemoizeFunction(function(q)
     local fam, type;
     fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_MatrixFamily"));
     fam!.q := q;
@@ -41,7 +41,7 @@ BIND_GLOBAL("FieldOfMTX64FELT", e -> FamilyObj(e)!.field);
 
 InstallMethod( MTX64_FiniteField, "for a size",
                [ IsPosInt ],
-        MemoizePosIntFunction(function(q)
+        MemoizeFunction(function(q)
     if  q >= 2^64 or not IsPrimePowerInt(q) then
         Error("MTX64_FiniteField: field order must be a prime power < 2^64");
     fi;
@@ -85,7 +85,7 @@ InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an integer",
         [ IsMTX64FiniteField, IsInt ],        
         MTX64_CreateFieldElement);
 
-BindGlobal("MTX64_ConversionTables", MemoizePosIntFunction(function(q)
+BindGlobal("MTX64_ConversionTables", MemoizeFunction(function(q)
     local  f, tab1, tab2, z, y, i, tab3, tab4;
     f := MTX64_FiniteField(q);    
     tab1 := MTX64_MakeFELTfromFFETable(f);
@@ -101,7 +101,7 @@ BindGlobal("MTX64_ConversionTables", MemoizePosIntFunction(function(q)
     return [tab1,tab2];
 end));
 
-BindGlobal("MTX64_ByteTables", MemoizePosIntFunction(function(q)
+BindGlobal("MTX64_ByteTables", MemoizeFunction(function(q)
     local  tab3, tab4, i, f;
     f := MTX64_FiniteField(q);    
     tab3 := MTX64_Make8BitConversion(f);
