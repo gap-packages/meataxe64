@@ -43,6 +43,9 @@ static Obj FuncMTX64_SLEchelizeDestructive(Obj self, Obj a) {
   DSPACE ds;
   DSSet(DataOfFieldObject(field), ncols, &ds);
   rank = SLEch(&ds, mat, rsp, csp, &det, multiply, cleaner, remnant, nrows);
+
+  // TODO: Why should it be ok to not do this?
+  CHANGED_BAG(m); CHANGED_BAG(r); CHANGED_BAG(c);
   // Garbage collection OK again here
   // Resize all the output matrices
   SetShapeAndResize(m, rank, rank);
