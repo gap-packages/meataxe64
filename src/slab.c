@@ -29,14 +29,17 @@ static Obj FuncMTX64_SLEchelizeDestructive(Obj self, Obj a) {
   Obj field = FieldOfMatrix(a);
   Obj m = NEW_MTX64_Matrix(field, rklimit, rklimit);
   Obj r = NEW_MTX64_Matrix(field, nrows, ncols);   // this may be a bit too high
-  Obj c = NEW_MTX64_Matrix(field, ncols, rklimit); // this is a bit too high, as
+  Obj c = NEW_MTX64_Matrix(field, nrows, rklimit); // this is a bit too high, as
                                                    // both bounds cannot be
                                                    // achieved at once
   // Done with garbage collection here
   uint64_t rank;
-  uint64_t *rsp = DataOfBitStringObject(rs), *csp = DataOfBitStringObject(cs);
-  Dfmt *mat = DataOfMTX64_Matrix(a), *multiply = DataOfMTX64_Matrix(m),
-       *remnant = DataOfMTX64_Matrix(r), *cleaner = DataOfMTX64_Matrix(c);
+  uint64_t *rsp = DataOfBitStringObject(rs);
+  uint64_t *csp = DataOfBitStringObject(cs);
+  Dfmt *mat = DataOfMTX64_Matrix(a);
+  Dfmt *multiply = DataOfMTX64_Matrix(m);
+  Dfmt *remnant = DataOfMTX64_Matrix(r);
+  Dfmt *cleaner = DataOfMTX64_Matrix(c);
   DSPACE ds;
   DSSet(DataOfFieldObject(field), ncols, &ds);
   rank = SLEch(&ds, mat, rsp, csp, &det, multiply, cleaner, remnant, nrows);
