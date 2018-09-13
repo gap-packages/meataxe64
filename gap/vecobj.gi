@@ -152,21 +152,11 @@ InstallMethod(AddRowVector, IsCollsCollsElmsXX,[IsMeataxe64VectorObj and IsMutab
     AddRowVector(v1,v2,x);
 end);
 
-InstallMethod(MultRowVector, IsCollsElms, [IsMeataxe64VectorObj and IsMutable, IsFFE],
+InstallMethod(MultVector, IsCollsElms, [IsMeataxe64VectorObj and IsMutable, IsFFE],
         function(v,x)
     local  u;
     u := UnderlyingMeataxe64Matrix(v);    
     MTX64_DSMad(1,MTX64_FiniteFieldElement(FieldOfMTX64Matrix(u),x), u);
-end);
-
-InstallMethod(MultRowVector, function(F1, F2, F3, F4, F5)
-    return HasElementsFamily(F1) and IsIdenticalObj(F1,F3) and IsIdenticalObj(ElementsFamily(F1), F5);
-end , [IsMeataxe64VectorObj and IsMutable, IsList, IsMeataxe64VectorObj, IsList, IsFFE],
-  function(v1, poss1, v2, poss2, x)
-    local  i;
-    for i in [1..Length(poss1)] do
-        v1[poss1[i]] := v2[poss2[i]]*x;
-    od;
 end);
 
 InstallMethod(\*, IsCollsElms, [IsMeataxe64VectorObj, IsFFE],
