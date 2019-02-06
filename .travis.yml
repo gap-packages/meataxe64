@@ -1,22 +1,15 @@
+dist: xenial
+
 sudo: required
 language: c
 env:
   global:
     - GAPROOT=gaproot
     - COVDIR=coverage
+    - GAP_PKGS_TO_CLONE="datastructures"
+    - GAP_PKGS_TO_BUILD="io profiling datastructures"
 
 addons:
-  apt:
-    update: true
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-5
-      - g++-5
-      - gcc-7
-      - g++-7
-      - binutils-gold
-      - binutils-2.26
   apt_packages:
       - libgmp3-dev
       - autotools-dev
@@ -28,26 +21,15 @@ matrix:
       compiler: clang
     - env: CFLAGS="-O2" CC=gcc CXX=g++
       compiler: gcc
-    - env: CFLAGS="-O2" CC=gcc-5 CXX=g++-5
-      compiler: gcc-5
-    - env: CFLAGS="-O2" CC=gcc-7 CXX=g++-7
-      compiler: gcc-5
-    - env: CFLAGS="" AS=as-2.26  # test build w/o optimization
+    - env: CFLAGS=""  # test build w/o optimization
 
 branches:
   only:
     - master
 
 before_script:
-# We need to use binutils-2.26, because otherwise
-# linking fails with object files generated from
-# tfarm0.s
-  - export PATH=/usr/lib/binutils-2.26/bin:${PATH}
-  - ld --version
-  - as --version
-  - as-2.26 --version
-  - gcc --version
   - export GAPROOT="$HOME/gap"
+  - git clone https://github.com/gap-system/pkg-ci-scripts.git scripts
   - scripts/build_gap.sh
 script:
   - scripts/build_pkg.sh
