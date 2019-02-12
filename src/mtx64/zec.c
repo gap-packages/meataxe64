@@ -18,7 +18,7 @@ int main(int argc,  char **argv)
         LogString(80,"usage zec m rs cs mul cln rem");
         exit(14);
     }
-    fech(argv[1],0,argv[2],0,argv[3],0,argv[4],0,
+    fFullEchelize("temp",argv[1],0,argv[2],0,argv[3],0,argv[4],0,
          argv[5],0,argv[6],0);
     return 0;
 

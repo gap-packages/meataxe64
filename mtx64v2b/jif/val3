@@ -1,0 +1,40 @@
+# a1 a2 generators for SL4(5)
+zrd a1 5 4 4 5
+zrd a2 5 4 4 8
+zsc a1 2 a2 3 af
+znu af an > junk
+zvp an a 2 avecs > junk
+# b1 b2 permutations on 624 points
+zmp avecs a1 b1
+zmp avecs a2 b2
+# c1 c2 624 matrices over GF(4)
+zpm b1 9 c1
+zpm b2 9 c2
+zsc c1 1 c2 2 cf
+znu cf cn > junk
+zis cn cx c1 c2 > junk
+# try zis with permutations
+zis cn cx1 c1 b2 > junk
+diff cx1.rem cx.rem
+diff cx1.bs cx.bs
+zis cn cx1 b1 b2 > junk
+diff cx1.rem cx.rem
+diff cx1.bs cx.bs
+# d1 d2 155 matrices over GF(4)
+zsa cx c1 d1
+zsa cx c2 d2
+# e1 e2 469 matrices over GF(4)
+zqa cx c1 e1
+zqa cx c2 e2
+zad a1 a2 a3
+zde a3 > junk
+zor a3 > junk
+zor b2 > junk
+zcn a1 a2 a4 > junk
+zcp d1 dpol
+zhr dpol
+zfr e1 f1
+zfr e2 f2
+zfr f1 e3
+diff e1 e3
+check_log.sh logfile ../reg/val3log

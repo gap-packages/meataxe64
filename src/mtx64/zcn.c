@@ -22,6 +22,12 @@ int main(int argc,  char **argv)
     LogCmd(argc,argv);
     nof=argc-2;
 
+    if(argc<2)
+    {
+        LogString(80,"usage zcn <m1> <m2> . . . <concat>");
+        exit(14);
+    }        
+
     EPeek(argv[1],hdr);
     fdef=hdr[1];
     noc=hdr[3];

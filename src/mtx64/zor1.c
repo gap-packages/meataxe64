@@ -8,14 +8,16 @@
 #include <stdint.h>
 #include "field.h"
 #include "io.h"
+#include "bitstring.h"
  
 int main(int argc,  char **argv)
 {
     long order,orgord,k,rank;
     char st[200];
     uint64_t hdr[5];
+    uint64_t *bs, *p;
     EFIL *e;
-    uint64_t fdef,dim,col;
+    uint64_t fdef,dim,col,nor,lenbs;
     uint64_t i,j;
     FIELD * f;
     DSPACE ds;
@@ -36,97 +38,140 @@ int main(int argc,  char **argv)
         exit(14);
     }
     e = ERHdr(argv[1],hdr);
-    fdef=hdr[1];
-    dim=hdr[2];
-    if (hdr[2]!=hdr[3]) 
+    if(hdr[0]==1)
     {
-        LogString(80,"Matrix not square in zor");
-        exit(15);
+        fdef=hdr[1];
+        dim=hdr[2];
+        if (hdr[2]!=hdr[3]) 
+        {
+            LogString(80,"Matrix not square in zor");
+            exit(15);
+        }
+        f = malloc(FIELDLEN);
+        FieldASet(fdef,f);
+        DSSet(f,dim,&ds);
+        piv=malloc(dim*sizeof(int));
+        m1=malloc(ds.nob*dim);        // input matrix
+        ERData(e,ds.nob*dim,m1);
+        ERClose(e);
+        m2=malloc(ds.nob*dim);        // space spanned so far
+        v1=malloc(ds.nob);            // first work vector
+        v2=malloc(ds.nob);            // second work vector
+        v3=malloc(ds.nob);            // third one
+        order=1;
+        rank=0;
+        for(i=0;i<dim;i++)
+        {
+            for(j=0;j<rank;j++)       // first check i is no pivot
+               if(i==piv[j]) break;
+            if(j!=rank) continue;     // don't spin it if it is
+            memset(v1,0,ds.nob);
+            DPak(&ds,i,v1,1);         // set v1 as initial vector
+            k=0;
+            lindep=0;
+            memcpy(v2,v1,ds.nob);
+            while(1)
+            {
+                k++;
+                if(lindep==0)
+                {
+                    memcpy(v3,v2,ds.nob);
+                    for(j=0;j<rank;j++)
+                    {
+                        fel=DUnpak(&ds,piv[j],v3);
+                        DSMad(&ds,fel,1,m2+j*ds.nob,v3);
+                    }
+                    col=DNzl(&ds,v3);
+                    if(col!=ZEROROW)
+                    {
+                        piv[rank]=col;
+                        fel=DUnpak(&ds,col,v3);
+                        fel=FieldInv(f,fel);
+                        fel=FieldNeg(f,fel);
+                        DSMul(&ds,fel,1,v3);
+                        DCpy(&ds,v3,1,m2+rank*ds.nob);
+                        rank++;
+                    }
+                    else
+                        lindep=1;
+                }
+                memset(v3,0,ds.nob);
+                for(j=0;j<dim;j++)   
+                {
+                    vp1=DPAdv(&ds,j,m1);
+                    fel=DUnpak(&ds,j,v2);
+                    DSMad(&ds,fel,1,vp1,v3);
+                }
+                if(memcmp(v3,v1,ds.nob)==0) break;
+                vp1=v2;
+                v2=v3;
+                v3=vp1;
+            }
+            orgord=order;
+            while(order%k!=0)
+            {
+                if(order>1000000000000)
+                {
+                    sprintf(st,"Order of %s is > 1000000000000",argv[1]);
+                    printf("%s\n",st);
+                    LogString(20,st);
+                    return 0;
+                }
+                order+=orgord;
+            }
+        }
+        sprintf(st,"Order of %s is %ld",argv[1],order);
+        printf("%s\n",st);
+        LogString(20,st);
+        free(f);
+        free(piv);
+        free(m1);
+        free(m2);
+        free(v1);
+        free(v2);
+        free(v3);
+        return 0;
     }
-    f = malloc(FIELDLEN);
-    FieldASet(fdef,f);
-    DSSet(f,dim,&ds);
-    piv=malloc(dim*sizeof(int));
-    m1=malloc(ds.nob*dim);        // input matrix
-    ERData(e,ds.nob*dim,m1);
-    ERClose(e);
-    m2=malloc(ds.nob*dim);        // space spanned so far
-    v1=malloc(ds.nob);            // first work vector
-    v2=malloc(ds.nob);            // second work vector
-    v3=malloc(ds.nob);            // third one
-    order=1;
-    rank=0;
-    for(i=0;i<dim;i++)
+    if(hdr[0]==3)    // permutation
     {
-        for(j=0;j<rank;j++)       // first check i is no pivot
-           if(i==piv[j]) break;
-        if(j!=rank) continue;     // don't spin it if it is
-        memset(v1,0,ds.nob);
-        DPak(&ds,i,v1,1);         // set v1 as initial vector
-        k=0;
-        lindep=0;
-        memcpy(v2,v1,ds.nob);
-        while(1)
+        nor=hdr[2];
+        p=malloc(8*nor);
+        ERData(e,8*nor,(uint8_t *) p);
+        ERClose(e);
+        lenbs=8*(2+(nor+63)/64);
+        bs=malloc(lenbs);
+        memset(bs,0,lenbs);
+        bs[0]=nor;
+        order=1;
+        for(i=0;i<nor;i++)
         {
-            k++;
-            if(lindep==0)
+            if(BSBitRead(bs,i)) continue;
+            BSBitSet(bs,i);
+            j=p[i];
+            k=1;
+            while(j!=i)
             {
-                memcpy(v3,v2,ds.nob);
-                for(j=0;j<rank;j++)
-                {
-                    fel=DUnpak(&ds,piv[j],v3);
-                    DSMad(&ds,fel,1,m2+j*ds.nob,v3);
-                }
-                col=DNzl(&ds,v3);
-                if(col!=ZEROROW)
-                {
-                    piv[rank]=col;
-                    fel=DUnpak(&ds,col,v3);
-                    fel=FieldInv(f,fel);
-                    fel=FieldNeg(f,fel);
-                    DSMul(&ds,fel,1,v3);
-                    DCpy(&ds,v3,1,m2+rank*ds.nob);
-                    rank++;
-                }
-                else
-                    lindep=1;
+                BSBitSet(bs,j);
+                j=p[j];
+                k++;
             }
-            memset(v3,0,ds.nob);
-            for(j=0;j<dim;j++)   
+            orgord=order;
+            while( (order%k)!=0 )
             {
-                vp1=DPAdv(&ds,j,m1);
-                fel=DUnpak(&ds,j,v2);
-                DSMad(&ds,fel,1,vp1,v3);
+                order+=orgord;
+                if(order>1000000000000) break;                
             }
-            if(memcmp(v3,v1,ds.nob)==0) break;
-            vp1=v2;
-            v2=v3;
-            v3=vp1;
+            if(order>1000000000000) break;  
         }
-        orgord=order;
-        while(order%k!=0)
-        {
-            if(order>1000000000000)
-            {
-                sprintf(st,"Order of %s is > 1000000000000",argv[1]);
-                printf("%s\n",st);
-                LogString(20,st);
-                return 0;
-            }
-            order+=orgord;
-        }
+        if(order<=1000000000000) 
+            sprintf(st,"Order of %s is %ld",argv[1],order);
+        else sprintf(st,"Order of %s is > 1000000000000",argv[1]);
+        printf("%s\n",st);
+        LogString(20,st);
+        free(p);
+        free(bs);
+        return 0;
     }
-    sprintf(st,"Order of %s is %ld",argv[1],order);
-    printf("%s\n",st);
-    LogString(20,st);
-    free(f);
-    free(piv);
-    free(m1);
-    free(m2);
-    free(v1);
-    free(v2);
-    free(v3);
-    return 0;
 }
 
 /*  end of zor1.c    */

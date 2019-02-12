@@ -1,11 +1,12 @@
 // Copyright (C) Richard Parker   2017
 // Meataxe64 Nikolaus version
-// fech.c - early version of full echelize function
+// fech.c - full echelize function
 
 #include <stdint.h>
 #include "mezz.h"
 
-uint64_t fech(const char *m1, int s1, const char *b2, int s2,
+uint64_t fFullEchelize(const char *temp, const char *m1, int s1,
+         const char *b2, int s2,
          const char *b3, int s3, const char *m4, int s4,
          const char *m5, int s5, const char *m6, int s6)
 {

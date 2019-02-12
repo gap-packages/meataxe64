@@ -4,6 +4,8 @@
 
 //    Contents
 // fFrobenius
+// fFieldContract
+// fFieldExtend
 
 #include <stdio.h>
 #include <stdint.h>
@@ -413,7 +415,7 @@ extern void fFieldExtend(const char *m1, int s1, uint64_t fdef2,
     {
         siz=f1->fdef*sizeof(FELT);
         tab=NULL;
-        if( (siz/1000000)<MEGABYTES )
+        if( (siz/1000000)<f1->megabytes )
             tab=malloc(siz);
         if(tab==NULL)
         {

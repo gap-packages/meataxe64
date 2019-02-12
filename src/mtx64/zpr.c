@@ -16,6 +16,7 @@ int main(int argc,  char **argv)
     DSPACE ds;
     int opt,chct,ch;
     uint64_t fdef,nor,noc;
+    uint64_t degree,nopolys;
     FELT fel;
     uint64_t i,j,k,fk;
     uint64_t header[5];
@@ -56,6 +57,34 @@ int main(int argc,  char **argv)
               else      printf("%6lu\n",k);
         }
         ERClose(e);
+        return 0;
+    }
+    if(header[0]==4)  // polynomial
+    {
+        degree=header[2];
+        nopolys=header[3];
+        fdef=header[1];
+        f = malloc(FIELDLEN);
+        FieldASet(fdef,f);
+        DSSet(f,degree,&ds);
+        v1=malloc(ds.nob);
+        printf(" 31 %lu %lu %lu\n",fdef,degree,nopolys);
+        for(i=0;i<nopolys;i++)
+        {
+            ERData(e,8,(uint8_t *)&j);
+            DSSet(f,j+1,&ds);
+            ERData(e,ds.nob,v1);
+            printf(" %lu   ",j);
+            for(k=0;k<=j;k++)
+            {
+                fel=DUnpak(&ds,k,v1);
+                printf("%lu ",fel);
+            }
+            printf("\n");
+        }
+        ERClose(e);
+        free(f);
+        free(v1);
         return 0;
     }
     if(opt==0)

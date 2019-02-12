@@ -3,176 +3,266 @@
 // scratch rax (RV) r10 r11
 // not scratch rbx rbp r12 r13 r14 r15
 
-// uint64_t * pcmex uint64_t * program, Dfmt * vector
-//            =====
-//                            %rdi              %rsi
+// **** pch2 prg    BWA    C    ****
+// ****      rdi    rsi  rdx    ****
+// byte order s0(8) s1(8) d(8)
+//  00 end, then
+//  00 return 01 Current Gray code 
+//     02-255 reserved for future use
 
-// %rdi   Program pointer
-// %r10   Copy of program pointer to keep it "const"
-// %rsi   Vector pointer
-// %rax   answer register building
-// %rdx   Program mode 0(%rdi)
-// %rcx   Main index into Dfmt (col if 16,32 or 64)
-// %r9    Dfmt of second or subsquent bytes (16,32,64)
-// %r8 %r11 spare
-// %rbx %rbp %r12 %r13 %r14 %r15 untouched.
+// #### pch2 SSE version pch2a
+	.text
+	.globl	pch2a
+pch2a:
+        movq    $0x7F80,%r9  /* 8 bit extraction mask */
+        notq    %r9          /* used with andn        */
+        jmp     pch2ac
+pch2aa:                     /* next chunk 36 mu-ops */
+        movdqa   0(%rsi,%rcx),%xmm0  /* s0  */
+        movdqa  16(%rsi,%rcx),%xmm1
+        movdqa  32(%rsi,%rcx),%xmm2
+        movdqa  48(%rsi,%rcx),%xmm3
+        movdqa  64(%rsi,%rcx),%xmm4
+        movdqa  80(%rsi,%rcx),%xmm5
+        movdqa  96(%rsi,%rcx),%xmm6
+        movdqa 112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        pxor     0(%rsi,%rcx),%xmm0  /* s1 */
+        pxor    16(%rsi,%rcx),%xmm1
+        pxor    32(%rsi,%rcx),%xmm2
+        pxor    48(%rsi,%rcx),%xmm3
+        pxor    64(%rsi,%rcx),%xmm4
+        pxor    80(%rsi,%rcx),%xmm5
+        pxor    96(%rsi,%rcx),%xmm6
+        pxor   112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        movdqa %xmm0,0(%rsi,%rcx)     /* d0 */
+        movdqa %xmm1,16(%rsi,%rcx)
+        movdqa %xmm2,32(%rsi,%rcx)
+        movdqa %xmm3,48(%rsi,%rcx)
+        movdqa %xmm4,64(%rsi,%rcx)
+        movdqa %xmm5,80(%rsi,%rcx)
+        movdqa %xmm6,96(%rsi,%rcx)
+        movdqa %xmm7,112(%rsi,%rcx)
+pch2ac:                 /* next chunk probably 4 mu-ops */
+        movl    0(%rdi),%eax     /* takes four bytes!  */
+        addq    $3,%rdi          /* three significant  */
+        shlq    $7,%rax          /* multiply by 128    */
+        movq    %rax,%rcx        /* copy for AND       */
+        andq    $0x7f80,%rcx
+        jnz     pch2aa
+/* end of brick greasing phase . . . now what */
+        shrq    $15,%rax         /* second byte to bottom (%al) */
+        testb   %al,%al          /* zero - just addition chain  */
+        jnz     pch2ae           /* 1 (or anything else) phase 2*/
+        ret
+pch2ae:
+// Not yet written
+        ret
+
+// #### pch2 ACX2 version pch2j
 
 	.text
-	.globl	pcmex
-	.type	pcmex, @function
-pcmex:
-        movq    0(%rdi),%rdx   /* get MODE word          */
-        movq    8(%rdi),%rcx   /* get IX0 for all cases  */
-        testq   $6,%rdx        /* Ck if 0 or 1           */
-        jnz     pcmex2         /* go process non-fragment*/
-        movzbq  0(%rsi,%rcx),%rax  /* get a[IX0] of Dfmt */
-        testq   $1,%rdx        /* is it 0 - consecutive  */
-        jnz     pcmex1         /* fragment non consec    */
-// MODE=0 4C
-        imulq   16(%rdi),%rax  /* get top part of (IX0)  */
-        shrq    $32,%rax       /* and get that back      */
-        testq   %rdx,%rdx      /* is MODE exactly 0      */
-        jnz     pcmex0a        /* more than one byte?    */
-        ret 
-pcmex0a:
-        subq    $8,%rdx        /* 2 bytes or more?       */
-        jnz     pcmex0b        /* more so deal with it   */
-        movzbq  1(%rsi,%rcx),%r9  /* get a[IX1] of Dfmt  */
-        imull   36(%rdi),%r9d  /* clear unwanted stuff   */
-        imulq   40(%rdi),%r9   /* get the wanted parts   */
-        shrq    $32,%r9        /* get top half to bottom */
-        imulq   24(%rdi),%r9   /* multiply by Q          */
-        addq    %r9,%rax       /* add into accumulation  */
-        ret    
-pcmex0b:
-        movq    %rdi,%r10
-pcmex0c:
-        movzbq  2(%rsi,%rcx),%r9 /* get a[IXi] of Dfmt   */
-        addq    $1,%rcx        /* ready for next byte    */
-        imulq   24(%r10),%r9   /* multiply by Q          */
-        addq    $8,%r10        /* ready for next Q       */
-        addq    %r9,%rax       /* add into accumulator   */
-        subq    $8,%rdx        /* decrement word counter */
-        jnz     pcmex0c
-        movzbq  2(%rsi,%rcx),%r9  /* get a[IXw] of Dfmt  */
-        imull   36(%r10),%r9d  /* clear unwanted stuff   */
-        imulq   40(%r10),%r9   /* get the wanted parts   */
-        shrq    $32,%r9        /* get top half to bottom */
-        imulq   24(%r10),%r9   /* multiply by Q          */
-        addq    %r9,%rax       /* add into accumulation  */
+	.globl	pch2j
+pch2j:
+        movq    $0x7F80,%r9  /* 8 bit extraction mask */
+        notq    %r9          /* used with andn        */
+        jmp     pch2jc
+pch2ja:                     /* next chunk 20 mu-ops */
+        vmovdqa  0(%rsi,%rcx),%ymm0  /* s0  */
+        vmovdqa 32(%rsi,%rcx),%ymm1
+        vmovdqa 64(%rsi,%rcx),%ymm2
+        vmovdqa 96(%rsi,%rcx),%ymm3
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        vpxor    0(%rsi,%rcx),%ymm0,%ymm0  /* s1 */
+        vpxor   32(%rsi,%rcx),%ymm1,%ymm1
+        vpxor   64(%rsi,%rcx),%ymm2,%ymm2
+        vpxor   96(%rsi,%rcx),%ymm3,%ymm3
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        vmovdqa %ymm0,0(%rsi,%rcx)     /* d */
+        vmovdqa %ymm1,32(%rsi,%rcx)
+        vmovdqa %ymm2,64(%rsi,%rcx)
+        vmovdqa %ymm3,96(%rsi,%rcx)
+pch2jc:                 /* next chunk probably 4 mu-ops */
+        movl    0(%rdi),%eax     /* loads four bytes!  */
+        addq    $3,%rdi          /* three significant  */
+        shlq    $7,%rax          /* multiply by 128    */
+        movq    %rax,%rcx        /* copy for AND no mu-op? */
+        andq    $0x7f80,%rcx
+        jnz     pch2ja           /* first byte tested  */
+//    end of brick greasing phase . . . now what?
+//    three bytes
+//      00 end bwa population (terminates population)
+//      01 do some more or 00 return
+//      aa accumulator index to load for next (bwamad) phase
+        shrq    $15,%rax         /* second byte to bottom (%al) */
+        testb   %al,%al          /* zero - just addition chain  */
+        jnz     pch2je           /* 1 (or anything else) phase 2*/
         ret
-pcmex1:
-        imull   20(%rdi),%eax  /* get rid of top entries */
-        imulq   24(%rdi),%rax  /* make the part wanted   */
-        shrq    $32,%rax       /* top word to bottom     */
-        subq    $1,%rdx        /* is W=0?                */
-        jnz     pcmex1a        /* no - do multiple case  */
-        ret
-pcmex1a:
-        movq    %rdi,%r10      /* program pointer const  */
-pcmex1b:
-        movq    32(%r10),%rcx  /* IX(i)                  */
-        movzbq  0(%rsi,%rcx),%r9  /* get byte of Dfmt    */
-        imull   52(%r10),%r9d  /* Multiply by D(i)       */
-        imulq   56(%r10),%r9   /* Multiply by E(i)       */
-        shrq    $32,%r9        /* Shift the word we want */
-        imulq   40(%r10),%r9   /* and put into position  */
-        addq    %r9,%rax       /* and add into result    */
-        addq    $32,%r10
-        subq    $8,%rdx        /* decrement word count   */
-        jnz     pcmex1b
-
-pcmex2:
-        cmpq    $2,%rdx        /* fast single byte case? */
-        jne     pcmex2a        /* anything else          */
-        movzbq  0(%rsi,%rcx),%rax /* load the single byte*/
-        ret
-pcmex2a:
-        testq   $4,%rdx        /* is it byte at all?     */
-        jnz     pcmex4         /* no so process 16+ Dfmt */
-        movzbq  0(%rsi,%rcx),%rax /* get the first byte  */
-        testq   $1,%rdx        /* mode 2 or 3?           */
-        jne     pcmex2c        /* non-consecutive bytes  */
-        movq    %rdi,%r10      /* keep const prog ctr    */
-        subq    $2,%rdx        /* get rid of mode bits   */
-pcmex2b:
-        movzbq  1(%rsi,%rcx),%r9  /* next byte Dfmt      */
-        imulq   16(%r10),%r9   /* multiply by its Q      */
-        addq    %r9,%rax       /* add into accumulator   */
-        addq    $8,%r10        /* next Q from list       */
-        addq    $1,%rcx        /* next byte of Dfmt      */
-        subq    $8,%rdx        /* decrement word counter */
-        jnz     pcmex2b        /* round again if needed  */
-        ret
-
-pcmex2c:
-        movq    %rdi,%r10      /* save const program     */
-        subq    $3,%rdx        /* get rid of mode bits   */
-pcmex2d:
-        movq    16(%r10),%rcx  /* get IX(i)              */
-        movzbq  0(%rsi,%rcx),%r9  /* Dfmt is indirect    */
-        imulq   24(%r10),%r9   /* multily by its Q       */
-        addq    %r9,%rax       /* add into result        */
-        addq    $16,%r10       /* next IX/Q pair         */
-        subq    $8,%rdx        /* decrement word count   */
-        jnz     pcmex2d        /* repeat till all done   */
-        ret
-
-pcmex4:
-        testq   $3,%rdx        /* check if 16 bits       */
-        jnz     pcmex5         /* No - on to next stage  */
-        movzwq  0(%rsi,%rcx,2),%rax  /* 16-bit load      */
-        subq    $4,%rdx        /* get rid of mode bits   */
-        jnz     pcmex4a        /* and continue if more   */
-        ret
-pcmex4a:
-        movq    %rdi,%r10      /* %rdi is const          */
-pcmex4b:
-        movq    16(%r10),%rcx  /* another index          */
-        movzwq  0(%rsi,%rcx,2),%r9  /* another 16 bits   */
-        imulq   24(%r10),%r9   /* multiply by its Q      */
-        addq    %r9,%rax       /* add into accumulator   */
-        addq    $16,%r10       /* up program counter     */
-        subq    $8,%rdx        /* decrement count        */
-        jnz     pcmex4b        /* loop until done        */
+pch2je:
+        movq    $0x3F80,%r8  /* 7 bit extraction mask */
+        notq    %r8          /* used with andn        */
+        movq    $0x7FF80,%r10 /* 12 bit extraction mask */
+        notq    %r10         /* used with andn        */
+        shrq    $1,%rax      /* third byte *128       */
+        andnq   %rax,%r9,%rax  /* convert into bwa index for accumulator */
+        vmovdqa  0(%rsi,%rax),%ymm4  /* load accumulator */
+        vmovdqa 32(%rsi,%rax),%ymm5
+        vmovdqa 64(%rsi,%rax),%ymm6
+        vmovdqa 96(%rsi,%rax),%ymm7
+        jmp     pch2jh
+pch2jf:
+// Afmt 48 bits - in %rax c(12) b0(8) b1(7) b2(7) b3(7) b4(7)
+// b0(8) and b1(7) go in via the accumulator
+// b3=0 is termination condition
+// %rax pristine Afmt word
+// %rcx index into BWA
+// %r11 index into C
+// so far %rax Afmt unrotated %rcx b3
+        rorq    $29,%rax
+        andnq   %rax,%r10,%r11   /* C index  */
+        vmovdqa  0(%rdx,%r11),%ymm0   /* get cauldron of Cfmt */
+        vmovdqa 32(%rdx,%r11),%ymm1
+        vmovdqa 64(%rdx,%r11),%ymm2
+        vmovdqa 96(%rdx,%r11),%ymm3  /* keep %r11 for store */
+        vpxor    0(%rsi,%rcx),%ymm0,%ymm0  /* b3 into C  */
+        vpxor   32(%rsi,%rcx),%ymm1,%ymm1
+        vpxor   64(%rsi,%rcx),%ymm2,%ymm2
+        vpxor   96(%rsi,%rcx),%ymm3,%ymm3
+        rolq    $8,%rax
+        andnq   %rax,%r9,%rcx   /* b0  */
+        vpxor    0(%rsi,%rcx),%ymm4,%ymm4  /* b0 into Acc  */
+        vpxor   32(%rsi,%rcx),%ymm5,%ymm5
+        vpxor   64(%rsi,%rcx),%ymm6,%ymm6
+        vpxor   96(%rsi,%rcx),%ymm7,%ymm7
+        rolq    $7,%rax
+        andnq   %rax,%r8,%rcx   /* b1  */
+        vpxor    0(%rsi,%rcx),%ymm4,%ymm4  /* b1 into Acc  */
+        vpxor   32(%rsi,%rcx),%ymm5,%ymm5
+        vpxor   64(%rsi,%rcx),%ymm6,%ymm6
+        vpxor   96(%rsi,%rcx),%ymm7,%ymm7
+        rolq    $7,%rax
+        andnq   %rax,%r8,%rcx   /* b2  */
+        vpxor    0(%rsi,%rcx),%ymm0,%ymm0  /* b2 into C  */
+        vpxor   32(%rsi,%rcx),%ymm1,%ymm1
+        vpxor   64(%rsi,%rcx),%ymm2,%ymm2
+        vpxor   96(%rsi,%rcx),%ymm3,%ymm3
+        rolq    $14,%rax
+        andnq   %rax,%r8,%rcx   /* b4  */
+        vpxor    0(%rsi,%rcx),%ymm0,%ymm0  /* b4 into C  */
+        vpxor   32(%rsi,%rcx),%ymm1,%ymm1
+        vpxor   64(%rsi,%rcx),%ymm2,%ymm2
+        vpxor   96(%rsi,%rcx),%ymm3,%ymm3
+        vpxor    %ymm4,%ymm0,%ymm0     /* Add in accumulator */
+        vpxor    %ymm5,%ymm1,%ymm1
+        vpxor    %ymm6,%ymm2,%ymm2
+        vpxor    %ymm7,%ymm3,%ymm3
+        vmovdqa  %ymm0,0(%rdx,%r11)   /* Put cauldron back */
+        vmovdqa  %ymm1,32(%rdx,%r11)
+        vmovdqa  %ymm2,64(%rdx,%r11)
+        vmovdqa  %ymm3,96(%rdx,%r11)
+pch2jh:
+        movq    0(%rdi),%rax  
+        addq    $6,%rdi 
+        movq    %rax,%rcx
+        andq    $0x3f80,%rcx
+        jnz     pch2jf
         ret
 
-pcmex5:
-        testq   $2,%rdx        /* check if 32 bits       */
-        jnz     pcmex6         /* No - on to next stage  */
-        movzwq  0(%rsi,%rcx,4),%rax  /* 32-bit load      */
-        subq    $5,%rdx        /* get rid of mode bits   */
-        jnz     pcmex5a        /* and continue if more   */
-        ret
-pcmex5a:
-        movq    %rdi,%r10      /* %rdi is const          */
-pcmex5b:
-        movq    16(%r10),%rcx  /* another index          */
-        movzwq  0(%rsi,%rcx,4),%r9  /* another 32 bits   */
-        imulq   24(%r10),%r9   /* multiply by its Q      */
-        addq    %r9,%rax       /* add into accumulator   */
-        addq    $16,%r10       /* up program counter     */
-        subq    $8,%rdx        /* decrement count        */
-        jnz     pcmex5b        /* loop until done        */
+//  **** this is just junk now  ****
+//  **** retained to crib for SSE version pch2a later
+        movq    $0x7F80,%r9  /* 8 bit extraction mask */
+        notq    %r9          /* used with andn        */
+        jmp     pcagyp8
+pcagyp1:
+        movdqa   0(%rsi,%rcx),%xmm0  /* s0  */
+        movdqa  16(%rsi,%rcx),%xmm1
+        movdqa  32(%rsi,%rcx),%xmm2
+        movdqa  48(%rsi,%rcx),%xmm3
+        movdqa  64(%rsi,%rcx),%xmm4
+        movdqa  80(%rsi,%rcx),%xmm5
+        movdqa  96(%rsi,%rcx),%xmm6
+        movdqa 112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        pxor     0(%rsi,%rcx),%xmm0  /* s1 */
+        pxor    16(%rsi,%rcx),%xmm1
+        pxor    32(%rsi,%rcx),%xmm2
+        pxor    48(%rsi,%rcx),%xmm3
+        pxor    64(%rsi,%rcx),%xmm4
+        pxor    80(%rsi,%rcx),%xmm5
+        pxor    96(%rsi,%rcx),%xmm6
+        pxor   112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        movdqa %xmm0,0(%rsi,%rcx)     /* d0 */
+        movdqa %xmm1,16(%rsi,%rcx)
+        movdqa %xmm2,32(%rsi,%rcx)
+        movdqa %xmm3,48(%rsi,%rcx)
+        movdqa %xmm4,64(%rsi,%rcx)
+        movdqa %xmm5,80(%rsi,%rcx)
+        movdqa %xmm6,96(%rsi,%rcx)
+        movdqa %xmm7,112(%rsi,%rcx)
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        movdqa   0(%rsi,%rcx),%xmm0  /* s2  */
+        movdqa  16(%rsi,%rcx),%xmm1
+        movdqa  32(%rsi,%rcx),%xmm2
+        movdqa  48(%rsi,%rcx),%xmm3
+        movdqa  64(%rsi,%rcx),%xmm4
+        movdqa  80(%rsi,%rcx),%xmm5
+        movdqa  96(%rsi,%rcx),%xmm6
+        movdqa 112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        pxor    0(%rsi,%rcx),%xmm0 /* s3 */
+        pxor   16(%rsi,%rcx),%xmm1
+        pxor   32(%rsi,%rcx),%xmm2
+        pxor   48(%rsi,%rcx),%xmm3
+        pxor   64(%rsi,%rcx),%xmm4
+        pxor   80(%rsi,%rcx),%xmm5
+        pxor   96(%rsi,%rcx),%xmm6
+        pxor  112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        pxor    0(%rsi,%rcx),%xmm0  /* s4 */
+        pxor   16(%rsi,%rcx),%xmm1
+        pxor   32(%rsi,%rcx),%xmm2
+        pxor   48(%rsi,%rcx),%xmm3
+        pxor   64(%rsi,%rcx),%xmm4
+        pxor   80(%rsi,%rcx),%xmm5
+        pxor   96(%rsi,%rcx),%xmm6
+        pxor  112(%rsi,%rcx),%xmm7
+        shrq    $8,%rax
+        andnq   %rax,%r9,%rcx
+        movdqa %xmm0,0(%rsi,%rcx)         /* d1 */
+        movdqa %xmm1,16(%rsi,%rcx)
+        movdqa %xmm2,32(%rsi,%rcx)
+        movdqa %xmm3,48(%rsi,%rcx)
+        movdqa %xmm4,64(%rsi,%rcx)
+        movdqa %xmm5,80(%rsi,%rcx)
+        movdqa %xmm6,96(%rsi,%rcx)
+        movdqa %xmm7,112(%rsi,%rcx)
+pcagyp8:
+        movq    0(%rdi),%rax  
+        addq    $7,%rdi
+        shlq    $7,%rax
+        movq    %rax,%rcx
+        andq    $0x7f80,%rcx
+        jnz     pcagyp1
         ret
 
-pcmex6:
-        testq   $1,%rdx        /* check if 64 bits       */
-        jnz     pcmex7         /* No - on to next stage  */
-        movzwq  0(%rsi,%rcx,8),%rax  /* 64-bit load      */
-        ret
-pcmex7:
-        xorq    %rax,%rax     /* just return zero        */
-        ret
-
-	.size	pcmex, .-pcmex
+// **** end of junk  ****
 
 // mactype (char res[8])
 //             rdi 
 
 	.text
 	.globl	mactype
-	.type	mactype, @function
 mactype:
         pushq   %rbx
         movb    $0x61,%r8b    /* Class starts off as 'a'  */
@@ -223,14 +313,23 @@ mactype:
         movb    $0x68,%r8b    /* else class is at least 'h' */
 /*  check BMI2 to move to class 'i'  */
         testl   $0x100,%ebx     /* BMI2 - bit set?  */
-        je      macp2         /* if not, class is 'h' */
+        je      macp1         /* if not, class is 'h' or 'k' */
         movb    $0x69,%r8b    /* Class at least 'i'  */
 /*  check AVX2 and MOVBE to move to class 'j'  */
         testl   $0x20,%ebx     /* AVX2 - bit set?  */
-        je      macp2         /* if not, class is 'i' */
+        je      macp1         /* if not, check FMA */
         testl   $0x400000,%r9d /* test MOVBE bit */
-        je      macp2         /* class j needs MOVBE as well */
+        je      macp1         /* class j needs MOVBE as well */
         movb    $0x6A,%r8b    /* Class at least 'j'  */
+        testl   $0x1000,%r9d /* test FMA bit */
+        je      macp2        /* no fma, class 'j' */
+        movb    $0x6C,%r8b   /* class 'l' if all of them */
+/* future tests in advance of 'l' go here */
+        jmp     macp2   
+macp1:                       /* no BMI2/AVX2/MOVBE but FMA? */
+        testl   $0x1000,%r9d /* test FMA bit */
+        je      macp2        /* no fma, class 'i' */
+        movb    $0x6B,%r8b   /* class 'k' if fma but not avx2/movbe */
 
 macp2:
         movb    %r8b,(%rdi)   /* put class into mact[0]   */
@@ -250,7 +349,6 @@ macp2:
 macp4:
         popq    %rbx
         ret
-	.size	mactype, .-mactype
 
 
 // pccl32 parms scalar noc  d1  d2
@@ -258,7 +356,6 @@ macp4:
 
 	.text
 	.globl	pccl32
-	.type	pccl32, @function
 // initialization
 pccl32:
        testq    %rdx,%rdx
@@ -286,7 +383,6 @@ pccl32p:
         jne         pccl32p
 pccl32ret:
         ret
-	.size	pccl32, .-pccl32
 
 // end of pccl32
 
@@ -295,7 +391,6 @@ pccl32ret:
 
 	.text
 	.globl	pccl64
-	.type	pccl64, @function
 // initialization
 pccl64:
        testq    %rdx,%rdx
@@ -323,7 +418,6 @@ pccl64p:
         jne         pccl64p
 pccl64ret:
         ret
-	.size	pccl64, .-pccl64
 
 // end of pccl64
 
@@ -337,7 +431,6 @@ pccl64ret:
 
 	.text
 	.globl	pcdasc
-	.type	pcdasc, @function
 pcdasc:                   /* initialization */
         movq        16(%rdx),%xmm9
         pshufd      $0x44,%xmm9,%xmm9
@@ -487,11 +580,11 @@ pcdasc6:                      /* anything 240+ is stop at the moment */
         jne     pcdasc1
         ret
 
-	.size	pcdasc, .-pcdasc
 
 // end of pcdasc
 
 // pcaas Afmt bwa Cfmt parms
+// SSE 16-bit 
 
 /* %rdi -> Afmt     %rsi bwa     %rdx -> Cfmt  %rcx parms */
 /* %rax Afmt        %r8 slice in bwa  %r11 constant bwa stride */
@@ -501,7 +594,6 @@ pcdasc6:                      /* anything 240+ is stop at the moment */
 // untouchted rbp r12 r13 r14 r15
 	.text
 	.globl	pcaas
-	.type	pcaas, @function
 pcaas:
         pushq         %rbx
         movq        16(%rcx),%xmm8    /* mask     */
@@ -640,11 +732,11 @@ pcaas2:
 pcaas8:
         popq    %rbx
         ret      
-	.size	pcaas, .-pcaas
 
 // end of pcaas
 
 // pcdas Afmt bwa Cfmt parms
+// SSE pmulld slower but can do 10-bit
 
 /* %rdi -> Afmt     %rsi bwa     %rdx -> Cfmt  %rcx parms */
 /* %rax Afmt        %r8 slice in bwa  %r11 constant bwa stride */
@@ -654,7 +746,6 @@ pcaas8:
 // untouchted rbp r12 r13 r14 r15
 	.text
 	.globl	pcdas
-	.type	pcdas, @function
 pcdas:
         pushq         %rbx
         movq        16(%rcx),%xmm8    /* mask     */
@@ -793,12 +884,12 @@ pcdas2:
 pcdas8:
         popq    %rbx
         ret      
-	.size	pcdas, .-pcdas
 
 // end of pcdas
 
 
-// pcbmas Afmt bwa Cfmt parms
+// pcjas Afmt bwa Cfmt parms
+// AVX2 vpmullw 16-bit faster but no 10-bit primes
 
 /* %rdi -> Afmt     %rsi bwa     %rdx -> Cfmt  %rcx parms */
 /* %rax Afmt        %r8 slice in bwa  %r11 constant bwa stride */
@@ -808,7 +899,6 @@ pcdas8:
 // untouchted rbp r12 r13 r14 r15
 	.text
 	.globl	pcjas
-	.type	pcjas, @function
 pcjas:
         pushq         %rbx
         vpbroadcastq 16(%rcx),%ymm8    /* mask     */
@@ -893,11 +983,11 @@ pcjas2:
 pcjas5:
         popq    %rbx
         ret      
-	.size	pcjas, .-pcjas
 
 // end of pcjas
 
 // pcjat Afmt bwa Cfmt parms
+// AVX2 vpmulld (slower but can do 10-bit primes)
 
 /* %rdi -> Afmt     %rsi bwa     %rdx -> Cfmt  %rcx parms */
 /* %rax Afmt        %r8 slice in bwa  %r11 constant bwa stride */
@@ -907,7 +997,6 @@ pcjas5:
 // untouchted rbp r12 r13 r14 r15
 	.text
 	.globl	pcjat
-	.type	pcjat, @function
 pcjat:
         pushq         %rbx
         vpbroadcastq 16(%rcx),%ymm8    /* mask     */
@@ -992,7 +1081,6 @@ pcjat2:
 pcjat5:
         popq    %rbx
         ret      
-	.size	pcjat, .-pcjat
 
 // end of pcjat
 
@@ -1003,7 +1091,6 @@ pcjat5:
 //                         %rcx              %r8
 	.text
 	.globl	pcbunf
-	.type	pcbunf, @function
 pcbunf:
 
         movq    %rdx,%r11      /* count out of ancient regs */
@@ -1101,7 +1188,6 @@ pcbunf3:
         jne     pcbunf3
 pcbunf2:
         ret
-	.size	pcbunf, .-pcbunf
 
 // void pcxunf(Dfmt * d, const Dfmt * s, uint64_t nob,
 //               %rdi            %rsi         %rdx
@@ -1109,7 +1195,6 @@ pcbunf2:
 //                         %rcx
 	.text
 	.globl	pcxunf
-	.type	pcxunf, @function
 pcxunf:
         movq    %rdx,%r9
         cmpq    $8,%r9
@@ -1169,7 +1254,6 @@ pcxunf7:
         jne     pcxunf7
 pcxunf8:
         ret
-	.size	pcxunf, .-pcxunf
 
 
 // void pcunf(Dfmt * d, uint64_t nob, const uint8_t * t1)
@@ -1177,7 +1261,6 @@ pcxunf8:
 
 	.text
 	.globl	pcunf
-	.type	pcunf, @function
 pcunf:
         cmpq    $0,%rsi
         je      pcunf2
@@ -1190,14 +1273,12 @@ pcunf1:
         jne     pcunf1
 pcunf2:
         ret
-	.size	pcunf, .-pcunf
 
 
 // uint64_t pcpmad(uint64_t p,uint64_t a,uint64_t b,uint64_t c);
 //  %rax             %rdi         %rsi       %rdx       %rcx
 	.text
 	.globl	pcpmad
-	.type	pcpmad, @function
 pcpmad:
         movq    %rdx,%rax
         mulq    %rsi
@@ -1206,14 +1287,12 @@ pcpmad:
         divq    %rdi      /* %rax quot,  %rdx rem  */
         movq    %rdx,%rax
         ret      
-	.size	pcpmad, .-pcpmad
 
 //  pcaxor(d.s1,s2,nob)  d = s1^s2 (all nob bytes long)
 //                      rdi rsi rdx     rcx
 
 	.text
 	.globl	pcaxor
-	.type	pcaxor, @function
 pcaxor:
         xorq    %rax,%rax
         cmpq    $16,%rcx
@@ -1243,14 +1322,12 @@ pcaxor7:
 
 pcaxor9:
         ret      
-	.size	pcaxor, .-pcaxor
 
 //  pcjxor(d.s1,s2,nob)  d = s1^s2 (all nob bytes long)
 //                      rdi rsi rdx     rcx
 
 	.text
 	.globl	pcjxor
-	.type	pcjxor, @function
 pcjxor:
         xorq    %rax,%rax
         cmpq    $32,%rcx
@@ -1280,14 +1357,12 @@ pcjxor7:
 
 pcjxor9:
         ret      
-	.size	pcjxor, .-pcjxor
 
 
 //  pcbif(d,s1,s2,nob,t)  a = t[(b*256)+c] (all nob bytes long)
 //                         di  r8[(si*256)+dx]   cx
 	.text
 	.globl	pcbif
-	.type	pcbif, @function
 pcbif:
         pushq   %rbx
         pushq   %rbp
@@ -1360,13 +1435,11 @@ pcbif9:
         popq    %rbx
         ret
 
-       .size	pcbif, .-pcbif
 
 /* rdi Afmt     rsi bwa     rdx  Cfmt  */
 /* rcx count  rax/r8 bwa addresses r9 bwa ptr*/
 	.text
 	.globl	pcab2
-	.type	pcab2, @function
 pcab2:
         pushq   %rbx
         pushq   %rbp
@@ -1509,13 +1582,11 @@ pcab25:
         popq    %rbx
   
         ret      
-	.size	pcab2, .-pcab2
 
 /* rdi Afmt     rsi bwa     rdx  Cfmt  */
 /* rcx count  rax/r8 bwa addresses r9 bwa ptr*/
 	.text
 	.globl	pcjb2
-	.type	pcjb2, @function
 pcjb2:
         pushq   %rbx
         pushq   %rbp
@@ -1607,14 +1678,12 @@ pcjb25:
         popq    %rbx
   
         ret      
-	.size	pcjb2, .-pcjb2
 
 /* pcad3 a, b, c.  c=a+b  */
 /* rdi input1   rsi input2  rdx output  */
 
 	.text
 	.globl	pcad3
-	.type	pcad3, @function
 pcad3:
 	movdqa	(%rdi),%xmm0
 	movdqa	64(%rdi),%xmm1
@@ -1668,7 +1737,6 @@ pcad3:
         movdqa  %xmm3,48(%rdx)
         movdqa  %xmm2,112(%rdx)
         ret      
-	.size	pcab3, .-pcad3
 
 /* input  rdi Afmt     rsi bwa     rdx  Cfmt  */
 
@@ -1677,7 +1745,6 @@ pcad3:
 /*                             2   rcx   r10  */
 	.text
 	.globl	pcab3
-	.type	pcab3, @function
 pcab3:
         pushq   %rbx
         pushq   %rbp
@@ -1832,7 +1899,6 @@ pcab35:
         popq    %rbp
         popq    %rbx
         ret      
-	.size	pcab3, .-pcab3
 
 /* input  rdi Afmt     rsi bwa     rdx  Cfmt  */
 
@@ -1841,7 +1907,6 @@ pcab35:
 /*                             2   rcx   r10  */
 	.text
 	.globl	pcjb3
-	.type	pcjb3, @function
 pcjb3:
         pushq   %rbx
         pushq   %rbp
@@ -1938,5 +2003,4 @@ pcjb35:
         popq    %rbp
         popq    %rbx
         ret      
-	.size	pcjb3, .-pcjb3
 

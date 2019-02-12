@@ -1,4 +1,14 @@
 cd $SRC
+cp ../src2/bluf.c .
+gcc $1 -O3 -Wall -pthread bluf.c -L$BIN -lmtx -o $BIN/bluf
+cp ../src2/zfl1.c .
+gcc $1 -O3 -Wall -pthread zfl1.c -L$BIN -lmtx -o $BIN/zfl
+cp ../src2/avxgray.c .
+gcc $1 -O3 -Wall -pthread avxgray.c -L$BIN -lmtx -o $BIN/avxgray
+cp ../src2/tslabm.c .
+gcc $1 -O3 -Wall -pthread tslabm.c -L$BIN -lmtx -o $BIN/tslabm
+cp ../src2/ginv.c .
+gcc $1 -O3 -Wall -pthread ginv.c -L$BIN -lmtx -o $BIN/ginv
 cp ../src2/perfmad.c .
 gcc $1 -O3 -Wall -pthread perfmad.c -L$BIN -lmtx -o $BIN/perfmad
 cp ../src2/perfadd.c .
@@ -13,6 +23,8 @@ cp ../src2/proj15.c .
 gcc $1 -O3 -Wall -pthread proj15.c -L$BIN -lmtx -o $BIN/proj15
 cp ../src2/zad1.c .
 gcc $1 -O3 -Wall -pthread zad1.c -L$BIN -lmtx -o $BIN/zad1
+cp ../src2/zde1.c .
+gcc $1 -O3 -Wall -pthread zde1.c -L$BIN -lmtx -o $BIN/zde1
 cp ../src2/ze21.c .
 gcc $1 -O3 -Wall -pthread ze21.c -L$BIN -lmtx -o $BIN/ze21
 cp ../src2/ze31.c .
@@ -39,5 +51,7 @@ cp ../src2/zsb1.c .
 gcc $1 -O3 -Wall -pthread zsb1.c -L$BIN -lmtx -o $BIN/zsb1
 cp ../src2/zsp1.c .
 gcc $1 -O3 -Wall -pthread zsp1.c -L$BIN -lmtx -o $BIN/zsp1
+cp ../src2/ztest.c .
+gcc $1 -O3 -Wall -pthread ztest.c -L$BIN -lmtx -o $BIN/ztest
 cp ../src2/ztr1.c .
 gcc $1 -O3 -Wall -pthread ztr1.c -L$BIN -lmtx -o $BIN/ztr1

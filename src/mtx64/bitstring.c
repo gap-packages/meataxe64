@@ -21,7 +21,26 @@ int  BSBitRead (const uint64_t *bs, uint64_t bitno)
     return 1;
 }
 
-void BSBitSet (uint64_t * bs, uint64_t bitno)
+void BSBitSetDet (uint64_t * bs, uint64_t bitno)
+{
+    uint64_t ix,val,sh;
+    ix=2+(bitno/64);
+    val=1;
+    sh=bitno%64;
+    val=(val<<sh);
+    bs[ix] |= val;
+    if(bitno>=bs[1])
+    {
+        bs[1]=bitno;
+        return;
+    }
+    bs[0]^=1;
+    for(ix=bitno+1;ix<bs[1];ix++)
+        bs[0]^=BSBitRead(bs,ix);
+    return;
+}
+
+extern void BSBitSet (uint64_t * bs, uint64_t bitno)
 {
     uint64_t ix,val,sh;
     ix=2+(bitno/64);
@@ -30,6 +49,19 @@ void BSBitSet (uint64_t * bs, uint64_t bitno)
     val=(val<<sh);
     bs[ix] |= val;
     return;
+}
+
+extern uint64_t BSRifDet(uint64_t *bs)
+{
+    uint64_t det,par1,i;
+    det=0;
+    par1=0;
+    for(i=0;i<bs[0];i++)
+    {
+        if(BSBitRead(bs,i)==1)  det^=par1;
+                else          par1^=1;
+    }
+    return det;
 }
 
 void BSColSelect (const FIELD * f, const uint64_t * bs, uint64_t nor,

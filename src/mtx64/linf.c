@@ -10,6 +10,7 @@
 #include "pcrit.h"
 #include "slab.h"
 #include "linf.h"
+#include "pmul.h"
 
 // interpreted programs for linear forms 
 
@@ -228,7 +229,7 @@ void runlf(DSPACE * dp, uint8_t * pg, Dfmt * pmx, uint64_t nor,Dfmt * tt)
     }
 }
 
-void extract(DSPACE * dq, const Dfmt *mq, uint64_t nor,
+void extract(DSPACE * dq, const Dfmt *mq, uint64_t qstride, uint64_t nor,
                  Dfmt *mp)
 {
     DSPACE dp;
@@ -254,7 +255,7 @@ void extract(DSPACE * dq, const Dfmt *mq, uint64_t nor,
     tt=malloc(dp.nob);
     for(i=0;i<nor;i++)
     {
-        PExtract(dq,mq+i*dq->nob,mp+i*dp.nob,1,nor*dp.nob);
+        PExtract(dq,mq+i*qstride,mp+i*dp.nob,1,nor*dp.nob);
         runlf(&dp,prog,mp+i*dp.nob,nor,tt);
     }
     free(tt);
@@ -293,19 +294,20 @@ void assemble(DSPACE * dq, Dfmt *mq, uint64_t nor,  Dfmt *mp)
     free(tt);
 }
 
-void LLMul(const FIELD *f,const Dfmt *a,const Dfmt *b,Dfmt *c,
-           uint64_t nora,uint64_t noca, uint64_t nocb)
+void LLMul(DSPACE *dsa, DSPACE *dsb, uint64_t nora, 
+          const Dfmt *a,uint64_t astride, const Dfmt *b, uint64_t bstride,
+          Dfmt *c)
 {
     uint64_t nom,sza,szb,szc,i;
     Dfmt *pma,*pmb,*pmc;
-    DSPACE dsa,dsb,dpa,dpb;
+    DSPACE dpa,dpb;
+    const FIELD * f;
 
-// set up spaces for extension field
-    DSSet(f,noca,&dsa);
-    DSSet(f,nocb,&dsb);
+    f=dsa->f;
+
 // and ground field
-    PSSet(f,noca,&dpa);
-    PSSet(f,nocb,&dpb);
+    PSSet(f,dsa->noc,&dpa);
+    PSSet(f,dsb->noc,&dpb);
 // how many matrices
     nom=3;
     if(f->pow==3) nom=5;
@@ -322,22 +324,22 @@ void LLMul(const FIELD *f,const Dfmt *a,const Dfmt *b,Dfmt *c,
     if(f->fdef==625) nom=8;
 // allocate matrices
     sza=dpa.nob*nora;
-    szb=dpb.nob*noca;
+    szb=dpb.nob*dsa->noc;
     szc=dpb.nob*nora;
     pma=malloc(sza*nom);
     pmb=malloc(szb*nom);
     pmc=malloc(szc*nom);
 // extract a
-    extract(&dsa,a,nora,pma);
+    extract(dsa,a,astride,nora,pma);
 // extract b
-    extract(&dsb,b,noca,pmb);
+    extract(dsb,b,bstride,dsa->noc,pmb);
 // call PLMul to muliply pairwise
     for(i=0;i<nom;i++)
     {
-        PLMul(f,pma+i*sza,pmb+i*szb,pmc+i*szc,nora,noca,nocb);
+        PLMul(&dpa,&dpb,nora,pma+i*sza,dpa.nob,pmb+i*szb,dpb.nob,pmc+i*szc);
     }
 // assemble c
-    assemble(&dsb,c,nora,pmc);
+    assemble(dsb,c,nora,pmc);
 // free everything
     free(pma);
     free(pmb);

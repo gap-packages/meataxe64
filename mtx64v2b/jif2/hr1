@@ -1,0 +1,4 @@
+zsc a1 $1 a2 0 afx
+zcp afx afp
+zhr afp
+

@@ -5,10 +5,10 @@ sh $BIN/run1.sh $* &
 echo "Starting $*" `date` > reclog
 while :
 do
-    sleep 10
+    sleep 2
     date >> reclog
-    if ! ps -p `cat pid.txt` -o "%cpu= rss=" | tee -a reclog | grep "" > /dev/null; then
+    if ! ps -p `cat pid.txt` -o "cputime= rss=" | tee -a reclog | grep "" > /dev/null; then
        exit;
     fi
-    sleep 20
+    sleep 4
 done

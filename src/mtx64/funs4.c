@@ -30,13 +30,43 @@ void fTensor(const char *mt1, int s1, const char *mt2, int s2,
     FELT e1;
     uint64_t hdr1[5],hdr2[5],hdr3[5];
     uint64_t fdef,nor1,noc1,nor2,noc2,nor3,noc3;
-    uint64_t i1,i2,j1;
+    uint64_t i1,i2,j1,i,j,k,t;
     DSPACE ds1,ds2,ds3;
     Dfmt *v1,*m2,*v3,*v4;
     long mem,wkr,thiswkr;
+    uint64_t * p2;
  
     ef1 = ERHdr(mt1,hdr1);
     ef2 = ERHdr(mt2,hdr2);
+    if((hdr1[0]==3)&&(hdr2[0]==3))
+    {
+        nor1=hdr1[2];
+        noc1=hdr1[3];
+        nor2=hdr2[2];
+        noc2=hdr2[3];
+        p2=malloc(8*nor2);
+        ERData(ef2,8*nor2,(uint8_t *) p2);
+        hdr3[0]=3;
+        hdr3[1]=1;
+        hdr3[2]=nor1*nor2;
+        hdr3[3]=noc1*noc2;
+        hdr3[4]=0;
+        ef3 = EWHdr(mt3,hdr3);
+        for(i=0;i<nor1;i++)
+        {
+            ERData(ef1,8,(uint8_t *) &k);
+            for(j=0;j<nor2;j++)
+            {
+                t=k*noc1+p2[j];
+                EWData(ef3,8,(uint8_t *)&t);
+            }
+        }
+        free(p2);
+        ERClose(ef1);
+        ERClose(ef2);
+        EWClose(ef3);
+        return;
+    }
     if(hdr1[1]!=hdr2[1])
     {
         LogString(80,"Matrices have different fields");
@@ -89,7 +119,7 @@ void fTensor(const char *mt1, int s1, const char *mt2, int s2,
 /*      make wkr rows of the output by taking */
 /*      that many rows of matrix 2, scaling   */
 /*      and then pasting into the answer      */
-    mem=MEGABYTES;
+    mem=f->megabytes;
     wkr=1000000;
     mem=mem*wkr;
     mem-=nor2*ds2.nob;
@@ -141,7 +171,7 @@ void fTensor(const char *mt1, int s1, const char *mt2, int s2,
 /*      of matrix 2 and the result are        */
 /*      dealt with at once using copy, scale  */
 /*      and paste                             */
-    mem=MEGABYTES;
+    mem=f->megabytes;
     wkr=1000000;
     mem=mem*wkr;
     mem-=ds1.nob;

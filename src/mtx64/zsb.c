@@ -1,6 +1,7 @@
 /*
       zsb.c     meataxe-64 standard base
       =====     J. G. Thackray   11.12.2017
+                updated RAP 28.1.19 permutation generators
 */
 
 #include <stdio.h>
@@ -49,7 +50,7 @@ struct gen {
 
 typedef struct gen gen;
 
-static const char prog_name[] = "zis";
+static const char prog_name[] = "zsb";
 
 static char *fun_tmp;
 
@@ -237,14 +238,13 @@ int main(int argc, const char *argv[])
   int ngens = argc - 3;
   uint64_t res;
   uint64_t nor = 0;
-  uint64_t fdef = 0;
   uint64_t rank, mrank = 0;
   gen *gens, *this_gen;
   CLogCmd(argc, argv);
   /* Check command line <vecs> <output stem> [<gen>*] */
   /* Must be at least 3 args */
   if (argc < 4) {
-    LogString(80,"usage zis <seeds> <output stem> [<generator>*]");
+    LogString(80,"usage zsb <seeds> <output stem> [<generator>*]");
     exit(21);
   }
   in_vecs = argv[1];
@@ -258,7 +258,7 @@ int main(int argc, const char *argv[])
   strcpy(fun_tmp, tmp_root);
   strcat(fun_tmp, FUN_TMP);
   /* Echelise initial vecs. Also sets up zero_bs and row_sel */
-  res = fech(in_vecs, 0, row_sel, 0,
+  res = fFullEchelize("temp",in_vecs, 0, row_sel, 0,
              zero_bs, 0, "NULL", 0,
              "NULL", 0, in_vecs_rem, 0);
   /* fail if rank 0 */
@@ -272,7 +272,7 @@ int main(int argc, const char *argv[])
   }
   rank = res;
   /* Reread to get a second copy of zero_bs: Fudge */
-  res = fech(in_vecs, 0, "NULL", 0,
+  res = fFullEchelize("temp",in_vecs, 0, "NULL", 0,
              in_vecs_bs, 0, "NULL", 0,
              "NULL", 0, in_vecs_rem, 0);
   /* Allocate the temporaries for the clean operation */
@@ -285,14 +285,13 @@ int main(int argc, const char *argv[])
     uint64_t hdr[5];
     EPeek(argv[i + 3], hdr);
     if (0 == i) {
-      fdef = hdr[1];
       nor = hdr[2];
       if (hdr[3] != nor) {
         fprintf(stderr, "%s: cannot spin with non square matrix %s\n", prog_name, argv[i + 3]);
         exit(20);
       }
     } else {
-      if (fdef != hdr[1] || nor != hdr[2] || nor != hdr[3]) {
+      if ( nor != hdr[2] || nor != hdr[3]) {
         fprintf(stderr, "%s: cannot spin with incompatible matrix %s\n", prog_name, argv[i + 3]);
         exit(20);
       }
@@ -353,7 +352,7 @@ int main(int argc, const char *argv[])
         /* Now clean with previous results of this round of multiply */
         if (first) {
           /* Just echelise this */
-          res = fech(clean_tmp1, 0, row_sel, 0,
+          res = fFullEchelize("temp",clean_tmp1, 0, row_sel, 0,
                      ech_tmp_bs, 0, "NULL", 0,
                      "NULL", 0, ech_tmp_rem, 0);
           if (0 == res) {
@@ -365,7 +364,7 @@ int main(int argc, const char *argv[])
           /* Clean with previous echelised */
           clean(ech_tmp_bs, ech_tmp_rem, clean_tmp1, clean_tmp2);
           /* Then echelise */
-          res = fech(clean_tmp2, 0, row_sel, 0,
+          res = fFullEchelize("temp",clean_tmp2, 0, row_sel, 0,
                      ech_tmp_bs1, 0, "NULL", 0,
                      "NULL", 0, ech_tmp_rem1, 0);
           if (0 != res) {

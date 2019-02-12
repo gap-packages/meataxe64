@@ -8,6 +8,15 @@ extern int  FieldSet1(uint64_t fdef, FIELD * f, int flags);
 
 extern void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
                   Dfmt * c, uint64_t nora, uint64_t noca, uint64_t nocb);
+extern void SLMad(const FIELD * f, const Dfmt * a, const Dfmt * b,
+                  Dfmt * temp, Dfmt * c, 
+                  uint64_t nora, uint64_t noca, uint64_t nocb);
+void TSMul(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
+     const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
+           Dfmt * c);
+void TSMad(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
+     const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
+           Dfmt * c, uint64_t cstride);
 
 extern void SLTra(const FIELD *f, const Dfmt *a, Dfmt *b,
                   uint64_t nora, uint64_t noca);
@@ -18,10 +27,5 @@ uint64_t SLSize (const FIELD * f, uint64_t nor, uint64_t noc);
 uint64_t SLSizeM(const FIELD * f, uint64_t nor, uint64_t noc);
 uint64_t SLSizeC(const FIELD * f, uint64_t nor, uint64_t noc);
 uint64_t SLSizeR(const FIELD * f, uint64_t nor, uint64_t noc);
-
-/* internal interface - called from linf */
-
-extern void PLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
-                  Dfmt * c, uint64_t nora, uint64_t noca, uint64_t nocb);
 
 /* end of slab.h  */

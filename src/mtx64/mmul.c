@@ -74,7 +74,7 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
     if(THREADS>25) buffering=4;
 
 /* First consider Strategy 3 - just blast them all off  */
-    if( ((siza+sizb+sizc)/1000000)<MEGABYTES)
+    if( ((siza+sizb+sizc)/1000000)<f->megabytes)
     {
         D2=D1;
         while(1)
@@ -87,10 +87,11 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
         }
         DSSet(f,D2,&dw);
         sizw=dw.nob*D2;
-        if(((A->c*sizc+THREADS*5*sizw)/1000000)<MEGABYTES) strat=3;
+        if(((A->c*sizc+THREADS*5*sizw)/1000000)<f->megabytes) strat=3;
     }
 /* strategy 2 may be correct if A+C smaller than B  */
-    if( (strat==0) && ((siza+sizc)<sizb) && (((siza+sizc)/500000)<MEGABYTES))
+    if( (strat==0) && ((siza+sizc)<sizb) &&
+                (((siza+sizc)/500000)<f->megabytes))
     {
         D2=D1;
         while(1)
@@ -104,7 +105,7 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
         strat=2;
     }
 /* Now consider Strategy 1 - read B then through A,C flow-controlled */
-    if( (strat==0) && ((sizb/500000)<MEGABYTES) )
+    if( (strat==0) && ((sizb/500000)<f->megabytes) )
     {
         D2=D1;
         while(1)

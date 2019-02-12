@@ -15,7 +15,7 @@
 int main(int argc,  char **argv)
 {
     EFIL *e;
-    int mode,b1,b2,c,res,gens;
+    int mode,b1,b2,c,res;
     uint64_t hdr[5];
     uint64_t siz,i;
     uint64_t * bs;
@@ -28,7 +28,6 @@ int main(int argc,  char **argv)
         printf(" 3 bitstring           Print ""Nullity "" then number of unset bits\n");
         printf(" 4 bitstring           return 0 unless bits is 0, in which case 1\n");
         printf(" 5 bitstring           Print ""Split result subspace nnn quotient nnn\n");
-        printf(" 6 algfile #gens       Make simple algebra file\n");
         exit(21);
     }
     mode = atoi(argv[1]);
@@ -112,18 +111,6 @@ int main(int argc,  char **argv)
             printf("Whole Space\n");
             return 1;
         }
-    }
-    if(mode==6)
-    {
-        gens=atoi(argv[3]);
-        hdr[0]=4;
-        hdr[1]=1;
-        hdr[2]=gens;
-        hdr[3]=0;
-        hdr[4]=0;
-        e=EWHdr(argv[2],hdr);
-        EWClose(e);
-        return 0;     
     }
     printf("Unknown mode %d\n",mode);
     return 17;

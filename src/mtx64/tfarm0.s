@@ -12,13 +12,11 @@
 
 	.text
 	.globl	TfAdd
-	.type	TfAdd, @function
 TfAdd:
         movl    %esi,%eax     /* copy val for later */
       lock xadd %esi,(%rdi)   /* do the atomic add, old value to %esi */
         addl    %esi,%eax     /* add val and old val to return */
         ret                   /* exit TfAdd  */
-	.size	TfAdd, .-TfAdd
 
 /*  long TfGetUni(long * uni) */
 /*  %rax             %rdi     */
@@ -27,7 +25,6 @@ TfAdd:
 
 	.text
 	.globl	TfGetUni
-	.type	TfGetUni, @function
 TfGetUni:
 	movabsq	$-9223372036854775808, %rdx    /* BUSY */
         movq    %rdx,%rax      /*  copy BUSY to %rax  */
@@ -41,7 +38,6 @@ TfGetUni1:                     /* spinlock */
         cmpq    %rax,%rdx      /* still busy?  */
         je      TfGetUni1      /* spinlock if so */
         ret                    /* otherwise we got it */
-	.size	TfGetUni, .-TfGetUni
 
 /* void TfPutUni(long * uni, long val)  */
 /*                   %rdi      %rsi     */
@@ -50,11 +46,9 @@ TfGetUni1:                     /* spinlock */
 
 	.text
 	.globl	TfPutUni
-	.type	TfPutUni, @function
 TfPutUni:
         movq    %rsi,(%rdi)    /* put val at *uni  */
         ret                    /* all done! */
-	.size	TfPutUni, .-TfPutUni
 
 /* uint64_t * TfLinkOut(uint64_t * chain) */
 /*   %rax                       %rdi      */
@@ -64,7 +58,6 @@ TfPutUni:
 
 	.text
 	.globl	TfLinkOut
-	.type	TfLinkOut, @function
 TfLinkOut:
         movq    $1,%rax        /*  BUSY  */
         xchg    %rax,(%rdi)    /* first try to get it */
@@ -87,7 +80,6 @@ TfLinkOut3:                    /* spinlock */
         cmpq    $1,%rax        /* still busy?  */
         jne     TfLinkOut1     /* we finally got it */
         jmp     TfLinkOut3     /* else keep trying */
-	.size	TfLinkOut, .-TfLinkOut
 
 
 /* uint64_t * TfLinkClose(uint64_t * chain) */
@@ -98,7 +90,6 @@ TfLinkOut3:                    /* spinlock */
 
 	.text
 	.globl	TfLinkClose
-	.type	TfLinkClose, @function
 TfLinkClose:
         movq    $1,%rax        /*  BUSY  */
         xchg    %rax,(%rdi)    /* first try to get it */
@@ -126,7 +117,6 @@ TfLinkClose3:                  /* spinlock */
         cmpq    $1,%rax        /* still busy?  */
         jne     TfLinkClose1   /* we finally got it */
         jmp     TfLinkClose3   /* else keep trying */
-	.size	TfLinkClose, .-TfLinkClose
 
 
 /* int TfLinkIn(uint64_t * chain, uint64_t * ours) */
@@ -136,7 +126,6 @@ TfLinkClose3:                  /* spinlock */
 
 	.text
 	.globl	TfLinkIn
-	.type	TfLinkIn, @function
 TfLinkIn:
         movq    $1,%rax        /*  BUSY  */
         xchg    %rax,(%rdi)    /* first try to get it */
@@ -158,7 +147,6 @@ TfLinkIn2:                     /* spinlock */
 TfLinkIn3:
         movq    %rax,(%rdi)    /* put it back and unlock */
         ret
-	.size	TfLinkIn, .-TfLinkIn
 
 /* uint64_t * TfGrowOut(uint64_t * chain) */
 /*   %rax                       %rdi      */
@@ -169,7 +157,6 @@ TfLinkIn3:
 
 	.text
 	.globl	TfGrowOut
-	.type	TfGrowOut, @function
 TfGrowOut:
         movq    $1,%rdx        /*  BUSY  */
         xchg    %rdx,(%rdi)    /* first try to get it */
@@ -205,7 +192,6 @@ TfGrowOut5:
         jne     TfGrowOut5
         jmp     TfGrowOut
 
-	.size	TfGrowOut, .-TfGrowOut
 
 /* void TfGrowIn(uint64_t * chain, uint64_t * ours) */
 /*                      %rdi              %rsi      */
@@ -214,7 +200,6 @@ TfGrowOut5:
 
 	.text
 	.globl	TfGrowIn
-	.type	TfGrowIn, @function
 TfGrowIn:
         movq    $1,%rdx        /*  BUSY  */
         xchg    %rdx,(%rdi)    /* first try to get it */
@@ -235,7 +220,6 @@ TfGrowIn2:                     /* spinlock */
         jne     TfGrowIn1      /* we finally got it */
         jmp     TfGrowIn2      /* if so keep trying */
 
-	.size	TfGrowIn, .-TfGrowIn
 
 /* void TfGrowGrow(uint64_t * chain, uint64_t * first, uint64_t last) */
 /*                      %rdi              %rsi            %rdx        */
@@ -244,7 +228,6 @@ TfGrowIn2:                     /* spinlock */
 
 	.text
 	.globl	TfGrowGrow
-	.type	TfGrowGrow, @function
 TfGrowGrow:
         movq    $1,%rcx        /*  BUSY  */
         xchg    %rcx,(%rdi)    /* first try to get it */
@@ -262,7 +245,6 @@ TfGrowGrow2:                   /* spinlock */
         jne     TfGrowGrow1    /* no we finally got it */
         jmp     TfGrowGrow2    /* busy? keep trying */
 
-	.size	TfGrowGrow, .-TfGrowGrow
 
 /* uint8_t TfBMLock(uint8_t * bm) */
 /* %rax (%al)           %rdi      */
@@ -271,7 +253,6 @@ TfGrowGrow2:                   /* spinlock */
 
 	.text
 	.globl	TfBMLock
-	.type	TfBMLock, @function
 TfBMLock:
         movb    (%rdi),%al     /* get the 1-byte mutex    */
 TfBMLock1:
@@ -290,7 +271,6 @@ TfBMLock3:
         jne     TfBMLock1
         ret
 
-	.size	TfBMLock, .-TfBMLock
 
 /* void TfBMUnlock(uint8_t * bm, uint8_t val) */
 /* %rax (%al)           %rdi        %rsi      */
@@ -299,12 +279,10 @@ TfBMLock3:
 
 	.text
 	.globl	TfBMUnlock
-	.type	TfBMUnlock, @function
 TfBMUnlock:
         movb    %sil,(%rdi)  /* simply store the state back */
         ret
 
-	.size	TfBMUnlock, .-TfBMUnlock
 
 /* void TfAppend(uint64_t * list, uint64_t new) */
 /*                      %rdi        %rsi        */
@@ -313,7 +291,6 @@ TfBMUnlock:
 
 	.text
 	.globl	TfAppend
-	.type	TfAppend, @function
 TfAppend:
         movq    $-1,%rax       /*  BUSY  */
         xchg    %rax,(%rdi)    /* first try to get it */
@@ -330,7 +307,6 @@ TfAppend2:                     /* spinlock */
         cmpq    $-1,%rax       /* still busy?  */
         jne     TfAppend1      /* we finally got it */ 
         jmp     TfAppend2      /* else keep trying */
-	.size	TfAppend, .-TfAppend
 
 /* void TfPause(long wait)  */
 /*                %rdi      */
@@ -339,12 +315,10 @@ TfAppend2:                     /* spinlock */
 
 	.text
 	.globl	TfPause
-	.type	TfPause, @function
 TfPause:
         pause                  /* pause nicely */
         subq    $1,%rdi
         jne     TfPause
         ret
-	.size	TfPause, .-TfPause
 
 /* end of tfarm0.s  */

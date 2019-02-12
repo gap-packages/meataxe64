@@ -2,8 +2,6 @@
 /*    ==========    ======     */
 /*    R. A. Parker     22.6.2017 */
 
-extern int mtra(const char *in, int sin, const char *out, int sout);
-
 extern void mmul(const char *m1, int s1, const char *m2, int s2,
                  const char *m3, int s3);
 extern uint64_t mpef(const char *m1, int s1, const char *b2, int s2,

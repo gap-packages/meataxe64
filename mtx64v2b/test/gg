@@ -1,0 +1,8 @@
+makl
+compa
+zrd a1 7 40 41 1
+zrd a2 7 41 42 2
+zmu1 a1 a2 a4
+zmu a1 a2 a3
+tail logfile
+

@@ -1,4 +1,4 @@
-// Copyright (C) Richard Parker   2017
+// Copyright (C) Richard Parker   2018
 // Meataxe64 Nikolaus version
 // field.h header file for operations in finite fields
 
@@ -86,10 +86,11 @@ typedef struct
      int   Thpb;
      int   Thpc;
     uint64_t parms[9];    // AS-code parms
-    uint8_t  prog[32];    // AS-code addition chain
+    uint8_t  prog[40];    // AS-code addition chain
 
 /*   HPMI public variables   */
 
+    uint64_t abase;       // bytes of Afmt besides alcovebytes
     uint64_t alcovebytes; // bytes in an alcove in Afmt inc. skip/term
     uint64_t cauldron;    // in columns
     uint64_t cfmtcauld;   // bytes in a cauldron in Cfmt
@@ -101,6 +102,10 @@ typedef struct
 
 /* other non-FIELD variables  */
 
+     uint64_t threads;
+     uint64_t megabytes;
+     uint64_t maxchop;
+
      int   linfscheme;
      int   pextype;
      int   pastype;
@@ -109,7 +114,8 @@ typedef struct
      int   Tlfa;
 
      int   Ttra;
-
+     int   basestrass;
+ 
 
 
 }   FIELD;
@@ -118,7 +124,7 @@ typedef struct
 {
   const FIELD * f;  /* the field in use */
   uint64_t noc;       /* Dimension of the space. */
-  uint64_t nob;       /* Number of bytes for a row of Dfmt in memory. */
+  uint64_t nob;       /* Number of bytes for noc columns in Dfmt */
   int ground;       /* 0 = extension, 1=ground */
 }   DSPACE;
 
@@ -150,8 +156,12 @@ extern FELT DUnpak(const DSPACE * ds, uint64_t col, const Dfmt * d);
 extern void DPak(const DSPACE * ds, uint64_t col, Dfmt * d, FELT a);
 extern void DAdd(const DSPACE * ds, uint64_t nor,
                   const Dfmt * d1, const Dfmt * d2, Dfmt * d);
+extern void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
+                  const Dfmt *b, uint64_t bstride, Dfmt *c, uint64_t cstride);
 extern void DSub(const DSPACE * ds, uint64_t nor,
                   const Dfmt * d1, const Dfmt * d2, Dfmt * d);
+extern void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
+                  const Dfmt *b, uint64_t bstride, Dfmt *c, uint64_t cstride);
 extern void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor,
                                      const Dfmt * d1, Dfmt * d2);
 extern void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d);

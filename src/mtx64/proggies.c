@@ -326,40 +326,6 @@ printf(" %lu x %lu  X  %lu x %lu",nor1,noc1,noc1,noc2);
     SLMul(f,da,db,dc,nor1,noc1,noc2);
 }
 
-/* moj adder 2 operands */
-/* cmoj += amoj         */
-/* then Stable and Release cmoj  */
-
-void genadd(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
-{
-    FIELD * f;
-    uint64_t *a,*c;
-    Dfmt *da, *dc;
-    uint64_t nor,noc;
-    DSPACE ds;
-
-    f=(FIELD *)  TFPointer(FMOJ);
-    a=(uint64_t *) TFPointer(AMOJ);
-    c=(uint64_t *) TFPointer(CMOJ);
-    if( (a[0]!=c[0]) || (a[1]!=c[1]) )
-    {
-        printf("Add with incompatible matrices %lu %lu + %lu %lu\n",
-                          a[0],a[1],c[0],c[1]);
-        exit(22);
-    }
-    nor=a[0];
-    noc=a[1];
-#ifdef DEBUG
-printf(" add %lu x %lu\n",nor,noc);
-#endif
-    da=(Dfmt *) a;
-    dc=(Dfmt *) c;
-    DSSet(f,noc,&ds);
-    da+=16;
-    dc+=16;
-    DAdd(&ds,nor,da,dc,dc);
-}
-
 void gencpy(MOJ FMOJ,  MOJ AMOJ, MOJ CMOJ)
 {
     FIELD * f;
@@ -393,11 +359,27 @@ printf("\n");
 
 void pgmad(MOJ FMOJ,  MOJ AMOJ, MOJ BMOJ, MOJ CMOJ, MOJ SMOJ)
 {
+
+    Dfmt * temp;
+    uint64_t i;
+    const FIELD * f;
+    uint64_t *ai,*ci;
+    Dfmt *a,*b,*c;
 #ifdef DEBUG
 printf("MAD ");
 #endif
-    genmul(FMOJ,AMOJ,BMOJ,SMOJ);
-    genadd(FMOJ,CMOJ,SMOJ);
+    f=(FIELD *)  TFPointer(FMOJ);
+    a=TFPointer(AMOJ);
+    b=TFPointer(BMOJ);
+    c=TFPointer(CMOJ);
+    ai=(uint64_t *)a;
+    ci=(uint64_t *)c;
+    i=SLSize(f,ci[0],ci[1]);
+    temp=malloc(i);
+    TFSetPtr(SMOJ,c);
+    TFSetPtr(CMOJ,NULL);
+    SLMad(f,a+16,b+16,temp,c+16,ci[0],ai[1],ci[1]);
+    free(temp);
     TFStable(SMOJ);
 }
 

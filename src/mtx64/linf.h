@@ -5,7 +5,8 @@
 
 void linftab(FIELD * f);
 
-void LLMul(const FIELD *f,const Dfmt *a,const Dfmt *b,Dfmt *c,
-           uint64_t nora,uint64_t noca, uint64_t nocb);
+void LLMul(DSPACE *dsa, DSPACE *dsbc, uint64_t nora, 
+           const Dfmt *a,uint64_t astride, const Dfmt *b, uint64_t bstride,
+           Dfmt *c);
 
 /* end of linf.h  */

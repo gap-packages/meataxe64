@@ -10,6 +10,7 @@
 #include "hpmi.h"
 #include "pcrit.h"
 #include "linf.h"
+#include "tuning.h"
 
 //  Malloc that aligns to the page - 4096
 
@@ -377,6 +378,11 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
 //  printf(" - %c\n",f->mact[0]);
 
 //  strcpy(f->mact,"j00");
+
+    f->threads=THREADS;
+    f->megabytes=MEGABYTES;
+    f->maxchop=MAXCHOP;
+
     f8=(uint8_t *)f;
     ftab8=f8 + sizeof(FIELD);
     ftab16=(uint16_t*)ftab8;
@@ -799,7 +805,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         f->pentbyte=1;
         f->pbytesper=1;
         f->paddtyp=3;
-        f->pmadtyp=3;
+        f->pmadtyp=2;
         f->pmultyp=1;
         break;
       case 4:
@@ -1500,6 +1506,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         }
     }
     f->hwm=ftab8-f8;
+    f->basestrass=4000;
     return 1;
 }
 
@@ -2733,269 +2740,834 @@ Dfmt * DPInc(const DSPACE * ds, const Dfmt * d)
     return (Dfmt *) (((char *) d)+ds->nob);
 }
 
+void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
+                  const Dfmt *b, uint64_t bstride, Dfmt *c, uint64_t cstride)
+{
+    const FIELD * f;
+    int addtyp,ast,bst,cst;
+    uint64_t *a64, *b64, *c64, *ap64, *bp64, *cp64;
+    uint32_t *a32, *b32, *c32, *ap32, *bp32, *cp32;
+    uint16_t *a16, *b16, *c16, *ap16, *bp16, *cp16;
+    const uint8_t *a8,*b8,*ap8,*bp8;
+    uint8_t *c8,*cp8;
+    uint64_t x64,y64,z64;
+    uint32_t x32;
+    uint64_t xb1,xb2,xb3,yb1,yb2,yb3,zb1,zb2,zb3;
+    uint64_t r,col,rw;
+    uint16_t *sqid16, *spac16, *red16;
+    uint8_t *f8, *add8;
+
+    f=ds->f;
+    f8=(uint8_t *)f;
+    if(ds->ground==0)
+        addtyp=f->addtyp;
+    else     
+        addtyp=f->paddtyp;
+    switch ( addtyp )
+    {
+
+// Characteristic 2
+
+      case 1:
+        a8=a;
+        b8=b;
+        c8=c;
+        if( (f->mact[0]=='j')||(f->mact[0]>='l') ) // AVX2?
+        {
+            for(r=0;r<nor;r++)
+            {
+                pcjxor(c8,a8,b8,ds->nob);  // AVX2
+                a8+=astride;
+                b8+=bstride;
+                c8+=cstride;
+            }
+            return;
+        }
+        for(r=0;r<nor;r++)
+        {
+            pcaxor(c8,a8,b8,ds->nob);  // SSE
+            a8+=astride;
+            b8+=bstride;
+            c8+=cstride;
+        }
+        return;
+
+// 8-bit cases
+
+      case 2:
+        add8=f8+f->Tadd8;
+        a8=a;
+        b8=b;
+        c8=c;
+        for(r=0;r<nor;r++)
+        {
+            pcbif(c8,a8,b8,ds->nob,add8);  // AVX2
+            a8+=astride;
+            b8+=bstride;
+            c8+=cstride;
+        }
+        return;
+      case 3:
+        red16=(uint16_t *)(f8+f->Tred16);
+        a8=a;
+        b8=b;
+        c8=c;
+        y64 = ds->nob;
+        x64 = y64>>2;    // words
+        y64 = y64&3;     // remaining bytes
+        for(r=0;r<nor;r++)
+        {
+            ap8=a8;
+            bp8=b8;
+            cp8=c8;
+            for(rw=0;rw<x64;rw++)
+            {
+                x32=*ap8;
+                *cp8    =red16[x32 + (*bp8)];
+                x32=*(ap8+1);
+                *(cp8+1)=red16[x32 + (*(bp8+1))];
+                x32=*(ap8+2);
+                *(cp8+2)=red16[x32 + (*(bp8+2))];
+                x32=*(ap8+3);
+                *(cp8+3)=red16[x32 + (*(bp8+3))];
+                ap8+=4;
+                bp8+=4;
+                cp8+=4;
+            }
+            for(rw=0;rw<y64;rw++)
+            {
+                x32=*(ap8++);
+                *(cp8++) = red16[x32+*(bp8++)];
+            }
+            a8+=astride;
+            b8+=bstride;
+            c8+=cstride;
+        }
+        return;
+
+// 16-bit cases
+
+      case 4:
+        red16=(uint16_t *)(f8+f->Tred16);
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
+        {
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap16++);
+                y64=*(bp16++);
+                z64=x64+y64;
+                *(cp16++) = red16[z64];
+            }
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+
+        }
+        return;
+      case 5:
+        sqid16=(uint16_t *)(f8+f->Tsqid16);
+        spac16=(uint16_t *)(f8+f->Tspac16);
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
+        {
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+                *(cp16++)=sqid16[spac16[*(ap16++)]+spac16[*(bp16++)]];
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+        }
+        return;
+      case 6:
+        red16=(uint16_t *)(f8+f->Tred16);
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
+        {
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap16++);
+                y64=*(bp16++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=red16[xb1+yb1];
+                zb2=red16[xb2+yb2];
+                *(cp16++) = zb1*f->sqpower+zb2;
+            }
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+        }
+        return;
+      case 12:
+        sqid16=(uint16_t *)(f8+f->Tsqid16);
+        spac16=(uint16_t *)(f8+f->Tspac16);
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
+        {
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap16++);
+                y64=*(bp16++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=sqid16[spac16[xb1]+spac16[yb1]];
+                zb2=sqid16[spac16[xb2]+spac16[yb2]];
+                *(cp16++) = zb1*f->sqpower+zb2;
+            }
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+        }
+        return;
+
+// 32-bit cases
+
+      case 7:
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                z64=x64+y64;
+/* next line is supposed to compile to cmov */
+                if(z64 >= f->charc) z64-=f->charc;
+                *(cp32++) = z64;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+      case 8:
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+                *(cp32++)=qadd(f,*(ap32++),*(bp32++));
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+      case 11:
+        sqid16=(uint16_t *)(f8+f->Tsqid16);
+        spac16=(uint16_t *)(f8+f->Tspac16);
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=sqid16[spac16[xb1]+spac16[yb1]];
+                zb2=sqid16[spac16[xb2]+spac16[yb2]];
+                *(cp32++) = zb1*f->sqpower+zb2;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+      case 13:
+        red16=(uint16_t *)(f8+f->Tred16);
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=red16[xb1+yb1];
+                zb2=red16[xb2+yb2];
+                *(cp32++) = zb1*f->sqpower+zb2;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+      case 14:
+        red16=(uint16_t *)(f8+f->Tred16);
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                xb2=(x64*f->bar41)>>41;
+                xb3=x64-(xb2*f->sqpower);
+                xb1=(xb2*f->bar41)>>41;
+                xb2=xb2-(xb1*f->sqpower);
+                yb2=(y64*f->bar41)>>41;
+                yb3=y64-(yb2*f->sqpower);
+                yb1=(yb2*f->bar41)>>41;
+                yb2=yb2-(yb1*f->sqpower);
+                zb1=red16[xb1+yb1];
+                zb2=red16[xb2+yb2];
+                zb3=red16[xb3+yb3];
+                *(cp32++) = zb1*f->sqpower2+zb2*f->sqpower+zb3;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+
+// 64-bit cases
+
+      case 9:
+        a64 = (uint64_t *) a;
+        b64 = (uint64_t *) b;
+        c64 = (uint64_t *) c;
+        ast=astride/8;
+        bst=bstride/8;
+        cst=cstride/8;
+        for(r=0;r<nor;r++)
+        {
+            ap64=a64;
+            bp64=b64;
+            cp64=c64;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap64++);
+                y64=*(bp64++);
+                z64=x64+y64;
+                if( (z64<x64) || (z64>=f->charc) ) z64-=f->charc;
+                *(cp64++) = z64;
+            }
+            a64+=ast;
+            b64+=bst;
+            c64+=cst;
+        }
+        return;
+      case 10:
+        a64 = (uint64_t *) a;
+        b64 = (uint64_t *) b;
+        c64 = (uint64_t *) c;
+        ast=astride/8;
+        bst=bstride/8;
+        cst=cstride/8;
+        for(r=0;r<nor;r++)
+        {
+            ap64=a64;
+            bp64=b64;
+            cp64=c64;
+            for(col=0;col<ds->noc;col++)
+                *(cp64++) = qadd(f,*(ap64++),*(bp64++));
+            a64+=ast;
+            b64+=bst;
+            c64+=cst;
+        }
+        return;
+      default:
+        printf("Internal error in TAdd - type not set\n");
+        exit(41);
+    }
+}
+
 /*   d = d1 + d2    */
 void DAdd(const DSPACE * ds, uint64_t nor, 
                    const Dfmt * d1, const Dfmt * d2, Dfmt * d)
 {
+        TAdd(ds,nor,d1,ds->nob,d2,ds->nob,d,ds->nob);
+}
+
+void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
+                  const Dfmt *b, uint64_t bstride, Dfmt *c, uint64_t cstride)
+{
     const FIELD * f;
-    FELT *pfelt, *qfelt, *rfelt;
-    FELT pxf, qxf;
-    uint64_t rw, ops;
-    uint64_t pb1,pb2,pb3,qb1,qb2,qb3,rb1,rb2,rb3;
-    uint64_t *p64, *q64, *r64, x64, y64, z64;
-    uint32_t *p32, *q32, *r32, x32, y32, z32, t32;
-    uint16_t *p16, *q16, *r16;
-    uint8_t *p8, *q8, *r8;
-    uint8_t * f8;
-    uint8_t * add8;
-    uint16_t * sqid16;
-    uint16_t * spac16;
-    uint16_t * red16;
-    int addtyp;
+    int addtyp,ast,bst,cst;
+    uint64_t *a64, *b64, *c64, *ap64, *bp64, *cp64;
+    uint32_t *a32, *b32, *c32, *ap32, *bp32, *cp32;
+    uint16_t *a16, *b16, *c16, *ap16, *bp16, *cp16;
+    const uint8_t *a8,*b8,*ap8,*bp8;
+    uint8_t *c8,*cp8;
+    uint64_t x64,y64,z64;
+    uint32_t x32;
+    uint64_t xb1,xb2,xb3,yb1,yb2,yb3,zb1,zb2,zb3;
+    uint64_t r,col,rw;
+    uint16_t *sqid16, *spac16, *red16;
+    uint8_t *f8, *sub8;
 
     f=ds->f;
+    f8=(uint8_t *)f;
     if(ds->ground==0)
-    {
-        addtyp=(ds->f)->addtyp;;
-    }
-         else     
-    {
-        addtyp=(ds->f)->paddtyp;
-    }
-
+        addtyp=f->addtyp;
+    else     
+        addtyp=f->paddtyp;
     switch ( addtyp )
     {
+
+// Characteristic 2
+
       case 1:
-        if(f->mact[0]>='j')
+        a8=a;
+        b8=b;
+        c8=c;
+        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
         {
-            pcjxor(d,d1,d2,nor*ds->nob);  // AVX2
+            for(r=0;r<nor;r++)
+            {
+                pcjxor(c8,a8,b8,ds->nob);  // AVX2
+                a8+=astride;
+                b8+=bstride;
+                c8+=cstride;
+            }
             return;
         }
-        pcaxor(d,d1,d2,nor*ds->nob);    // SSE2
+        for(r=0;r<nor;r++)
+        {
+            pcaxor(c8,a8,b8,ds->nob);  // AVX2
+            a8+=astride;
+            b8+=bstride;
+            c8+=cstride;
+        }
         return;
+
+// 8-bit cases
+
       case 2:
-        f8=(uint8_t *)f;
-        add8=f8+f->Tadd8;
-        pcbif(d,d1,d2,nor*ds->nob,add8);
+        sub8=f8+f->Tsub8;
+        a8=a;
+        b8=b;
+        c8=c;
+        for(r=0;r<nor;r++)
+        {
+            pcbif(c8,a8,b8,ds->nob,sub8);
+            a8+=astride;
+            b8+=bstride;
+            c8+=cstride;
+        }
         return;
       case 3:
-        f8=(uint8_t *)f;
         red16=(uint16_t *)(f8+f->Tred16);
-        p8 = (uint8_t *) d1;
-        q8 = (uint8_t *) d2;
-        r8 = (uint8_t *) d;
-        y64 = nor*ds->nob;
+        a8=a;
+        b8=b;
+        c8=c;
+        y64 = ds->nob;
         x64 = y64>>2;    // words
         y64 = y64&3;     // remaining bytes
-        for(rw=0;rw<x64;rw++)
+        for(r=0;r<nor;r++)
         {
-            x32=*p8;
-            *r8    =red16[x32 + (*q8)];
-            y32=*(p8+1);
-            *(r8+1)=red16[y32 + (*(q8+1))];
-            z32=*(p8+2);
-            *(r8+2)=red16[z32 + (*(q8+2))];
-            t32=*(p8+3);
-            *(r8+3)=red16[t32 + (*(q8+3))];
-            p8+=4;
-            q8+=4;
-            r8+=4;
-        }
-        for(rw=0;rw<y64;rw++)
-        {
-            x32=*(p8++);
-            y32=*(q8++);
-            *(r8++) = red16[x32+y32];
+            ap8=a8;
+            bp8=b8;
+            cp8=c8;
+            for(rw=0;rw<x64;rw++)
+            {
+                x32=*ap8;
+                *cp8    =red16[f->p32 + x32 - (*bp8)];
+                x32=*(ap8+1);
+                *(cp8+1)=red16[f->p32 + x32 - (*(bp8+1))];
+                x32=*(ap8+2);
+                *(cp8+2)=red16[f->p32 + x32 - (*(bp8+2))];
+                x32=*(ap8+3);
+                *(cp8+3)=red16[f->p32 + x32 - (*(bp8+3))];
+                ap8+=4;
+                bp8+=4;
+                cp8+=4;
+            }
+            for(rw=0;rw<y64;rw++)
+            {
+                x32=*(ap8++);
+                *(cp8++) = red16[f->p32 + x32 - *(bp8++)];
+            }
+            a8+=astride;
+            b8+=bstride;
+            c8+=cstride;
         }
         return;
+
+// 16-bit cases
+
       case 4:
-        f8=(uint8_t *)f;
         red16=(uint16_t *)(f8+f->Tred16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
         {
-            x64=*(p16++);
-            y64=*(q16++);
-            x64+=y64;
-            *(r16++) = red16[x64];
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap16++)+f->p32;
+                y64=*(bp16++);
+                z64=x64-y64;
+                *(cp16++) = red16[z64];
+            }
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+
         }
         return;
       case 5:
-        f8=(uint8_t *)f;
         sqid16=(uint16_t *)(f8+f->Tsqid16);
         spac16=(uint16_t *)(f8+f->Tspac16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-            *(r16++)=sqid16[spac16[*(p16++)]+spac16[*(q16++)]];
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
+        {
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+                *(cp16++)=sqid16[f->spaczero+
+                spac16[*(ap16++)]-spac16[*(bp16++)]];
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+        }
         return;
       case 6:
-        f8=(uint8_t *)f;
         red16=(uint16_t *)(f8+f->Tred16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
         {
-            pxf=*(p16++);
-            qxf=*(q16++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=red16[pb1+qb1];
-            rb2=red16[pb2+qb2];
-            *(r16++) = rb1*f->sqpower+rb2;
-        }
-        return;
-      case 7:
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            x64=*(p32++);
-            y64=*(q32++);
-            x64+=y64;
-/* next line compiles with cmov gcc -O2 or -O3 */
-            if(x64 >= f->charc) x64-=f->charc;
-            *(r32++) = x64;
-        }
-        return;
-      case 8:
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pxf=qadd(ds->f,pxf,qxf);
-            *(r32++) = pxf;
-        }
-        return;
-      case 9:
-        p64 = (uint64_t *) d1;
-        q64 = (uint64_t *) d2;
-        r64 = (uint64_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            x64=*(p64++);
-            y64=*(q64++);
-            z64=x64+y64;
-            if( (z64<x64) || (z64>=f->charc) ) z64-=f->charc;
-            *(r64++) = z64;
-        }
-        return;
-      case 10:
-        pfelt = (FELT *) d1;
-        qfelt = (FELT *) d2;
-        rfelt = (FELT *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            *rfelt=qadd(ds->f,*(pfelt++),*(qfelt++));
-            rfelt++;
-        }
-        return;
-      case 11:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=sqid16[spac16[pb1]+spac16[qb1]];
-            rb2=sqid16[spac16[pb2]+spac16[qb2]];
-            *(r32++) = rb1*f->sqpower+rb2;
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap16++);
+                y64=*(bp16++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=red16[f->p32+xb1-yb1];
+                zb2=red16[f->p32+xb2-yb2];
+                *(cp16++) = zb1*f->sqpower+zb2;
+            }
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
         }
         return;
       case 12:
-        f8=(uint8_t *)f;
         sqid16=(uint16_t *)(f8+f->Tsqid16);
         spac16=(uint16_t *)(f8+f->Tspac16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
+        a16 = (uint16_t *) a;
+        b16 = (uint16_t *) b;
+        c16 = (uint16_t *) c;
+        ast=astride/2;
+        bst=bstride/2;
+        cst=cstride/2;
+        for(r=0;r<nor;r++)
         {
-            pxf=*(p16++);
-            qxf=*(q16++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=sqid16[spac16[pb1]+spac16[qb1]];
-            rb2=sqid16[spac16[pb2]+spac16[qb2]];
-            *(r16++)=rb1*f->sqpower+rb2;
+            ap16=a16;
+            bp16=b16;
+            cp16=c16;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap16++);
+                y64=*(bp16++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=sqid16[f->spaczero+spac16[xb1]-spac16[yb1]];
+                zb2=sqid16[f->spaczero+spac16[xb2]-spac16[yb2]];
+                *(cp16++) = zb1*f->sqpower+zb2;
+            }
+            a16+=ast;
+            b16+=bst;
+            c16+=cst;
+        }
+        return;
+
+// 32-bit cases
+
+      case 7:
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++)+f->p32;
+                y64=*(bp32++);
+                z64=x64-y64;
+/* next line is supposed to compile to cmov */
+                if(z64 >= f->charc) z64-=f->charc;
+                *(cp32++) = z64;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+      case 8:
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+                *(cp32++)=qsub(f,*(ap32++),*(bp32++));
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+      case 11:
+        sqid16=(uint16_t *)(f8+f->Tsqid16);
+        spac16=(uint16_t *)(f8+f->Tspac16);
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
+        {
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=sqid16[f->spaczero+spac16[xb1]-spac16[yb1]];
+                zb2=sqid16[f->spaczero+spac16[xb2]-spac16[yb2]];
+                *(cp32++) = zb1*f->sqpower+zb2;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
         }
         return;
       case 13:
-        f8=(uint8_t *)f;
         red16=(uint16_t *)(f8+f->Tred16);
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
         {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=red16[pb1+qb1];
-            rb2=red16[pb2+qb2];
-            *(r32++) = rb1*f->sqpower+rb2;
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                xb1=(x64*f->bar41)>>41;
+                xb2=x64-(xb1*f->sqpower);
+                yb1=(y64*f->bar41)>>41;
+                yb2=y64-(yb1*f->sqpower); 
+                zb1=red16[f->p32+xb1-yb1];
+                zb2=red16[f->p32+xb2-yb2];
+                *(cp32++) = zb1*f->sqpower+zb2;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
         }
         return;
       case 14:
-        f8=(uint8_t *)f;
         red16=(uint16_t *)(f8+f->Tred16);
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
+        a32 = (uint32_t *) a;
+        b32 = (uint32_t *) b;
+        c32 = (uint32_t *) c;
+        ast=astride/4;
+        bst=bstride/4;
+        cst=cstride/4;
+        for(r=0;r<nor;r++)
         {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pb2=(pxf*f->bar41)>>41;
-            pb3=pxf-(pb2*f->sqpower);
-            pb1=(pb2*f->bar41)>>41;
-            pb2=pb2-(pb1*f->sqpower);
-            qb2=(qxf*f->bar41)>>41;
-            qb3=qxf-(qb2*f->sqpower); 
-            qb1=(qb2*f->bar41)>>41;
-            qb2=qb2-(qb1*f->sqpower);
-            rb1=red16[pb1+qb1];
-            rb2=red16[pb2+qb2];
-            rb3=red16[pb3+qb3];
-            *(r32++) = rb1*f->sqpower2+rb2*f->sqpower+rb3;
+            ap32=a32;
+            bp32=b32;
+            cp32=c32;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap32++);
+                y64=*(bp32++);
+                xb2=(x64*f->bar41)>>41;
+                xb3=x64-(xb2*f->sqpower);
+                xb1=(xb2*f->bar41)>>41;
+                xb2=xb2-(xb1*f->sqpower);
+                yb2=(y64*f->bar41)>>41;
+                yb3=y64-(yb2*f->sqpower);
+                yb1=(yb2*f->bar41)>>41;
+                yb2=yb2-(yb1*f->sqpower);
+                zb1=red16[f->p32+xb1-yb1];
+                zb2=red16[f->p32+xb2-yb2];
+                zb3=red16[f->p32+xb3-yb3];
+                *(cp32++) = zb1*f->sqpower2+zb2*f->sqpower+zb3;
+            }
+            a32+=ast;
+            b32+=bst;
+            c32+=cst;
+        }
+        return;
+
+// 64-bit cases
+
+      case 9:
+        a64 = (uint64_t *) a;
+        b64 = (uint64_t *) b;
+        c64 = (uint64_t *) c;
+        ast=astride/8;
+        bst=bstride/8;
+        cst=cstride/8;
+        for(r=0;r<nor;r++)
+        {
+            ap64=a64;
+            bp64=b64;
+            cp64=c64;
+            for(col=0;col<ds->noc;col++)
+            {
+                x64=*(ap64++);
+                y64=*(bp64++);
+                z64=x64-y64;
+                if(z64>x64) z64+=f->charc;
+                *(cp64++) = z64;
+            }
+            a64+=ast;
+            b64+=bst;
+            c64+=cst;
+        }
+        return;
+      case 10:
+        a64 = (uint64_t *) a;
+        b64 = (uint64_t *) b;
+        c64 = (uint64_t *) c;
+        ast=astride/8;
+        bst=bstride/8;
+        cst=cstride/8;
+        for(r=0;r<nor;r++)
+        {
+            ap64=a64;
+            bp64=b64;
+            cp64=c64;
+            for(col=0;col<ds->noc;col++)
+                *(cp64++) = qsub(f,*(ap64++),*(bp64++));
+            a64+=ast;
+            b64+=bst;
+            c64+=cst;
         }
         return;
       default:
-        printf("Internal error in DAdd - type not set\n");
+        printf("Internal error in TSub - type not set\n");
         exit(41);
     }
 }
@@ -3004,260 +3576,7 @@ void DAdd(const DSPACE * ds, uint64_t nor,
 void DSub(const DSPACE * ds, uint64_t nor, 
                    const Dfmt * d1, const Dfmt * d2, Dfmt * d)
 {
-    const FIELD * f;
-    int addtyp;
-    FELT *pfelt, *qfelt, *rfelt;
-    FELT pxf, qxf;
-    uint64_t rw, ops;
-    uint64_t pb1,pb2,pb3,qb1,qb2,qb3,rb1,rb2,rb3;
-    uint64_t *p64, *q64, *r64, x64, y64, z64;
-    uint32_t *p32, *q32, *r32, x32, y32, z32, t32;
-    uint16_t *p16, *q16, *r16;
-    uint8_t *p8, *q8, *r8;
-    uint8_t * f8;
-    uint8_t * sub8;
-    uint16_t * spac16;
-    uint16_t * sqid16;
-    uint16_t * red16;
-    f=ds->f;
-    if(ds->ground==0) addtyp=f->addtyp;
-          else        addtyp=f->paddtyp;
-    switch ( addtyp )
-    {
-      case 1:
-        if(f->mact[0]>='j')
-        {
-            pcjxor(d,d1,d2,nor*ds->nob);  // AVX2
-            return;
-        }
-        pcaxor(d,d1,d2,nor*ds->nob);      // SSE2
-        return;
-      case 2:
-        f8=(uint8_t *)f;
-        sub8=f8+f->Tsub8;
-        pcbif(d,d1,d2,nor*ds->nob,sub8);
-        return;
-      case 3:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        p8 = (uint8_t *) d1;
-        q8 = (uint8_t *) d2;
-        r8 = (uint8_t *) d;
-        y64 = nor*ds->nob;
-        x64 = y64>>2;    // words
-        y64 = y64&3;     // remaining bytes
-        for(rw=0;rw<x64;rw++)
-        {
-            x32=*p8;
-            *r8    =red16[f->p32 + x32 - (*q8)];
-            y32=*(p8+1);
-            *(r8+1)=red16[f->p32 + y32 - (*(q8+1))];
-            z32=*(p8+2);
-            *(r8+2)=red16[f->p32 + z32 - (*(q8+2))];
-            t32=*(p8+3);
-            *(r8+3)=red16[f->p32 + t32 - (*(q8+3))];
-            p8+=4;
-            q8+=4;
-            r8+=4;
-        }
-        for(rw=0;rw<y64;rw++)
-        {
-            x32=*(p8++);
-            y32=*(q8++);
-            *(r8++) = red16[f->p32+x32-y32];
-        }
-        return;
-      case 4:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            x64=*(p16++)+f->p32;
-            y64=*(q16++);
-            x64-=y64;
-            *(r16++) = red16[x64];
-        }
-        return;
-      case 5:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-            *(r16++)=sqid16[f->spaczero+spac16[*(p16++)]
-                      -spac16[*(q16++)]];
-        return;
-      case 6:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p16++);
-            qxf=*(q16++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=red16[f->p32+pb1-qb1];
-            rb2=red16[f->p32+pb2-qb2];
-            *(r16++) = rb1*f->sqpower+rb2;
-        }
-        return;
-      case 7:
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            x64=*(p32++)+f->p32;
-            y64=*(q32++);
-            x64-=y64;
-/* next line compiles with cmov gcc -O2 or -O3 */
-            if(x64 >= f->charc) x64-=f->charc;
-            *(r32++) = x64;
-        }
-        return;
-      case 8:
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pxf=qsub(ds->f,pxf,qxf);
-            *(r32++) = pxf;
-        }
-        return;
-      case 9:
-        p64 = (uint64_t *) d1;
-        q64 = (uint64_t *) d2;
-        r64 = (uint64_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            x64=*(p64++);
-            y64=*(q64++);
-            z64=x64-y64;
-            if(y64>x64) z64+=f->charc;
-            *(r64++) =z64;
-        }
-        return;
-      case 10:
-        pfelt = (FELT *) d1;
-        qfelt = (FELT *) d2;
-        rfelt = (FELT *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            *rfelt=qsub(ds->f,*(pfelt++),*(qfelt++));
-            rfelt++;
-        }
-        return;
-      case 11:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=sqid16[f->spaczero+spac16[pb1]-spac16[qb1]];
-            rb2=sqid16[f->spaczero+spac16[pb2]-spac16[qb2]];
-            *(r32++) = rb1*f->sqpower+rb2;
-        }
-        return;
-      case 12:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        p16 = (uint16_t *) d1;
-        q16 = (uint16_t *) d2;
-        r16 = (uint16_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p16++);
-            qxf=*(q16++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=sqid16[f->spaczero+spac16[pb1]-spac16[qb1]];
-            rb2=sqid16[f->spaczero+spac16[pb2]-spac16[qb2]];
-            *(r16++)=rb1*f->sqpower+rb2;
-        }
-        return;
-      case 13:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pb1=(pxf*f->bar41)>>41;
-            pb2=pxf-(pb1*f->sqpower);
-            qb1=(qxf*f->bar41)>>41;
-            qb2=qxf-(qb1*f->sqpower); 
-            rb1=red16[f->p32+pb1-qb1];
-            rb2=red16[f->p32+pb2-qb2];
-            *(r32++) = rb1*f->sqpower+rb2;
-        }
-        return;
-      case 14:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        p32 = (uint32_t *) d1;
-        q32 = (uint32_t *) d2;
-        r32 = (uint32_t *) d;
-        ops=nor*ds->noc;
-        for(rw=0;rw<ops;rw++)
-        {
-            pxf=*(p32++);
-            qxf=*(q32++);
-            pb2=(pxf*f->bar41)>>41;
-            pb3=pxf-(pb2*f->sqpower);
-            pb1=(pb2*f->bar41)>>41;
-            pb2=pb2-(pb1*f->sqpower);
-            qb2=(qxf*f->bar41)>>41;
-            qb3=qxf-(qb2*f->sqpower); 
-            qb1=(qb2*f->bar41)>>41;
-            qb2=qb2-(qb1*f->sqpower);
-            rb1=red16[f->p32+pb1-qb1];
-            rb2=red16[f->p32+pb2-qb2];
-            rb3=red16[f->p32+pb3-qb3];
-            *(r32++) = rb1*f->sqpower2+rb2*f->sqpower+rb3;
-        }
-        return;
-      default:
-        printf("Internal error in DSub - type not set\n");
-        exit(48);
-    }
+        TSub(ds,nor,d1,ds->nob,d2,ds->nob,d,ds->nob);
 }
 
 /*d2 += scalar*d1 */
@@ -3272,13 +3591,11 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
     uint64_t *p64,*q64;
     uint32_t x32,y32,a32;
     uint64_t x64,a64,b64;
-    uint8_t x8;
     uint8_t * f8;
     uint8_t * mul8;
     uint8_t * add8;
     uint16_t * log16;
     uint16_t * alog16;
-    uint16_t * red16;
     uint16_t * zech16;
     uint16_t * rdlg16;
     f=ds->f;
@@ -3321,25 +3638,9 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
         pcbunf(q8,p8,ds->nob*nor,pmul8,add8);
         return;
       case 3:
-        if(scalar==0) return;
-        if(scalar==1)
-        {
-            DAdd(ds,nor,d1,d2,d2);
-            return;
-        }
-        f8=(uint8_t *)f;
-        mul8=f8+f->Tmul8;
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        pmul8=mul8+scalar*256;
-        p8=(uint8_t *)d1;
-        q8=(uint8_t *)d2;
-        for(i=0;i<ds->nob*nor;i++)
-        {
-            x8=red16[(*q8)+pmul8[*(p8++)]];
-            *(q8++)=x8;
-        }
-        return;
+printf("Currently not used\n");
+exit(1);
+// used to be 1-byte primes, but pcbunf (case 2) is faster
       case 4:
         p16=(uint16_t *)d1;
         q16=(uint16_t *)d2;

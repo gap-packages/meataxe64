@@ -1,0 +1,9 @@
+zsb an qq a1 a2 a3
+ziv qq.sb qq.sbi
+zmu a1 qq.sbi ax
+zmu qq.sb ax s1
+zmu a2 qq.sbi ax
+zmu qq.sb ax s2
+zmu a3 qq.sbi ax
+zmu qq.sb ax s3
+

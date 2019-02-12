@@ -46,7 +46,7 @@ void fColumnExtract(const char *bs, int sbs, const char *in, int sin,
     DSSet(f,noc1,&dssel);
     DSSet(f,noc2,&dsnon);
     if(noc==0) RowsThatFit=10000000;
-       else    RowsThatFit=(1000000ul*MEGABYTES)/ds.nob;
+       else    RowsThatFit=(1000000ul*f->megabytes)/ds.nob;
     RowsAtOnce=RowsThatFit/5;
     if(RowsAtOnce==0) RowsAtOnce=1;
     if(RowsThatFit>100) RowsAtOnce=RowsThatFit/10;

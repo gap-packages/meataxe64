@@ -6,12 +6,15 @@
 
 
 extern void fTranspose(const char * tmp, const char *in, int sin,
-                 const char *out, int sout);
+                 const char *out, int sout);  //ftra.c
 extern void fMultiply(const char * tmp, const char *m1, int s1, 
-                 const char *m2, int s2, const char *m3, int s3);
+                 const char *m2, int s2, const char *m3, int s3);  //fmul.c
 extern uint64_t fProduceNREF(const char * tmp, const char *m1, int s1,
-                     const char *b2, int s2,const char *m3, int s3);
-
+                     const char *b2, int s2,const char *m3, int s3);  //fpef.c
+extern uint64_t fFullEchelize(const char *temp, 
+                const char *m1, int s1, const char *b2, int s2,
+                const char *b3, int s3, const char *m4, int s4,
+                const char *m5, int s5, const char *m6, int s6);  // fech.c
 // funs1 (Gaussian-related) functions
 extern void fColumnExtract(const char *bs, int sbs, const char *in, int sin, 
           const char *sel, int ssel, const char * nsel, int snsel);
@@ -27,6 +30,8 @@ extern void fMultiplyAdd(const char * tmp, const char *m1, int s1,
            const char *m2, int s2, const char *m3, int s3,
            const char * m4, int s4);
 extern uint64_t fNullSpace(const char *tmp, const char *m1, int s1,
+                           const char *m2, int s2);
+extern void fInvert(const char *tmp, const char *m1, int s1,
                            const char *m2, int s2);
 
 // funs3 field-changing routines
@@ -50,27 +55,21 @@ extern void fSymmetricSquare(const char *m1, int s1,
 // funs5 miscellanous small functions
 extern void fAdd(const char *fn1, int s1, const char *fn2, int s2,
                  const char *fn3, int s3);
+extern void fScalarMul(const char *m1, int s1,
+                       const char *m2, int s2, FELT sc);
 extern FELT fTrace(const char *m1, int s1);
 
 void fProjectiveVector(const char *m1, int s1, uint64_t pvec,
                        const char *m2, int s2);
 void fMulMatrixMap(const char *m1, int s1, const char *x2, int s2,
                        const char *m3, int s3);
+void fMulMaps(const char *m1, int s1, const char *x2, int s2,
+                       const char *m3, int s3);
 
 // The remainder is to be considered, and either removed
 // or put into the first part
 
-typedef struct
-{
-    FIELD * f;
-} TLS;
 
-extern uint64_t fech(const char *m1, int s1, const char *b2, int s2,
-                const char *b3, int s3, const char *m4, int s4,
-                const char *m5, int s5, const char *m6, int s6);
-// Scalar multiply
-extern void fsmu(TLS * tls, const char *fn1, int s1,
-                 const char *fn2, int s2, FELT sc);
 
 /*
  * Chop on disc for operations such as ftr, fmu
@@ -98,10 +97,6 @@ extern char ***fchp(const char *fname, const char *tmp, unsigned int rchops, uns
  * This function will always do logging close operations
  */
 extern void fasp(const char *fname, char ***tmpnames, unsigned int rchops, unsigned int cchops);
-
-/*
- * zmkn, make null-space from bitstring and transposed remnant
- */
 
 
 /* end of funs.h  */

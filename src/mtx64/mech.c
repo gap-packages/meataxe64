@@ -36,7 +36,7 @@ typedef struct
     MOJ rf;     // Riffle
 }  STE;
 
-void CD(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
+static void CD(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
 {
     MOJ Ad,H,Gmd,R,Rd1,Rd;
     CEX(pri, fmoj, D->cs, C, A->A, Ad);
@@ -48,12 +48,12 @@ void CD(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
     RRF(pri, fmoj, A->rf, Rd, R, D->R);
 }
 
-void CD0(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
+static void CD0(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
 {
     ECH(pri, fmoj, C, A->rs, D->cs, A->M, A->K, D->R);
 }
 
-void UR(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
+static void UR(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
 {
     MOJ Z,V,W,X,S;
     MAD(pri, fmoj, A->A, *B, *C, Z);
@@ -64,7 +64,7 @@ void UR(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
     MAD(pri, fmoj, A->K, V, W, *C);
 }
 
-void URT(int pri, MOJ fmoj, STA *A, STE *E, MOJ *M, MOJ *K,
+static void URT(int pri, MOJ fmoj, STA *A, STE *E, MOJ *M, MOJ *K,
             int uc)
 {
     MOJ S,V,W,X,Z;
@@ -99,7 +99,7 @@ void URT(int pri, MOJ fmoj, STA *A, STE *E, MOJ *M, MOJ *K,
       MAD(pri,fmoj,A->K,V,W,*K);
 }
 
-void UR0(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
+static void UR0(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
 {
     MOJ V,W,X;
     REX(pri, fmoj, A->rs, *C, V, W);
@@ -108,7 +108,7 @@ void UR0(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
     MAD(pri, fmoj, A->K, V, W, *C);
 }
 
-void RL(int pri, MOJ fmoj, MOJ M1, STE * E1, STE * E2, MOJ * M2)
+static void RL(int pri, MOJ fmoj, MOJ M1, STE * E1, STE * E2, MOJ * M2)
 {
     MOJ rif;
     MKR(pri,E1->rs,E2->rs,rif);
@@ -152,6 +152,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
     Dfmt * buf;
     Dfmt * mx;
     uint64_t *mm;
+    int tick;      // priority shift for phases
 
     TFInit(THREADS); /*  Start Thread farm */
     TFStopMOJFree();
@@ -169,27 +170,25 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
     xr=nor*THREADS;
     xc=noc*THREADS;
     chsz=1;
-    while( (xr>600) && (xc>600))
+    while( (xr>10000) && (xc>10000))
     {
         chsz=chsz+1+chsz/5;
         xr=xr/2;
         xc=xc/2;
     }
+    while((chsz*(chsz-1))<3*THREADS) chsz++;
     if(chsz>MAXCHOP) chsz=MAXCHOP;
 
     cha=chsz;
     chb=chsz;
-// printf("Chopping %d\n",(int)chsz);
+//printf("Chopping %d\n",(int)chsz);
+    tick=cha+chb+1;
 
     CM->r=cha;
     CM->c=chb;
     M3EvenChop(CM,f->entbyte,f->entbyte);
     M3MOJs(CM);
     M3Read(CM);
-
-
-#define PRI1 ((i)+(j))
-#define PRI2 ((i)+(k))
 
 /*  copy the input mojes as C will change and CM must not */
     for(i=0;i<cha;i++)
@@ -204,28 +203,28 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
 /* (D,A) = ClearDown(C,D) */
             if (i == 0)
             {
-                CD0(PRI1,fmoj,C[i][j],&D[j],&A);
+                CD0(i+j,fmoj,C[i][j],&D[j],&A);
                 if(i==(cha-1)) TFGetReadRef(D[j].cs);
 
             } 
             else 
             {
-                CD(PRI1,fmoj,C[i][j],&D[j],&A);
+                CD(i+j,fmoj,C[i][j],&D[j],&A);
                 if(i==(cha-1)) TFGetReadRef(D[j].cs);
 
             }
 /*  E = Extend(A,E) */
             if(j==0)
-                PC0(PRI1,A.rs,E[i][j].rs,E[i][j].rf);              
+                PC0(i+j,A.rs,E[i][j].rs,E[i][j].rf);              
             else
-                PVC(PRI1,E[i][j-1].rs,A.rs,E[i][j].rs,E[i][j].rf);
+                PVC(i+j,E[i][j-1].rs,A.rs,E[i][j].rs,E[i][j].rf);
             for (k = j + 1; k < chb; k++)
             {
 /* (C,B) = UpdateRow(A,C,B)  */
                 if (i==0)
-                    UR0(PRI2,fmoj,&A,&B[j][k],&C[i][k]);
+                    UR0(i+k,fmoj,&A,&B[j][k],&C[i][k]);
                 else
-                     UR(PRI2,fmoj,&A,&B[j][k],&C[i][k]);
+                     UR(i+k,fmoj,&A,&B[j][k],&C[i][k]);
             }
             for(h=0;h<=i;h++)
             {
@@ -234,7 +233,7 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
                 if(h==i) urtcase+=2;
                 if(i==0) urtcase+=2;
                 if(j!=0) urtcase+=1;
-                URT(PRI2,fmoj,&A,&E[h][j],&M[j][h],
+                URT(tick+i+j,fmoj,&A,&E[h][j],&M[j][h],
                         &K[i][h],urtcase);
             }
         }
@@ -244,30 +243,29 @@ uint64_t mech(const char *m1, int s1, const char *b2, int s2,
     {
         for(h=0;h<cha;h++)
         {
-            RL(10,fmoj, M[j][h],&E[h][j],&E[h][chb-1],&M[j][h]); 
+            RL(2*tick,fmoj, M[j][h],&E[h][j],&E[h][chb-1],&M[j][h]); 
                                   // what is correct priority?
         }
     }
 
 /* step 3 - the back-clean  */
-#define PRI3 (chb-k)
     for(k=0;k<chb;k++)
 /* R = Copy(D) */
-        MCP(PRI3, fmoj, D[k].R, R[k][k]);
+        MCP(3*tick, fmoj, D[k].R, R[k][k]);
 
     for(k=chb-1;k>0;k--)   // not done for k=0?
     {
         for(j=0;j<k;j++) 
         {
 /* (X,R) = PreClearUp(B,D)  */
-            CEX(PRI3, fmoj, D[k].cs, B[j][k], X, R[j][k]);
+            CEX(6*tick-j-k, fmoj, D[k].cs, B[j][k], X, R[j][k]);
             for(l=k;l<chb;l++)
 /* R = ClearUp(R,X,R)  */
-                MAD(PRI3, fmoj, X, R[k][l], R[j][l], R[j][l]);
+                MAD(6*tick-j-k, fmoj, X, R[k][l], R[j][l], R[j][l]);
 
             for(h=0;h<cha;h++)
 /* M = ClearUp(M,X,M)  */
-                MAD(PRI3, fmoj, X, M[k][h], M[j][h], M[j][h]);
+                MAD(6*tick-j-k, fmoj, X, M[k][h], M[j][h], M[j][h]);
         }
     }
 /* Keep the bits we need for the remnant */

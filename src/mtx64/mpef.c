@@ -30,7 +30,7 @@ typedef struct
     MOJ cs;     // total pivotal rows in this column so far
 }  STD;
 
-void CD(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
+static void CD(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
 {
     MOJ Ad,H,Gmd,R,Rd1,Rd;
     CEX(pri, fmoj, D->cs, C, A->A, Ad);
@@ -42,12 +42,12 @@ void CD(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
     RRF(pri, fmoj, A->rf, Rd, R, D->R);
 }
 
-void CD0(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
+static void CD0(int pri, MOJ fmoj, MOJ C, STD * D, STA * A)
 {
     ECH(pri, fmoj, C, A->rs, D->cs, A->M, A->K, D->R);
 }
 
-void UR(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
+static void UR(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
 {
     MOJ Z,V,W,X,S;
     MAD(pri, fmoj, A->A, *B, *C, Z);
@@ -58,7 +58,7 @@ void UR(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
     MAD(pri, fmoj, A->K, V, W, *C);
 }
 
-void UR0(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
+static void UR0(int pri, MOJ fmoj, STA * A, MOJ * B, MOJ * C)
 {
     MOJ V,W,X;
     REX(pri, fmoj, A->rs, *C, V, W);
@@ -96,6 +96,7 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     long *chp,*chpcol,*colstart;
     Dfmt * buf;
     Dfmt * mx;
+    int tick;
 
     TFInit(THREADS); /*  Start Thread farm */
     TFStopMOJFree();
@@ -113,28 +114,25 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     xr=nor*THREADS;
     xc=noc*THREADS;
     chsz=1;
-    while( (xr>600) && (xc>600))
+    while( (xr>2500) && (xc>2500))
     {
         chsz=chsz+1+chsz/5;
         xr=xr/2;
         xc=xc/2;
     }
+    while((chsz*(chsz-1))<3*THREADS) chsz++;
     if(chsz>MAXCHOP) chsz=MAXCHOP;
 
     cha=chsz;
     chb=chsz;
 
 // printf("Chopping %d\n",(int)chsz);
-
+    tick=cha+chb+1;
     CM->r=cha;
     CM->c=chb;
     M3EvenChop(CM,f->entbyte,f->entbyte);
     M3MOJs(CM);
     M3Read(CM);
-
-
-#define PRI1 ((i)+(j))
-#define PRI2 ((i)+(k))
 
 /*  copy the input mojes as C will change and CM must not */
     for(i=0;i<cha;i++)
@@ -149,40 +147,39 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
 /* (D,A) = ClearDown(C,D) */
             if (i == 0)
             {
-                CD0(PRI1,fmoj,C[i][j],&D[j],&A);
+                CD0(i+j,fmoj,C[i][j],&D[j],&A);
                 if(i==(cha-1)) TFGetReadRef(D[j].cs);
             } 
             else 
             {
-                CD(PRI1,fmoj,C[i][j],&D[j],&A);
+                CD(i+j,fmoj,C[i][j],&D[j],&A);
                 if(i==(cha-1)) TFGetReadRef(D[j].cs);
             }
             for (k = j + 1; k < chb; k++)
             {
 /* (C,B) = UpdateRow(A,C,B)  */
                 if (i==0)
-                    UR0(PRI2,fmoj,&A,&B[j][k],&C[i][k]);
+                    UR0(i+k,fmoj,&A,&B[j][k],&C[i][k]);
                 else
-                     UR(PRI2,fmoj,&A,&B[j][k],&C[i][k]);
+                     UR(i+k,fmoj,&A,&B[j][k],&C[i][k]);
             }
         }
     }
 
 /* Now do the back-cleaning  */
-#define PRI3 (chb-k)
     for(k=0;k<chb;k++)
 /* R = Copy(D) */
-        MCP(PRI3, fmoj, D[k].R, R[k][k]);
+        MCP(3*tick, fmoj, D[k].R, R[k][k]);
 
     for(k=chb-1;k>0;k--)
     {
         for(j=0;j<k;j++)
         {
 /* (X,R) = PreClearUp(B,D)  */
-            CEX(PRI3, fmoj, D[k].cs, B[j][k], X, R[j][k]);
+            CEX(6*tick-j-k, fmoj, D[k].cs, B[j][k], X, R[j][k]);
             for(l=k;l<chb;l++)
 /* R = ClearUp(R,X,R)  */
-                MAD(PRI3, fmoj, X, R[k][l], R[j][l], R[j][l]);
+                MAD(6*tick-j-k, fmoj, X, R[k][l], R[j][l], R[j][l]);
         }
     }
 /* Keep the bits we need for the remnant */
