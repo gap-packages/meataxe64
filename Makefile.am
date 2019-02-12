@@ -40,12 +40,12 @@ meataxe64_la_SOURCES = \
    src/mtx64/tabmake.c \
    src/mtx64/io.c \
    src/mtx64/slab.c \
+   src/mtx64/dfmtf.c \
    src/mtx64/fasp.c \
    src/mtx64/fchp.c \
    src/mtx64/fech.c \
    src/mtx64/fmul.c \
    src/mtx64/fpef.c \
-   src/mtx64/fsmu.c \
    src/mtx64/ftra.c \
    src/mtx64/funs1.c \
    src/mtx64/funs2.c \
@@ -54,7 +54,6 @@ meataxe64_la_SOURCES = \
    src/mtx64/funs5.c \
    src/mtx64/mmul.c \
    src/mtx64/mpef.c \
-   src/mtx64/mtra.c \
    src/mtx64/proggies.c \
    src/mtx64/tfarm1.c \
    src/mtx64/tfarm2.c \
