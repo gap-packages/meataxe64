@@ -27,16 +27,16 @@ gap> solutionmat := function(n, q)
 >       v   := MTX64_RandomMat(fld, 1, n); 
 >       sol := MTX64_SolutionsMat(mat, v)[2];
 >       if (MTX64_Matrix_NumRows(sol) = 1) and
->          (sol * mat <> -v) then
+>          (sol * mat <> v) then
 >           Error("Not a solution");
 >       fi;
 >       sol    := MTX64_ExtractMatrix(sol);
 >       gapmat := MTX64_ExtractMatrix(mat);
 >       gapv   := MTX64_ExtractMatrix(v)[1];
 >       gapsol := SolutionMat(gapmat, gapv);
->       if not ((sol = [] and gapsol = fail) or IsZero(sol[1] + gapsol)) then
+>       if not ((sol = [] and gapsol = fail) or IsZero(sol[1] - gapsol)) then
 >           Error("Solutions do not match");
 >       fi;
->       return [sol, gapsol, sol + gapsol]; 
+>       return [sol, gapsol, sol - gapsol]; 
 >    end;;
 gap> for i in [1..1000] do solutionmat(Random([2..100]), Random(Primes)); od;
