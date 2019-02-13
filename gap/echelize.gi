@@ -523,7 +523,7 @@ MTX64_SolutionsMat := function(a, bs)
         fi;
     od;
     x := MTX64_RowSelect(solvables,bss[1])[1]*res.multiplier;
-    x := MTX64_BSColRifZ(res.rowSelect,x);
+    x := -MTX64_BSColRifZ(res.rowSelect,x);
     return [solvables,x];
 end;
 
