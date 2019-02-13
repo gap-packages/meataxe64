@@ -42,4 +42,9 @@ gap> MTX64_BSCombine(bs, sub);
 [ < MTX64 bitstring 5/10>, < MTX64 bitstring 4/5> ]
 gap> MTX64_BSCombine(bs2, sub);
 Error, MTX64_BSCombine: bitstrings incompatible
+gap> bl := BlistList([1..1000],Primes);;
+gap> bs := MTX64_BitStringBlist(bl);
+< MTX64 bitstring 168/1000>
+gap> bl = MTX64_BlistBitString(bs);
+true
 gap> STOP_TEST("bitstring.tst");

@@ -300,8 +300,38 @@ static Obj FuncMTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2) {
   return INTOBJ_INT((res < 0) ? -1 : (res > 0) ? 1 : 0);
 }
 
+static Obj FuncMTX64_BlistBitString(Obj self, Obj bs) {
+  CHECK_MTX64_BitString(bs);
+  UInt len = DataOfBitStringObject(bs)[0];
+
+  Obj bl = NewBag(T_BLIST, SIZE_PLEN_BLIST(len));
+  memcpy(BLOCKS_BLIST(bl), DataOfBitStringObject(bs) + 2,
+         Size_Bits_BitString(len));
+  SET_LEN_BLIST(bl, len);
+  return bl;
+}
+         
+static Obj FuncMTX64_BitStringBlist(Obj self, Obj bl) {
+    if (!IS_BLIST_REP(bl)) {
+        ConvBlist(bl);
+        if (!IS_BLIST_REP(bl)) {
+            ErrorMayQuit("MTX64_BitStringBlist: argument must be a blist",0,0);            
+        }
+    }
+    UInt len = LEN_BLIST(bl);
+    Obj bs = MTX64_MakeBitString(len);
+    DataOfBitStringObject(bs)[0] = len;
+    memcpy(DataOfBitStringObject(bs) + 2, CONST_BLOCKS_BLIST(bl),
+         Size_Bits_BitString(len));
+    RecountBS(bs);
+    return bs;
+}
+
+
 // Table of functions to export
 static StructGVarFunc GVarFuncs[] = {
+    GVAR_FUNC(MTX64_BitStringBlist, 1, "bl"),
+    GVAR_FUNC(MTX64_BlistBitString, 1, "bs"),
     GVAR_FUNC(MTX64_LengthOfBitString, 1, "bs"),
     GVAR_FUNC(MTX64_WeightOfBitString, 1, "bs"),
     GVAR_FUNC(MTX64_SetEntryOfBitString, 2, "bs, pos"),
