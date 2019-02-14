@@ -1,20 +1,23 @@
 # Copyright and authors
 
-The principle authors and copyright holders of the datastructures
-package, elsewhere in this package referred to as "the datastructures
+The principle authors and copyright holders of the meataxe64
+package, elsewhere in this package referred to as "the meataxe64
 team", are, in alphabetical order:
 
-Steve Linton
-Richard Parker
+Steve Linton and
 Markus Pfeiffer
 
 This package contains additional code and other contributions by:
 
 Max Horn
 
+The package includes for convenience a copy of the meataxe 64 C library by
+Richard Parker and John Thackray (in the mtx64v2b and src/mtx64 directories), which
+is released separately.
+
 # License
 
-datastructures is free software; you can redistribute it and/or modify
+meatyaxe64 is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by the
 Free Software Foundation; either version 2 of the License, or (at your
 option) any later version.
