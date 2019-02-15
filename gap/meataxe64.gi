@@ -135,6 +135,7 @@ BindGlobal("MTX64_Get8BitExportTable", function(f)
     return MTX64_ByteTables(MTX64_FieldOrder(f))[2];    
 end);
 
+
 InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
         [ IsMTX64FiniteField, IsFFE ],        
         function(field, ffe)
@@ -401,7 +402,7 @@ BindGlobal( "MTX64_ExtractVector",
     elif q<= 2^16 then
         return MTX64_ExtractVecFFE(m,row);
     else
-        return List([1..MTX64_Matrix_NumRows(m)], i->
+        return List([1..MTX64_Matrix_NumCols(m)], i->
                     FFEfromFELT(m[row+1,i]));
     fi;
 end);
