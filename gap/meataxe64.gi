@@ -145,14 +145,19 @@ InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
        d < DegreeFFE(ffe) then
         Error("Element not in field");        
     fi;
-    if p^d <= 65536 then
+    if p^d <= MAXSIZE_GF_INTERNAL then
         tab := MTX64_GetFELTfromFFETable(field);
         if IsZero(ffe) then
             x := 0;
         else 
             x := tab[LogFFE(ffe,Z(p,d))+1];
         fi;
-    else      
+    elif d = 1 then
+        x := IntFFE(ffe);
+    elif IsCoeffsModConwayPolRep(ffe) and ffe![2] = d and Length(ffe![1]) = d then
+        # Ugly dependency on the Conway Pol interbnal rep
+        x := NumberFFVector(Reversed(ffe![1]),p);
+    else
         cb := CanonicalBasis(AsVectorSpace(GF(p),GF(p,d)));
         vec := Coefficients(cb, ffe);
         x := 0;
@@ -238,24 +243,28 @@ InstallMethod(InverseOp,  "meataxe64 field element",
 
 
 FFEfromFELT := function(felt)
-    local  fld, p, d, x, tab, z, zp, y;
+    local  fld, p, d, x, tab, v, zp, z, fam, i;
     fld := MTX64_FieldOfElement(felt);    
     p := MTX64_FieldCharacteristic(fld);
     d := MTX64_FieldDegree(fld);
     x := MTX64_ExtractFieldElement(felt);
-    if p^d <= 65536 then
+    if p^d <= MAXSIZE_GF_INTERNAL then
         tab := MTX64_GetFFEfromFELTTable(fld);
         return tab[x+1];
     fi;
-    z := Z(p,d);
-    zp := z^0;    
-    y := 0*z;    
-    while x <> 0 do
-        y := y+ zp*(x mod p);
-        zp := zp*z;  
-        x := QuoInt(x,p);        
+    if d = 1 then
+        return Z(p)^0*x;
+    fi;
+    v := [];
+    zp := Z(p);    
+    for i in [1..d] do
+        Add(v, zp* (x mod p));
+        x := QuoInt(x,p);
     od;
-    return y;    
+    ConvertToVectorRep(v,p);
+    z := Z(p,d);
+    fam := FamilyObj(z);
+    return Objectify(fam!.ConwayFldEltDefaultType, [v, d, fail]);    
 end;
 
 
