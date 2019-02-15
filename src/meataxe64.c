@@ -481,6 +481,42 @@ static Obj FuncMTX64_compareMatrices(Obj self, Obj m1, Obj m2) {
 // Only useful for fields up to 2^16 where GAP uses Zech logs
 //
 
+//
+// FieldMul is very slow for some fields of orders
+// over 2^16 (like 2^24). Do what we needs more quickly
+//
+static FELT mulFeltByZ( FIELD *f, FELT x, FELT z)  {
+    if (f->multyp <= 5)
+        return FieldMul(f,x,z);
+    if (f->charc == 2) {
+        FELT x0 = x;
+        x <<= 1;
+        if (x & f->fdef) 
+            x ^= (f->fdef | f->conp);
+        return x;
+    }
+    x *= z;
+    if (f->pow == 1) {
+        x %= f->fdef;
+        return x;
+    }
+    UInt y = (x/f->fdef);
+    if (!y) return x;
+    x %= f->fdef;
+    // Now we need to add y*f->conp to x but treating them
+    // as polynomials mod z
+    UInt a = 1;
+    UInt r = 0;
+    UInt c = f->conp;
+    for (UInt i = 0; i < f->pow; i++) {
+        r += a*((x +  y * c) %z);
+        a *= z;
+        x /= z;
+        c /= z;
+    }
+    return r;
+}
+
 static Obj FuncMTX64_MakeFELTfromFFETable(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *f = DataOfFieldObject(field);
@@ -494,7 +530,7 @@ static Obj FuncMTX64_MakeFELTfromFFETable(Obj self, Obj field) {
   FELT z = (p == q) ? f->conp : p; // primitive element
   for (int i = 0; i < q - 1; i++) {
     SET_ELM_PLIST(l, i + 2, INTOBJ_INT(x));
-    x = FieldMul(f, x, z);
+    x = mulFeltByZ(f, x, z);
   }
   SET_LEN_PLIST(l, q);
   return l;
