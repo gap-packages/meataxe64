@@ -151,7 +151,7 @@ InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
         if IsZero(ffe) then
             x := 0;
         else 
-            x := tab[LogFFE(ffe,Z(p,d))+1];
+            x := tab[LogFFE(ffe,Z(p,d))+2];
         fi;
     elif d = 1 then
         x := IntFFE(ffe);
@@ -399,7 +399,7 @@ BindGlobal( "MTX64_ExtractVector",
         return MTX64_ExtractVecGF2(m, row);        
     elif q <= 256 then
         return MTX64_ExtractVec8Bit(m, row);        
-    elif q<= 2^16 then
+    elif q<= MAXSIZE_GF_INTERNAL then
         return MTX64_ExtractVecFFE(m,row);
     else
         return List([1..MTX64_Matrix_NumCols(m)], i->
