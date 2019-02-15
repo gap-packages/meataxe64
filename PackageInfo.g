@@ -97,7 +97,7 @@ AvailabilityTest := function()
         return true;
     end,
 
-TestFile := "tst/testall.g",
+TestFile := "tst/testinstall.g",
 
 #Keywords := [ "TODO" ],
 

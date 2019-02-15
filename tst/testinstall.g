@@ -6,8 +6,7 @@
 #
 LoadPackage( "meataxe64" );
 
-TestDirectory([DirectoriesPackageLibrary( "meataxe64", "tst/testinstall" ),
-DirectoriesPackageLibrary( "meataxe64", "tst/testfull" )],
+TestDirectory(DirectoriesPackageLibrary( "meataxe64", "tst/testinstall" ),
   rec(exitGAP := true));
 
 FORCE_QUIT_GAP(1); # if we ever get here, there was an error

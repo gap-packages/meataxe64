@@ -55,19 +55,6 @@ MTX64_CheckEchelize := function(a,r,o)
     Append(colOrder, Difference([1..m],colOrder));
     rowOrder := ListBlist([1..n], grs);
     Append(rowOrder, Difference([1..n],rowOrder));
-    ga2 := ga{rowOrder}{colOrder};  
-    gm2 := NullMat(n,n,GF(q));
-    gm2{[1..rk]}{[1..rk]} := gm;
-    gm2{[rk+1..n]}{[1..rk]} := gk;
-    z := Zero(GF(q));
-    one := One(GF(q));    
-    for i in [rk+1..n] do
-        gm2[i][i] := one;
-    od;
-    gm2 := ImmutableMatrix(GF(q),gm2);
-    ga2 := ImmutableMatrix(GF(q),ga2);    
-    x := MTX64_ExtractMatrix(MTX64_Matrix(gm2,q)*MTX64_Matrix(ga2,q));
- 
     if o.remnantNeeded then
         gr := MTX64_ExtractMatrix(r.remnant);
         if Length(gr) <> rk then
@@ -77,37 +64,52 @@ MTX64_CheckEchelize := function(a,r,o)
             Error("Wrong number of cols in remnant");
         fi;
     fi;    
-    for i in [1..n] do
-        for j in [1..m] do
-            if i <= rk then 
-                if o.multiplierNeeded then
-                    if j <= rk then 
-                        if i = j then
-                            if x[i][j] <> -one then
-                                Error("Product wrong at ",i," ",j);
+    if n <> 0 and m <> 0 then
+        ga2 := ga{rowOrder}{colOrder};  
+        gm2 := NullMat(n,n,GF(q));
+        gm2{[1..rk]}{[1..rk]} := gm;
+        gm2{[rk+1..n]}{[1..rk]} := gk;
+        z := Zero(GF(q));
+        one := One(GF(q));    
+        for i in [rk+1..n] do
+            gm2[i][i] := one;
+        od;
+        gm2 := ImmutableMatrix(GF(q),gm2);
+        ga2 := ImmutableMatrix(GF(q),ga2);    
+        x := MTX64_ExtractMatrix(MTX64_Matrix(gm2,q)*MTX64_Matrix(ga2,q));
+ 
+        for i in [1..n] do
+            for j in [1..m] do
+                if i <= rk then 
+                    if o.multiplierNeeded then
+                        if j <= rk then 
+                            if i = j then
+                                if x[i][j] <> -one then
+                                    Error("Product wrong A at ",i," ",j);
+                                fi;
+                            else
+                                if x[i][j] <> z then
+                                    Error("Product wrong B at ",i," ",j);
+                                fi;
                             fi;
                         else
-                            if x[i][j] <> z then
-                                Error("Product wrong at ",i," ",j);
+                            if o.remnantNeeded then
+                                if x[i][j] <> gr[i][j-rk] then
+                                    Error("Product wrong C at ",i," ",j);
+                                fi;
                             fi;
                         fi;
-                    else
-                        if o.remnantNeeded then
-                            if x[i][j] <> gr[i][j-rk] then
-                                Error("Product wrong at ",i," ",j);
-                            fi;
+                    fi;                
+                else
+                    if o.cleanerNeeded then
+                        if  x[i][j] <> z then
+                            Error("Product wrong D at ",i," ",j);
                         fi;
-                    fi;
-                fi;                
-            else
-                if o.cleanerNeeded then
-                    if  x[i][j] <> z then
-                        Error("Product wrong at ",i," ",j);
                     fi;
                 fi;
-            fi;
+            od;
         od;
-    od;
+    fi;
 end;
    
                 
@@ -134,3 +136,14 @@ testSolutionMat := function(n, q)
     fi;
 end;
 
+testRoundtrip := function(n, q)
+    local m, mm, m1,m2;
+    m1 := MTX64_RandomMat(MTX64_FiniteField(q), n, n);
+    m := MTX64_ExtractMatrix(m1);
+    m2 := MTX64_Matrix(m,q);
+    mm := MTX64_ExtractMatrix(m2);
+    if m1 <> m2 or m <> mm then
+        Error("Mismatch between matrix and roundtrip matrix ",n," ",q);
+    fi;
+    return true;
+end;
