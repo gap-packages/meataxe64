@@ -298,7 +298,21 @@ end);
 
 InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl],
         function(m)
-    local  nor, noc, f, fld, mm, i;
+    local f;    
+    f := DefaultFieldOfMatrix(m);
+    return MTX64_Matrix(m, f);
+end);
+
+InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
+            IsField and IsFinite and IsFFECollection],
+        function(m, f)
+    return MTX64_Matrix(m,Size(f));
+end);
+
+InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
+            IsPosInt],
+        function(m, q)
+    local  nor, noc, fld, mm, i;
     nor := Length(m);
     if nor = 0 then
         Error("Don't know how many columns each of the 0 rows has");
@@ -307,14 +321,21 @@ InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl],
     if noc = 0 then
         Error("Don't know what field the 0 entries in each row lie in");
     fi;
-    f := DefaultFieldOfMatrix(m);
-    fld := MTX64_FiniteField(Size(f));        
+    return MTX64_Matrix(m, q, nor, noc);
+end);
+
+InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
+        IsPosInt, IsInt, IsInt],
+        function(m,q,nor,noc)
+    local fld, mm, i;    
+    fld := MTX64_FiniteField(q);        
     mm := MTX64_NewMatrix(fld, nor, noc);
     for i in [1..nor] do
         MTX64_InsertVector(mm,m[i], i-1);        
     od;
     return mm;
 end);
+    
 
     
     

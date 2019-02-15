@@ -32,6 +32,11 @@ DeclareOperation( "MTX64_FiniteFieldElement",
 DeclareGlobalFunction( "MTX64_FieldOfElement" );
 
 DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl] );
+DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl, 
+        IsField and IsFFECollection and IsFinite] );
+DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl, IsPosInt] );
+DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl, 
+        IsPosInt, IsInt, IsInt] );
 
 DeclareOperation( "MTX64_Matrices", [IsList and IsFFECollCollColl ] );
 
