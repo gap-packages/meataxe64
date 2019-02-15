@@ -141,6 +141,9 @@ MTX64_CleanExtendInner := function( ech, mat, optrec)
         mats := MTX64_ColSelect(ech.colSelect, mat);
         matnp := mats[2] + mats[1]*ech.remnant;
         ech2 := MTX64_EchelizeInner(matnp, optrec);
+        if (ech2 = fail) then
+            return fail;
+        fi;
         matp := mats[1];        
         r2 := ech2.rank;
         Info(InfoMTX64_NG,3,"MTX64_CleanExtend: extension adds rank ",r2);    
