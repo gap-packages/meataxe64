@@ -94,4 +94,20 @@ gap> MTX64_DCut(m,7,7,0,m2);
 Error, Meataxe64: row range too large for matrix: 14 3
 gap> MTX64_DCut(m,7,7,0,m4);
 Error, Meataxe64 matrices not over the same field
+gap> extract_roundtrip := function(n, q)
+>    local m, mm, m1,m2;
+>    m1 := MTX64_RandomMat(MTX64_FiniteField(q), n, n);
+>    m := MTX64_ExtractMatrix(m1);
+>    m2 := MTX64_Matrix(m,q);
+>    mm := MTX64_ExtractMatrix(m2);
+>    if m1 <> m2 or m <> mm then
+>        Error("Mismatch between matrix and roundtrip matrix ",n," ",q);
+>    fi;
+>    return true;
+>    end;;
+gap> for d in [1,2,3,4,5,16,31,32,33,100,201] do
+> for q in [2,3,4,5,7,8,13,16,256,257,
+>       NextPrimeInt(2^16), 2^24, NextPrimeInt(2^32)] do
+>     extract_roundtrip(d,q); od; od;
 gap> STOP_TEST("matrix.tst");
+

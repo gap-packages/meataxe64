@@ -1,23 +1,5 @@
 #
-gap> extract_roundtrip := function(n, q)
->    local m, mm;
->    m := RandomMat(n, n, GF(q));
->    mm := MTX64_ExtractMatrix(MTX64_Matrix(m));
->    if m <> mm then
->        Error("Mismatch between matrix and roundtrip matrix");
->    fi;
->    return true;
->    end;;
-gap> for i in [1..50] do extract_roundtrip(Random([2..50]), Random(Primes) ^ Random([1..3])); od;;
-
-#
-gap> echelize := function(m, n, q)
->       local fld, mat, r;
->       fld := MTX64_FiniteField(q);
->       mat := MTX64_RandomMat(fld, m, n); 
->       r := MTX64_Echelize(mat);
->    end;;
-gap> for i in [1..100] do echelize(Random([2..1000]), Random([2..1000]), Random(Primes)); od;
+gap> START_TEST("solving.tst");
 
 #
 gap> solutionmat := function(n, q)
@@ -30,13 +12,11 @@ gap> solutionmat := function(n, q)
 >          (sol * mat <> v) then
 >           Error("Not a solution");
 >       fi;
->       sol    := MTX64_ExtractMatrix(sol);
->       gapmat := MTX64_ExtractMatrix(mat);
->       gapv   := MTX64_ExtractMatrix(v)[1];
->       gapsol := SolutionMat(gapmat, gapv);
->       if not ((sol = [] and gapsol = fail) or IsZero(sol[1] - gapsol)) then
->           Error("Solutions do not match");
->       fi;
->       return [sol, gapsol, sol - gapsol]; 
 >    end;;
-gap> for i in [1..1000] do solutionmat(Random([2..100]), Random(Primes)); od;
+gap> for q in [2,3,4,5,7,8,13,16,256,257,
+>       NextPrimeInt(2^16), 2^24, NextPrimeInt(2^32)] do
+>       for n in [1,2,3,5,8,20,100,200,500,1000,2000] do
+>                   AppendTo("foo", Runtime(), " S ",q," ",n,"\n");
+>           solutionmat(n,q);
+>       od; od;
+gap> STOP_TEST("solving.tst");
