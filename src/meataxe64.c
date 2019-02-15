@@ -890,9 +890,17 @@ static Obj FuncMTX64_RandomMat(Obj self, Obj field, Obj nrows, Obj ncols) {
     return m;
 }
 
-typedef Obj (*GVarFunc)(/*arguments*/);
-#define GVAR_FUNC_TABLE_ENTRY(srcfile, name, nparam, params)                   \
-  { #name, nparam, params, (GVarFunc) name, srcfile ":Func" #name }
+Obj FuncMTX64_HashMatrix(Obj self, Obj m) {
+    GAP_ASSERT(IS_MTX64_Matrix(m)); // method selection should ensure
+    Obj f = FieldOfMatrix(m);
+    UInt noc = HeaderOfMatrix(m)->noc;
+    UInt nor = HeaderOfMatrix(m)->nor;
+    return HashValueToObjInt(HASHKEY_MEM_NC((const UChar *)DataOfMTX64_Matrix(m),
+                                            1, Size_Data_Matrix(f, nor, noc)));
+}
+
+
+
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs[] = {
@@ -942,7 +950,7 @@ static StructGVarFunc GVarFuncs[] = {
 
     GVAR_FUNC(MTX64_WriteMatrix, 2, "m, fn"),
     GVAR_FUNC(MTX64_ReadMatrix, 1, "fn"),
-
+    GVAR_FUNC(MTX64_HashMatrix, 1, "m" ),
 
     {0} /* Finish with an empty entry */
 

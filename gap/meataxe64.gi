@@ -75,7 +75,10 @@ InstallMethod(\=, [IsMTX64FiniteField, IsMTX64FiniteField],
                             
 InstallMethod( \<, "for meataxe64 fields",
                [IsMTX64FiniteField, IsMTX64FiniteField],
-               {F1, F2} -> MTX64_FieldOrder(F1) < MTX64_FieldOrder(F2));
+        {F1, F2} -> MTX64_FieldOrder(F1) < MTX64_FieldOrder(F2));
+
+BindGlobal("MTX64_HashField", f->HashBasic(MTX64_FieldOrder(f),"Meataxe64_Field"));
+
 
 #
 ## Elements of finite fields
@@ -263,6 +266,10 @@ InstallOtherMethod(Zero, "for a meataxe64 field",
 InstallOtherMethod(One, "for a meataxe64 field",
         [IsMTX64FiniteField],
         f->MTX64_FiniteFieldElement(f,1));
+
+
+BindGlobal("MTX64_HashFELT", 
+        x->HashBasic( MTX64_FieldOrder(MTX64_FieldOfElement(x)), MTX64_ExtractFieldElement(x), "MTX64 FELT"));
 
 
 #

@@ -13,6 +13,8 @@
 #include "slab.h" /* headers from other files in this package */
 #include "bitstring.h" /* headers from other files in this package */
 
+#include "src/intfuncs.h"
+
 #include <assert.h>
 
 // meataxe64 is architecture specific
@@ -177,5 +179,18 @@ static inline void SetDSpaceOfMTX64_Matrix(Obj m, DSPACE *ds) {
   Obj field = FieldOfMatrix(m);
   DSSet(DataOfFieldObject(field), HeaderOfMatrix(m)->noc, ds);
 }
+
+// FIXME: this is copied from datastructures
+// Transform a UInt into a signed GAP intermediate integer, shrinking
+// the size of the number as required
+static inline Obj HashValueToObjInt(UInt uhash)
+{
+    Int hash = (Int)uhash;
+    // Make sure bottom bits are not lost
+    hash += hash << 11;
+    hash /= 16;
+    return INTOBJ_INT(hash);
+}
+
 
 #endif
