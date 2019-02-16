@@ -603,9 +603,6 @@ InstallMethod(One, "for a meataxe64 matrix",
     return o;
 end);
 
-#
-# This could be made faster by using DNzl in the kernel
-#
 InstallMethod(IsOne, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         function(m)
@@ -727,4 +724,4 @@ end);
 
 
 InstallOtherMethod(IsZero, [IsMTX64Matrix],
-        m -> ForAll([0..MTX64_Matrix_NumRows-1], i-> fail = MTX64_DNzl(m,i)));
+        m -> ForAll([0..MTX64_Matrix_NumRows(m)-1], i-> fail = MTX64_DNzl(m,i)));
