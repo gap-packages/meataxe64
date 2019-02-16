@@ -213,6 +213,15 @@ InstallMethod(One, "for a meataxe64 field element",
         [IsMTX64FiniteFieldElement],
         x -> One(MTX64_FieldOfElement(x)));
 
+InstallMethod(IsZero, "for a meataxe64 field element",
+        [IsMTX64FiniteFieldElement],
+        x -> MTX64_ExtractFieldElement(x) = 0);
+
+
+InstallMethod(IsOne, "for a meataxe64 field element",
+        [IsMTX64FiniteFieldElement],
+        x -> MTX64_ExtractFieldElement(x) = 1);
+
 InstallMethod(\+, "meataxe64 field elements", IsIdenticalObj,   [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
         function(x,y)
     return MTX64_FieldAdd(MTX64_FieldOfElement(x), x, y);    
@@ -504,21 +513,6 @@ BindGlobal("MTX64_SLEchelize",
         a -> MTX64_SLEchelizeDestructive(ShallowCopy(a)));
 
 
-InstallMethod(InverseMutable, "for a meataxe64 matrix",
-        [IsMTX64Matrix],
-        function(m)
-    local  len, copy, res;
-    len := MTX64_Matrix_NumCols(m);
-    if len <> MTX64_Matrix_NumRows(m) then
-        Error("not square");
-    fi;
-    res := MTX64_SLEchelize(m, rec(failIfSingular := true, remnantNeeded := false, cleanerNeeded := false));
-    if res = fail or res.rank <> len then
-        Error("not invertible");
-    fi;
-    return -res.multiplier;    
-end);
-
 InstallMethod(InverseSameMutability, "for a meataxe64 matrix", 
         [IsMTX64Matrix],
         function(m)
@@ -589,6 +583,49 @@ InstallMethod(OneMutable, "for a meataxe64 matrix",
     return MTX64_IdentityMat(n,FieldOfMTX64Matrix(m));
 end);
 
+InstallMethod(OneSameMutability, "for a meataxe64 matrix",
+        [IsMTX64Matrix],
+        function(m)
+    local o;
+    o := OneMutable(m);
+    if not IsMutable(m) then
+        MakeImmutable(o);
+    fi;
+    return o;
+end);
+
+InstallMethod(One, "for a meataxe64 matrix",
+        [IsMTX64Matrix],
+        function(m)
+    local o;
+    o := OneMutable(m);
+    MakeImmutable(o);
+    return o;
+end);
+
+#
+# This could be made faster by using DNzl in the kernel
+#
+InstallMethod(IsOne, "for a meataxe64 matrix",
+        [IsMTX64Matrix],
+        function(m)
+    local  f, n, i, j;
+    f := FieldOfMTX64Matrix(m);
+    n := MTX64_Matrix_NumCols(m);
+    if n <> MTX64_Matrix_NumRows(m) then
+        return false;
+    fi;
+    for i in [1..n-1] do
+        for j in [i+1..n] do
+            if not IsZero(m[i,j]) or not IsZero(m[j,i]) then
+                return false;
+            fi;
+        od;
+    od;
+    return ForAll([1..n], i-> IsOne(m[i,i]));
+end);
+
+    
 InstallMethod(\=,  "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
