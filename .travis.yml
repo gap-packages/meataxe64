@@ -8,8 +8,9 @@ env:
     - COVDIR=coverage
     - GAP_PKGS_TO_CLONE="datastructures"
     - GAP_PKGS_TO_BUILD="io profiling datastructures"
+    - GAP_TESTFILE="tst/testinstall.g"
 
-addons:
+addonse:
   apt_packages:
       - libgmp3-dev
       - autotools-dev
