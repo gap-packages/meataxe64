@@ -1,6 +1,7 @@
 # Test for basic properties of MTX64 Matrix objects
 #
 gap> START_TEST("matrix.tst");
+gap> Read(Filename(DirectoriesPackageLibrary("meataxe64","tst"),"testutils.g"));
 gap> f := MTX64_FiniteField(61);
 <MTX64 GF(61)>
 gap> m := MTX64_NewMatrix(f,8,12);
@@ -95,8 +96,31 @@ Error, Meataxe64: row range too large for matrix: 14 3
 gap> MTX64_DCut(m,7,7,0,m4);
 Error, Meataxe64 matrices not over the same field
 gap> for d in [1,2,3,4,5,16,31,32,33,100,201] do
-> for q in [2,3,4,5,7,8,13,16,256,257,
+> for q in [2,3,4,5,7,8,13,16,256,257,512,
 >       NextPrimeInt(2^16), 2^24, NextPrimeInt(2^32)] do
 >     testRoundtrip(d,q); od; od;
+gap> repeat m := MTX64_RandomMat(MTX64_FiniteField(13^2),100,100); until RankMat(m) = 100;
+gap> mi := Inverse(m);;
+gap> mism := InverseSameMutability(m);;
+gap> mim := InverseMutable(m);;
+gap> mi = mism;
+true
+gap> mi = mim;
+true
+gap> IsMutable(mim);
+true
+gap> IsMutable(mism);
+true
+gap> IsMutable(mi);
+false
+gap> IsOne(mi*m);
+true
+gap> IsOne(m*mi);
+true
+gap> mi2 := InverseSameMutability(mi);;
+gap> IsMutable(mi2);
+false
+gap> mi2 = m;
+true
 gap> STOP_TEST("matrix.tst");
 
