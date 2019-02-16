@@ -122,5 +122,55 @@ gap> IsMutable(mi2);
 false
 gap> mi2 = m;
 true
+gap> m := MTX64_RandomMat(MTX64_FiniteField(17),100,101);
+< matrix 100x101 : <MTX64 GF(17)>>
+gap> mi := AdditiveInverse(m);;
+gap> mism := AdditiveInverseSameMutability(m);;
+gap> mim := AdditiveInverseMutable(m);;
+gap> mi = mism;
+true
+gap> mi = mim;
+true
+gap> IsMutable(mim);
+true
+gap> IsMutable(mism);
+true
+gap> IsMutable(mi);
+false
+gap> IsZero(mi+m);
+true
+gap> IsZero(m+mi);
+true
+gap> mi2 := AdditiveInverseSameMutability(mi);;
+gap> IsMutable(mi2);
+false
+gap> mi2 = m;
+true
+gap> m := MTX64_RandomMat(MTX64_FiniteField(512),73,52);
+< matrix 73x52 : <MTX64 GF(2^9)>>
+gap> mi := AdditiveInverse(m);;
+gap> mism := AdditiveInverseSameMutability(m);;
+gap> mim := AdditiveInverseMutable(m);;
+gap> mi = mism;
+true
+gap> mi = mim;
+true
+gap> IsMutable(mim);
+true
+gap> IsMutable(mism);
+true
+gap> IsMutable(mi);
+false
+gap> IsZero(mi+m);
+true
+gap> IsZero(m+mi);
+true
+gap> mi2 := AdditiveInverseSameMutability(mi);;
+gap> IsMutable(mi2);
+false
+gap> mi2 = m;
+true
+gap> mi = m;
+true
 gap> STOP_TEST("matrix.tst");
 
