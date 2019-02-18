@@ -435,35 +435,6 @@ InstallOtherMethod(NullspaceMat, [IsMTX64Matrix],
 end);
 
     
-MakeEchTestMatrix := function(f, arg...)
-    local  n, d, x, y, r, p, x1, x2, m1, m2;
-    if Length(arg) = 1 then
-        n := arg[1];
-        d := DivisorsInt(n);
-        x := First(d, a->a*a>=n);
-        y := n/x;
-        return MakeEchTestMatrix(f,x,x,y,y);
-    elif Length(arg) = 2 then
-        n := arg[1];
-        r := arg[2];
-        d := DivisorsInt(n);
-        p := PositionProperty(d,a->a*a> r);
-        x1 := d[p];
-        x2 := d[p-1];
-        if AbsInt(r - x1^2) < AbsInt(r-x2^2) then
-            x := x1;
-        else
-            x := x2;
-        fi;
-        y := n/x;
-        return MakeEchTestMatrix(f,x,y,y,x);
-    fi;    
-    m1 := RandomMat(arg[1],arg[2],f);
-    m2 := RandomMat(arg[3],arg[4],f);
-    ConvertToMatrixRep(m1);
-    ConvertToMatrixRep(m2);
-    return MTX64_Matrix(KroneckerProduct(m1,m2));
-end;
    
     
 MTX64_SEMT := function(mat)
