@@ -335,25 +335,46 @@ InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
     return MTX64_Matrix(m,Size(f));
 end);
 
+InstallOtherMethod(MTX64_Matrix, [IsList,
+            IsField and IsFinite and IsFFECollection],
+        function(m, f)
+    return MTX64_Matrix(m,Size(f));
+end);
+
+    
+
 InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
             IsPosInt],
         function(m, q)
     local  nor, noc, fld, mm, i;
     nor := Length(m);
-    if nor = 0 then
-        Error("Don't know how many columns each of the 0 rows has");
-    fi;
+    Assert(2,nor > 0);
     noc := Length(m[1]);
-    if noc = 0 then
-        Error("Don't know what field the 0 entries in each row lie in");
-    fi;
+    Assert(2, noc > 0);
     return MTX64_Matrix(m, q, nor, noc);
+end);
+
+InstallOtherMethod(MTX64_Matrix, [IsList,
+            IsPosInt],
+        function(m, q)
+    local  nor, noc, fld, mm, i;
+    nor := Length(m);
+    if nor = 0 then
+        TryNextMethod();
+    fi;
+    if ForAny(m, x-> x<> []) then
+        TryNextMethod();
+    fi;
+    return MTX64_NewMatrix(MTX64_FiniteField(q), nor, 0);    
 end);
 
 InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
         IsPosInt, IsInt, IsInt],
         function(m,q,nor,noc)
     local fld, mm, i;    
+    Assert(1, Length(m) = nor);
+    Assert(1, nor = 0 or Length(m[1]) = noc);
+    Assert(2, nor = 0 or noc = 0 or q mod Characteristic(m) = 0);    
     fld := MTX64_FiniteField(q);        
     mm := MTX64_NewMatrix(fld, nor, noc);
     for i in [1..nor] do
@@ -361,38 +382,18 @@ InstallMethod(MTX64_Matrix, [IsMatrix and IsFFECollColl,
     od;
     return mm;
 end);
-    
 
-    
-    
-
-InstallMethod(MTX64_Matrices, [IsMatrix and IsFFECollCollColl],
-        function(m)
-    local  nom, nor, noc, f, fld, mms, j, mm, i;
-    nom := Length(m);
-    if nom = 0 then
-        return [];
-    fi;    
-    nor := Length(m[1]);
-    if nor = 0 then
-        Error("Don't know how many columns each of the 0 rows has");
-    fi;
-    noc := Length(m[1][1]);
-    if noc = 0 then
-        Error("Don't know what field the 0 entries in each row lie in");
-    fi;
-    f := DefaultScalarDomainOfMatrixList(m);
-    fld := MTX64_FiniteField(Size(f));  
-    mms := [];    
-    for j in [1..nom] do
-        mm := MTX64_NewMatrix(fld, nor, noc);
-        for i in [1..nor] do
-            MTX64_InsertVector(mm,m[i], i-1);        
-        od;
-        Add(mms,mm);
-    od;
-    return mms;    
+InstallOtherMethod(MTX64_Matrix, [IsList,
+        IsPosInt, IsInt, IsInt],
+        function(m,q,nor,noc)
+    local fld;    
+    Assert(1, noc = 0);
+    Assert(1, Length(m) = nor);
+    Assert(2, ForAll(m, x-> x = []));    
+    fld := MTX64_FiniteField(q);        
+    return MTX64_NewMatrix(fld, nor, noc);
 end);
+        
 
     
 

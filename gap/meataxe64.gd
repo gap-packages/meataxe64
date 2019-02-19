@@ -38,8 +38,6 @@ DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl, IsPosInt] );
 DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl, 
         IsPosInt, IsInt, IsInt] );
 
-DeclareOperation( "MTX64_Matrices", [IsList and IsFFECollCollColl ] );
-
 DeclareOperation( "MTX64_ExtractMatrix", [IsMTX64Matrix]);
 
 
