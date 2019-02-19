@@ -117,6 +117,28 @@ gap> IsOne(mi*m);
 true
 gap> IsOne(m*mi);
 true
+gap> o := One(m);
+< matrix 100x100 : <MTX64 GF(13^2)>>
+gap> IsMutable(o);
+false
+gap> IsOne(o);
+true
+gap> om := OneMutable(m);
+< matrix 100x100 : <MTX64 GF(13^2)>>
+gap> IsOne(om);
+true
+gap> IsMutable(om);
+true
+gap> osm := OneSameMutability(m);
+< matrix 100x100 : <MTX64 GF(13^2)>>
+gap> IsOne(osm);
+true
+gap> IsMutable(osm);
+true
+gap> om = osm and o = om;
+true
+gap> IsMutable(OneSameMutability(mi));
+false
 gap> mi2 := InverseSameMutability(mi);;
 gap> IsMutable(mi2);
 false
@@ -146,6 +168,8 @@ gap> IsMutable(mi2);
 false
 gap> mi2 = m;
 true
+gap> IsZero(m-mi);
+false
 gap> m := MTX64_RandomMat(MTX64_FiniteField(512),73,52);
 < matrix 73x52 : <MTX64 GF(2^9)>>
 gap> mi := AdditiveInverse(m);;
@@ -172,5 +196,47 @@ gap> mi2 = m;
 true
 gap> mi = m;
 true
+gap> IsZero(mi-mi);
+true
+gap> zm := ZeroMutable(m);
+< matrix 73x52 : <MTX64 GF(2^9)>>
+gap> IsMutable(zm);
+true
+gap> IsZero(zm);
+true
+gap> IsOne(MTX64_Matrix(Z(2)*[[1,0]], 2));
+false
+gap> MTX64_Matrix([],3);
+Error, no method found! For debugging hints type ?Recovery from NoMethodFound
+Error, no 2nd choice method found for `MTX64_Matrix' on 2 arguments
+gap> MTX64_Matrix([[]],GF(3));
+< matrix 1x0 : <MTX64 GF(3)>>
+gap> MTX64_Matrix([[],[]],4,2,0);
+< matrix 2x0 : <MTX64 GF(2^2)>>
+gap> m1 := MTX64_RandomMat(MTX64_FiniteField(17,2), 10,15);;
+gap> m2 := MTX64_RandomMat(MTX64_FiniteField(17,2), 11,15);;
+gap> m3 := MTX64_RandomMat(MTX64_FiniteField(17,2), 10,16);;
+gap> m4 := MTX64_RandomMat(MTX64_FiniteField(17,3), 10,15);;
+gap> m1 < m2;
+Error, No ordering for matrices of different shapes
+gap> m1 < m3;
+Error, No ordering for matrices of different shapes
+gap> m1 < m4;
+Error, no method found! For debugging hints type ?Recovery from NoMethodFound
+Error, no 1st choice method found for `<' on 2 arguments
+gap> m1 < m1;
+false
+gap> Zero(m1) < m1;
+true
+gap> m1 := MTX64_Matrix(Z(7)*[[1,2,3,4],[5,6,7,8]]);
+< matrix 2x4 : <MTX64 GF(7)>>
+gap> sm1 := MTX64_Submatrix(m1, 1, 1, 1, 4);
+< matrix 1x4 : <MTX64 GF(7)>>
+gap> Display(sm1);
+ 3 6 2 5
+gap> sm2 := MTX64_Submatrix(m1, 1, 2, 2, 2);
+< matrix 2x2 : <MTX64 GF(7)>>
+gap> Display(sm2);
+ 6 2
+ 4 .
 gap> STOP_TEST("matrix.tst");
-
