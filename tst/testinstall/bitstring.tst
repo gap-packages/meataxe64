@@ -29,6 +29,14 @@ gap> MTX64_WeightOfBitString(bs);
 gap> MTX64_SetEntryOfBitString(bs,0);
 gap> MTX64_WeightOfBitString(bs);
 4
+gap> bs[5];
+0
+gap> bs1[3] := 1;
+1
+gap> bs = bs1;
+false
+gap> bs1 < bs;
+false
 gap> bs2 := MTX64_ComplementBitString(bs);
 < MTX64 bitstring 6/10>
 gap> Display(bs2);
@@ -38,7 +46,7 @@ gap> MTX64_PositionsBitString(bs2);
 gap> sub := MTX64_EmptyBitString(6);
 < MTX64 bitstring 0/6>
 gap> MTX64_SetEntryOfBitString(sub,1);
-gap> MTX64_BSCombine(bs, sub);
+gap> MTX64_BSCombine(bs1, sub);
 [ < MTX64 bitstring 5/10>, < MTX64 bitstring 4/5> ]
 gap> MTX64_BSCombine(bs2, sub);
 Error, MTX64_BSCombine: bitstrings incompatible
