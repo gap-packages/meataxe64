@@ -177,3 +177,16 @@ MakeEchTestMatrix := function(f, arg...)
     ConvertToMatrixRep(m2);
     return MTX64_Matrix(KroneckerProduct(m1,m2));
 end;
+
+MakeSparseMatrix := function(fld, m, n, entriesPerRow) 
+    local  mat, i, j;
+    mat := MTX64_NewMatrix(fld, m, n);
+    for i in [1..m] do
+        for j in [1..entriesPerRow] do
+            mat[i, Random([1..n])] := Random(fld);
+        od;
+    od;
+    return mat;
+end;
+
+    

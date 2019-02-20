@@ -55,6 +55,10 @@ function(char, deg)
     return MTX64_FiniteField(char ^ deg);
 end);
 
+InstallOtherMethod(Size, [IsMTX64FiniteField],
+        MTX64_FieldOrder);
+
+
 InstallMethod( ViewString, "for a meataxe64 field",
                [ IsMTX64FiniteField ],
                function(f)
@@ -289,6 +293,22 @@ InstallOtherMethod(One, "for a meataxe64 field",
 
 BindGlobal("MTX64_HashFELT", 
         x->HashBasic( MTX64_FieldOrder(MTX64_FieldOfElement(x)), MTX64_ExtractFieldElement(x), "MTX64 FELT"));
+
+#
+# MTX64 fields as collections
+#
+
+InstallOtherMethod(AsList, [IsMTX64FiniteField ],
+        f -> List([0..Size(f)-1], i-> MTX64_FiniteFieldElement(f,i)));
+
+InstallOtherMethod(AsSSortedList, [IsMTX64FiniteField ],
+        f -> List([0..Size(f)-1], i-> MTX64_FiniteFieldElement(f,i)));
+
+InstallOtherMethod(Random, [IsRandomSource, IsMTX64FiniteField],
+        {rs, f} -> MTX64_FiniteFieldElement(f, Random(rs, [0..MTX64_FieldOrder(f)-1])));
+
+InstallOtherMethod(Random, [IsMTX64FiniteField],
+        f -> Random(GlobalMersenneTwister, f));
 
 
 #
