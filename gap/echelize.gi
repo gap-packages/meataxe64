@@ -75,10 +75,7 @@ MTX64_EchelizeLR := function(mat, optrec)
     res2 := MTX64_EchelizeInner(a2np, optrec);
     Info(InfoMTX64_NG,3,"Right part gave rank ",res2.rank);    
     ret.rank := res.rank + res2.rank;
-    if optrec.failIfSingular and (ret.rank < n or ret.rank < m) then
-        Info(InfoMTX64_NG,3,"Matrix is singular, returning fail");
-        return fail;
-    fi;
+    Assert(2, not optrec.failIfSingular or ret.rank = n);
     rs := MTX64_BSCombine(res.rowSelect, res2.rowSelect);
     ret.colSelect := MTX64_EmptyBitString(m);
     MTX64_BSShiftOr(res.colSelect,0,ret.colSelect);
