@@ -11,6 +11,10 @@ gap> y := MTX64_FiniteFieldElement(f,Z(5));
 <2 : <MTX64 GF(5^3)>>
 gap> z := MTX64_FiniteFieldElement(f,Z(125)^2);
 <25 : <MTX64 GF(5^3)>>
+gap> z7 := MTX64_FiniteFieldElement(f, Z(625));
+Error, Element not in field
+gap> z7 := MTX64_FiniteFieldElement(f, 0*Z(5));
+<0 : <MTX64 GF(5^3)>>
 gap> zz := Z(2,52);;
 gap> z2 := zz^((2^52-1)/(2^26-1));;
 gap> f := MTX64_FiniteField(2,26);;

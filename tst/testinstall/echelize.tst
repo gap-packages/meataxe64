@@ -46,4 +46,6 @@ rec( cleaner := < matrix 1000x1000 : <MTX64 GF(11^2)>>,
   multiplier := < matrix 1000x1000 : <MTX64 GF(11^2)>>, rank := 1000, 
   remnant := < matrix 1000x0 : <MTX64 GF(11^2)>>, 
   rowSelect := < MTX64 bitstring 1000/2000> )
+gap> MTX64_GAPEchelize(MTX64_Matrix(Z(2)*[[0,0],[1,0]], 2), rec(failIfSingular := true));
+fail
 gap> STOP_TEST("echelize.tst");

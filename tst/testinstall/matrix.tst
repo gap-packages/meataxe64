@@ -125,8 +125,13 @@ gap> IsOne(o);
 true
 gap> om := OneMutable(m);
 < matrix 100x100 : <MTX64 GF(13^2)>>
+gap> m2 := MTX64_NewMatrix(MTX64_FiniteField(11),3,2);;
+gap> OneMutable(m2);
+Error, Not square
 gap> IsOne(om);
 true
+gap> IsOne(MTX64_Matrix(Z(23)^0*[[1,1],[1,1]],23));
+false
 gap> IsMutable(om);
 true
 gap> osm := OneSameMutability(m);
@@ -213,6 +218,9 @@ gap> MTX64_Matrix([[]],GF(3));
 < matrix 1x0 : <MTX64 GF(3)>>
 gap> MTX64_Matrix([[],[]],4,2,0);
 < matrix 2x0 : <MTX64 GF(2^2)>>
+gap> MTX64_Matrix([[],1],9);
+Error, no method found! For debugging hints type ?Recovery from NoMethodFound
+Error, no 2nd choice method found for `MTX64_Matrix' on 2 arguments
 gap> m1 := MTX64_RandomMat(MTX64_FiniteField(17,2), 10,15);;
 gap> m2 := MTX64_RandomMat(MTX64_FiniteField(17,2), 11,15);;
 gap> m3 := MTX64_RandomMat(MTX64_FiniteField(17,2), 10,16);;

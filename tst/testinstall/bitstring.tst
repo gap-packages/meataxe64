@@ -31,8 +31,16 @@ gap> MTX64_WeightOfBitString(bs);
 4
 gap> bs[5];
 0
+gap> bs[12];
+Error, Index too big
 gap> bs1[3] := 1;
 1
+gap> bs[12] := 1;
+Error, Index too big
+gap> bs1[3] := 0;
+Error, meataxe64 bitstring entries can ONLY be set to 1
+gap> bs1[3] := 2;
+Error, meataxe64 bitstring entries can ONLY be set to 1
 gap> bs = bs1;
 false
 gap> bs1 < bs;
