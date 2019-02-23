@@ -45,10 +45,17 @@ gap> bs = bs1;
 false
 gap> bs1 < bs;
 false
+gap> bsx := MTX64_EmptyBitString(100);;
+gap> MTX64_SetEntryOfBitString(bsx, 23);
+gap> MTX64_SetEntryOfBitString(bsx, 72);
+gap> MTX64_SetEntryOfBitString(bsx, 99);
+gap> bsx2 := MTX64_ComplementBitString(bsx);;
 gap> bs2 := MTX64_ComplementBitString(bs);
 < MTX64 bitstring 6/10>
-gap> Display(bs2);
-[0,1,1,0,1,1,1,0,1,0]
+gap> Display(bsx2);
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1\
+,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1\
+,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]
 gap> MTX64_PositionsBitString(bs2);
 [ 2, 3, 5, 6, 7, 9 ]
 gap> sub := MTX64_EmptyBitString(6);
