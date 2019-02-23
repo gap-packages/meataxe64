@@ -1,4 +1,5 @@
 #include "bitstring.h"
+#include "src/bits_intern.h" // workaround
 static Obj
     TYPE_MTX64_BitString; // global variable, type of MTX64 Bitstring objects
 static Obj IsMTX64BitString;
