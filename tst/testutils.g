@@ -129,10 +129,12 @@ testSolutionMat := function(n, q)
     fld := MTX64_FiniteField(q);
     mat := MTX64_RandomMat(fld, n, n);
     v   := MTX64_RandomMat(fld, 1, n); 
-    sol := MTX64_SolutionsMat(mat, v)[2];
-    if (MTX64_Matrix_NumRows(sol) = 1) and
-       (sol * mat <> v) then
+    sol := SolutionMat(mat, v);
+    if sol <> fail and sol * mat <> v then
         Error("Not a solution");
+    fi;
+    if sol = fail and RankMat(mat) = n then
+        Error("Should have a solution");
     fi;
 end;
 
