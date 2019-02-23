@@ -687,7 +687,7 @@ static Obj FuncMTX64_Make8BitConversion(Obj self, Obj fld) {
     for (UInt i = 0; i < e; i++) {
       UInt ent = x % q;
       x /= q;
-      FFV ent2 = VAL_FFE(FFE_FELT_FIELDINFO_8BIT(info)[ent]);
+      FFV ent2 = VAL_FFE(FFE_FELT_FIELDINFO_8BIT(info,ent));
       FELT ent3 = INT_INTOBJ(ELM_PLIST(tab, ent2 + 1));
       y += ent3 * z;
       z *= q;
