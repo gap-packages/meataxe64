@@ -44,8 +44,8 @@ static Obj FuncMTX64_ComplementBitString(Obj self, Obj bs) {
   Obj c = MTX64_MakeBitString(len);
   DataOfBitStringObject(c)[0] = len;
   if (wt < len) {
-    UInt *bsp = DataOfBitStringObject(bs) + 2;
-    UInt *cp = DataOfBitStringObject(c) + 2;
+    uint64_t *bsp = DataOfBitStringObject(bs) + 2;
+    uint64_t *cp = DataOfBitStringObject(c) + 2;
     for (UInt i = 0; i < len / 64; i++)
       *cp++ = ~*bsp++;
     if (len % 64) {
@@ -68,7 +68,7 @@ static Obj FuncMTX64_PositionsBitString(Obj self, Obj bs) {
   }
   Obj res = NEW_PLIST(T_PLIST_CYC_SSORT, wt);
   UInt i = 1;
-  UInt *bsp = DataOfBitStringObject(bs);
+  uint64_t *bsp = DataOfBitStringObject(bs);
   for (UInt j = 0; j < len; j++) {
     if (BSBitRead(bsp, j)) {
       SET_ELM_PLIST(res, i++, INTOBJ_INT(j + 1));
@@ -96,7 +96,7 @@ static Obj FuncMTX64_SetEntryOfBitString(Obj self, Obj bs, Obj pos) {
     ErrorMayQuit(
         "MTX64_SetEntryOfBitString: position not an integer or out of range", 0,
         0);
-  UInt *d = DataOfBitStringObject(bs);
+  uint64_t *d = DataOfBitStringObject(bs);
   UInt ipos = INT_INTOBJ(pos);
   UInt x = BSBitRead(d, ipos);
   BSBitSet(d, ipos);
@@ -140,7 +140,7 @@ static Obj FuncMTX64_ColSelect(Obj self, Obj bitstring, Obj m) {
   Obj fld = FieldOfMatrix(m);
   Obj sel = NEW_MTX64_Matrix(fld, nor, nos);
   Obj nonsel = NEW_MTX64_Matrix(fld, nor, noc - nos);
-  UInt *bs = DataOfBitStringObject(bitstring);
+  uint64_t *bs = DataOfBitStringObject(bitstring);
   Dfmt *d = DataOfMTX64_Matrix(m);
   Dfmt *selp = DataOfMTX64_Matrix(sel);
   Dfmt *nonselp = DataOfMTX64_Matrix(nonsel);
@@ -172,7 +172,7 @@ static Obj FuncMTX64_RowSelectShifted(Obj self, Obj bitstring, Obj m,
   if (noc != 0) {
     DSPACE ds;
     SetDSpaceOfMTX64_Matrix(m, &ds);
-    UInt *bs = DataOfBitStringObject(bitstring);
+    uint64_t *bs = DataOfBitStringObject(bitstring);
     Dfmt *d = DataOfMTX64_Matrix(m);
     d = DPAdv(&ds, ishift, d);
     Dfmt *selp = DataOfMTX64_Matrix(sel);
@@ -213,7 +213,7 @@ static Obj FuncMTX64_RowCombine(Obj self, Obj bitstring, Obj m1, Obj m2) {
   Dfmt *d1 = DataOfMTX64_Matrix(m1);
   Dfmt *d2 = DataOfMTX64_Matrix(m2);
   Dfmt *d = DataOfMTX64_Matrix(m);
-  UInt *bs = DataOfBitStringObject(bitstring);
+  uint64_t *bs = DataOfBitStringObject(bitstring);
   for (UInt i = 0; i < len; i++) {
     if (BSBitRead(bs, i)) {
       memcpy(d, d1, ds.nob);
@@ -237,7 +237,7 @@ static Obj FuncMTX64_BSColRifZ(Obj self, Obj bitstring, Obj m) {
   UInt noc2 = DataOfBitStringObject(bitstring)[0];
   Obj fld = FieldOfMatrix(m);
   Obj out = NEW_MTX64_Matrix(fld, nor, noc2);
-  UInt *bs = DataOfBitStringObject(bitstring);
+  uint64_t *bs = DataOfBitStringObject(bitstring);
   Dfmt *d = DataOfMTX64_Matrix(m);
   Dfmt *outp = DataOfMTX64_Matrix(out);
   BSColRifZ(DataOfFieldObject(fld), bs, nor, d, outp);
@@ -254,7 +254,7 @@ static Obj FuncMTX64_BSColPutS(Obj self, Obj bitstring, Obj m, Obj x) {
   if (noc != DataOfBitStringObject(bitstring)[0])
     ErrorMayQuit("mismatched row length", 0, 0);
   Obj fld = FieldOfMatrix(m);
-  UInt *bs = DataOfBitStringObject(bitstring);
+  uint64_t *bs = DataOfBitStringObject(bitstring);
   Dfmt *d = DataOfMTX64_Matrix(m);
   FELT f = GetFELTFromFELTObject(x);
   BSColPutS(DataOfFieldObject(fld), bs, nor, f, d);
@@ -262,8 +262,8 @@ static Obj FuncMTX64_BSColPutS(Obj self, Obj bitstring, Obj m, Obj x) {
 }
 
 static void RecountBS(Obj bs) {
-  UInt *d = DataOfBitStringObject(bs);
-  d[1] = COUNT_TRUES_BLOCKS(d + 2, (d[0] + 63) / 64);
+    uint64_t *d = DataOfBitStringObject(bs);
+    d[1] = COUNT_TRUES_BLOCKS((UInt *)(d + 2), (d[0] + 63) / 64);
 }
 
 static Obj FuncMTX64_BSShiftOr(Obj self, Obj bs1, Obj shift, Obj bs2) {

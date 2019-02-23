@@ -765,7 +765,7 @@ static Obj FuncMTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
   header[2] = nor;
   header[3] = noc;
   EFIL *f = EWHdr((const char *)CHARS_STRING(fname),
-                  header); // exits if file won't open
+                  (uint64_t *)header); // exits if file won't open
   EWData(f, Size_Data_Matrix(fld, noc, nor), DataOfMTX64_Matrix(mx));
   EWClose(f);
   return True;
@@ -777,7 +777,7 @@ static Obj FuncMTX64_ReadMatrix(Obj self, Obj fname) {
   if (!IsStringConv(fname))
     ErrorMayQuit("MTX64_ReadMatrix: filename must be a string", 0, 0);
   UInt header[5];
-  EFIL *f = ERHdr((const char *)CHARS_STRING(fname), header);
+  EFIL *f = ERHdr((const char *)CHARS_STRING(fname), (uint64_t *)header);
   // We need to pass this construction out to GAP because the caching
   // of fields and families happens there
   Obj fld = CALL_1ARGS(MTX64_FiniteField, ObjInt_UInt(header[1]));
