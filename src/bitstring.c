@@ -49,7 +49,7 @@ static Obj FuncMTX64_ComplementBitString(Obj self, Obj bs) {
     for (UInt i = 0; i < len / 64; i++)
       *cp++ = ~*bsp++;
     if (len % 64) {
-      UInt mask = (1 << (len % 64)) - 1;
+        UInt mask = (((UInt)1) << (len % 64)) - 1;
       *cp = (~*bsp) & mask;
     }
     DataOfBitStringObject(c)[1] = len - wt;
