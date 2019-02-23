@@ -501,7 +501,7 @@ end;
 InstallOtherMethod(SolutionMat, [IsMTX64Matrix, IsMTX64Matrix],
         function(m,v)
     local  res;
-    res := MTX64_SolutionsMat(m,[v]);
+    res := MTX64_SolutionsMat(m,v);
     if MTX64_GetEntryOfBitString(res[1],0) = 1 then
         return res[2];
     else
