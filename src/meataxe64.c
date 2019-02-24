@@ -790,40 +790,52 @@ static Obj FuncMTX64_ReadMatrix(Obj self, Obj fname) {
 // too hard to seed the MT stuff in integer.c and the very nice arc4random functions
 // don't seem to work on Linux (although I may be being stupid)
 
-static inline UInt random64() {
-    GAP_STATIC_ASSERT(RAND_MAX+1 >= 1UL<<31,"Random generates too few bits");
-        return (random()<<62)|(random()<<31)|random();
+
+
+static inline UInt random64(UInt4 *source) {
+    return ((UInt)nextrandMT_int32(source)) << 32  | nextrandMT_int32(source);
 }
 
-static inline UInt random_uniform(UInt q) {
+static inline UInt random_uniform(UInt q, UInt4 *source) {
     UInt x;
-    if (q <= RAND_MAX) {        
+    if (q <= (1L<<32)) {        
         do {
-            x = random();
-        } while (x >= (RAND_MAX/q)*q);
-     } else if (q <= ((UInt)RAND_MAX)*((UInt)RAND_MAX)) {
+            x = nextrandMT_int32(source);
+        } while (x >= ((1L<<32)/q)*q);
+    } else {
+        // Somewhat ugly method of finding the largest multiple of q < 2^64
+        UInt y = ((UInt)1<<63)/(q >> 1);
+        UInt r = ((UInt)1<<63) % (q >> 1);
+        if (y > 2*r)
+            y--;
+        // Let q = 2k+1. Then 2^63 = ky + r and so qy - 2^64 = y-2r.
+        // If this risks being negative, we need to reduce y by 1.
+        UInt ct = 0;
         do {
-            x = random() *RAND_MAX + random();
-        } while (x >= (((UInt)RAND_MAX)*((UInt)RAND_MAX)/q)*q);
-     } else {
-        do {
-            x = random64();
-        } while ( x >= (0xFFFFFFFFFFFFFFFFL/q)*q);
-     }
+            x = random64(source);
+        } while (x >= y*q);
+    }
     return x % q;
 }
 
-static inline void random_buf(void * buf, size_t len) {
+static inline void random_buf(void * buf, size_t len, UInt4 *source) {
     for (UInt i = 0; i < len/8; i++)        
-        ((UInt *)buf)[i] = random64();
+        ((UInt *)buf)[i] = random64(source);
     for (UInt i = 0; i < len % 8; i++)
-        ((UInt1 *)buf)[(len/8)*8 + i] = random() % 256;   
+        ((UInt1 *)buf)[(len/8)*8 + i] = nextrandMT_int32(source) % 256;   
 }
 
 
-static Obj FuncMTX64_RandomMat(Obj self, Obj field, Obj nrows, Obj ncols) {
+static Obj FuncMTX64_RANDOM_MAT(Obj self, Obj field, Obj nrows, Obj ncols, Obj mtsource) {
     CHECK_MTX64_Field(field);
     CHECK_NONNEG_SMALLINT(nrows);
+    RequireStringRep("MTX64_RANDOM_MAT", mtsource);
+    if (GET_LEN_STRING(mtsource) < 2500) {
+        ErrorMayQuit(
+                     "MTX64_RANDOM_MAT: <mtstr> must be a string "
+                     "with at least 2500 characters",
+         0, 0);
+    }
     UInt nor = INT_INTOBJ(nrows);
     CHECK_NONNEG_SMALLINT(ncols);
     UInt noc = INT_INTOBJ(ncols);
@@ -831,90 +843,91 @@ static Obj FuncMTX64_RandomMat(Obj self, Obj field, Obj nrows, Obj ncols) {
     FIELD *f = DataOfFieldObject(field);
     Dfmt *mp = DataOfMTX64_Matrix(m);
     UInt q = f->fdef;
-    DSPACE ds;
+    DSPACE ds;    
     SetDSpaceOfMTX64_Matrix(m, &ds);
+    UInt4 *source = (UInt4 *)CHARS_STRING(mtsource);
     for (UInt i = 0; i < nor; i++) {
         switch(f->paktyp) {
         case 0:
             for (UInt j = 0; j < noc; j++) {
-                ((UInt *)mp)[j] = random_uniform(q);
+                ((UInt *)mp)[j] = random_uniform(q,source);
             }
             break;
         case 1:
             for (UInt j = 0; j < noc; j++) 
-                ((uint32_t *)mp)[j] = random_uniform(q);
+                ((uint32_t *)mp)[j] = random_uniform(q,source);
             break;
         case 2:
             if (q == (1<<16)) {
-                random_buf(mp, ds.nob);
+                random_buf(mp, ds.nob,source);
             } else {
                 for (UInt j = 0; j < noc; j++) 
-                    ((uint16_t *)mp)[j] = (uint16_t)random_uniform(q);
+                    ((uint16_t *)mp)[j] = (uint16_t)random_uniform(q,source);
             }
             break;
         case 3:
             if (q == 256) {
-                random_buf(mp, ds.nob);
+                random_buf(mp, ds.nob,source);
             } else {
                 for (UInt j = 0; j < noc; j++) 
-                    ((uint8_t *)mp)[j] = (uint8_t)random_uniform(q);
+                    ((uint8_t *)mp)[j] = (uint8_t)random_uniform(q,source);
             }
             break;
         case 4:
             if (q == 16) {
-                random_buf(mp, noc/2);
+                random_buf(mp, noc/2,source);
             } else {
                 for (UInt j = 0; j < noc/2; j++) 
-                    ((uint8_t *)mp)[j] = (uint8_t)random_uniform(q*q);
+                    ((uint8_t *)mp)[j] = (uint8_t)random_uniform(q*q,source);
             }
             if (noc % 2) {
-                mp[ds.nob-1] = (uint8_t)random_uniform(q);
+                mp[ds.nob-1] = (uint8_t)random_uniform(q,source);
             }
             break;
         case 5:
             for (UInt j = 0; j < noc/3; j++) 
-                ((uint8_t *)mp)[j] = (uint8_t)random_uniform(125);
+                ((uint8_t *)mp)[j] = (uint8_t)random_uniform(125,source);
             switch (noc %3) {
             case 0:
                 break;
             case 1:
-                mp[ds.nob-1] = (uint8_t)random_uniform(5);
+                mp[ds.nob-1] = (uint8_t)random_uniform(5,source);
                 break;
             case 2:
-                mp[ds.nob-1] = (uint8_t)random_uniform(25);
+                mp[ds.nob-1] = (uint8_t)random_uniform(25,source);
                 break;
             }
             break;
         case 6:
-            random_buf(mp, noc/4);
+            random_buf(mp, noc/4,source);
             if (noc % 4) {
-                mp[ds.nob-1] = (uint8_t)random_uniform(1<< 2*(noc % 4));
+                mp[ds.nob-1] = (uint8_t)random_uniform(1<< 2*(noc % 4),source);
             }
             break;
         case 7:
             for (UInt j = 0; j < noc/5; j++) 
-                ((uint8_t *)mp)[j] = (uint8_t)random_uniform(243);
+                ((uint8_t *)mp)[j] = (uint8_t)random_uniform(243,source);
             switch (noc %5) {
             case 0:
                 break;
             case 1:
-                mp[ds.nob-1] = (uint8_t)random_uniform(3);
+                mp[ds.nob-1] = (uint8_t)random_uniform(3,source);
                 break;
             case 2:
-                mp[ds.nob-1] = (uint8_t)random_uniform(9);
+                mp[ds.nob-1] = (uint8_t)random_uniform(9,source);
                 break;
             case 3:
-                mp[ds.nob-1] = (uint8_t)random_uniform(27);
+                mp[ds.nob-1] = (uint8_t)random_uniform(27,source);
                 break;
             case 4:
-                mp[ds.nob-1] = (uint8_t)random_uniform(81);
+                mp[ds.nob-1] = (uint8_t)random_uniform(81,source);
                 break;
             }
             break;
         case 8:
-            random_buf(mp, noc/8);
+            random_buf(mp, noc/8,source);
             if (noc % 8) {
-                mp[ds.nob-1] = (uint8_t)random_uniform(1<< (noc % 8));
+                mp[ds.nob-1] = (uint8_t)random_uniform(1<< (noc % 8),source);
             }
             break;
         }
@@ -970,7 +983,7 @@ static StructGVarFunc GVarFuncs[] = {
 
     GVAR_FUNC(MTX64_ShallowCopyMatrix, 1, "m"),
     GVAR_FUNC(MTX64_compareMatrices, 2, "m1, m2"),
-    GVAR_FUNC(MTX64_RandomMat, 3, "f, nor, noc"),
+    GVAR_FUNC(MTX64_RANDOM_MAT, 4, "f, nor, noc, state"),
 
     GVAR_FUNC(MTX64_MakeFELTfromFFETable, 1, "q"),
     GVAR_FUNC(MTX64_InsertVecFFE, 3, "d, v, row"),

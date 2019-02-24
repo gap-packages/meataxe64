@@ -415,6 +415,11 @@ InstallOtherMethod(MTX64_Matrix, [IsList,
 end);
         
 
+BindGlobal("MTX64_RandomMat", 
+        function(f, n, m)
+    return MTX64_RANDOM_MAT( f, n , m, GlobalMersenneTwister!.state);
+end);
+
     
 
 #
