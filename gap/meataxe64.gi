@@ -233,7 +233,7 @@ end);
 
 InstallMethod(\-, "meataxe64 field elements", IsIdenticalObj,  [IsMTX64FiniteFieldElement, IsMTX64FiniteFieldElement],
         function(x,y)
-    return MTX64_FieldAdd(MTX64_FieldOfElement(x), x, y);    
+    return MTX64_FieldSub(MTX64_FieldOfElement(x), x, y);    
 end);
 
 InstallMethod(AdditiveInverse, "meataxe64 field element",  
