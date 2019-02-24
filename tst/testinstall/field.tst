@@ -29,4 +29,9 @@ gap> MTX64_FieldDegree(f);
 1
 gap> MTX64_FieldDegree(f9);
 2
+gap> MTX64_CREATE_FIELD("foo");
+Error, MTX64_CreateField: argument must be a prime power < 2^64, not a list (s\
+tring)
+gap> MTX64_CREATE_FIELD(-1);
+Error, MTX64_CreateField: argument must be a prime power < 2^64, not a integer
 gap> STOP_TEST("field.tst");

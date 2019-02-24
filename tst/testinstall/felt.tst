@@ -5,6 +5,19 @@ gap> f := MTX64_FiniteField(125);
 <MTX64 GF(5^3)>
 gap> x := MTX64_FiniteFieldElement(f,5);
 <5 : <MTX64 GF(5^3)>>
+gap> MTX64_FiniteFieldElement(f,-11);
+Error, MTX64_CreateFieldElement: element should be a non-negative integer
+gap> MTX64_FiniteFieldElement(f,126);
+Error, MTX64_CreateFieldElement: element number too large for field
+gap> t := MTX64_MakeFELTfromFFETable(MTX64_FiniteField(2,17));;
+gap> t[100000];
+97883
+gap> t := MTX64_MakeFELTfromFFETable(MTX64_FiniteField(65537));;
+gap> t[50000];
+18151
+gap> MTX64_MakeFELTfromFFETable(MTX64_FiniteField(181,3));;
+gap> t[10000];
+60422
 gap> FieldOfMTX64FELT(x);
 <MTX64 GF(5^3)>
 gap> y := MTX64_FiniteFieldElement(f,Z(5));
@@ -37,7 +50,7 @@ gap> One(z);
 gap> y+z;
 <27 : <MTX64 GF(5^3)>>
 gap> x-z;
-<30 : <MTX64 GF(5^3)>>
+<105 : <MTX64 GF(5^3)>>
 gap> -x;
 <20 : <MTX64 GF(5^3)>>
 gap> y^-1;
