@@ -80,7 +80,7 @@ Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
   Obj m;
   m = NewBag(T_DATOBJ, Size_Bag_Matrix(f, noc, nor));
   SET_TYPE_DATOBJ(
-      m, CALL_1ARGS(TYPE_MTX64_Matrix, INTOBJ_INT(DataOfFieldObject(f)->fdef)));
+                  m, CALL_1ARGS(TYPE_MTX64_Matrix, ObjInt_UInt(DataOfFieldObject(f)->fdef)));
   HeaderOfMatrix(m)->noc = noc;
   HeaderOfMatrix(m)->nor = nor;
   return m;
@@ -100,7 +100,7 @@ Obj MakeMtx64Field(UInt field_order) {
 Obj MakeMtx64Felt(Obj field, FELT x) {
   Obj f = NewBag(T_DATOBJ, sizeof(FELT) + sizeof(Obj));
   UInt q = DataOfFieldObject(field)->fdef;
-  Obj type = CALL_1ARGS(TYPE_MTX64_Felt, INTOBJ_INT(q));
+  Obj type = CALL_1ARGS(TYPE_MTX64_Felt, ObjInt_UInt(q));
   SET_TYPE_DATOBJ(f, type);
   SetFELTOfFELTObject(f, x);
   return f;
@@ -132,13 +132,13 @@ static Obj FuncMTX64_CREATE_FIELD(Obj self, Obj field_order) {
 static Obj FuncMTX64_FieldOrder(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *_f = DataOfFieldObject(field);
-  return INTOBJ_INT(_f->fdef);
+  return ObjInt_UInt(_f->fdef);
 }
 
 static Obj FuncMTX64_FieldCharacteristic(Obj self, Obj field) {
   CHECK_MTX64_Field(field);
   FIELD *_f = DataOfFieldObject(field);
-  return INTOBJ_INT(_f->charc);
+  return ObjInt_UInt(_f->charc);
 }
 
 static Obj FuncMTX64_FieldDegree(Obj self, Obj field) {
@@ -496,10 +496,7 @@ static FELT mulFeltByZ( FIELD *f, FELT x, FELT z)  {
         return x;
     }
     x *= z;
-    if (f->pow == 1) {
-        x %= f->fdef;
-        return x;
-    }
+    GAP_ASSERT(f->pow > 1);
     UInt y = (x/f->fdef);
     if (!y) return x;
     x %= f->fdef;
