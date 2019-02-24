@@ -247,4 +247,14 @@ gap> sm2 := MTX64_Submatrix(m1, 1, 2, 2, 2);
 gap> Display(sm2);
  6 2
  4 .
+gap> m1 := MTX64_Matrix(Z(257)*[[1,2,3,4],[5,6,7,8]]);;
+gap> MTX64_InsertVecFFE(m1, [Z(257)],0);
+Error, row length mismatch
+gap> m1 := MTX64_Matrix(Z(121)*[[1,2,3,4],[5,6,7,8]],121);;
+gap> MTX64_InsertVecFFE(m1, Z(11)*[1,3,2,4],0);
+fail
+gap> m1 := MTX64_NewMatrix(MTX64_FiniteField(257), 3, 0);;
+gap> MTX64_ExtractVector(m1,0);
+[  ]
+gap> STOP_TEST("matrix.tst");
 gap> STOP_TEST("matrix.tst");
