@@ -298,4 +298,28 @@ gap> Display(TriangulizedMat(m));
   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .\
   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(9), 1000, 1000);;
+gap> m2 := MTX64_RandomMat(MTX64_FiniteField(9), 1000, 800);;
+gap> MTX64_DPaste(m2, 0, 1000, 200, m);
+gap> MTX64_GAPEchelize(m);
+rec( cleaner := < matrix 200x800 : <MTX64 GF(3^2)>>, 
+  colSelect := < MTX64 bitstring 800/1000>, 
+  multiplier := < matrix 800x800 : <MTX64 GF(3^2)>>, rank := 800, 
+  remnant := < matrix 800x200 : <MTX64 GF(3^2)>>, 
+  rowSelect := < MTX64 bitstring 800/1000> )
+gap> Reset(GlobalMersenneTwister,25);;
+gap> m1 := MakeEchTestMatrix(GF(25), 1000, 200);
+< matrix 1000x1000 : <MTX64 GF(5^2)>>
+gap> m2 := MakeEchTestMatrix(GF(25), 1000, 200);
+< matrix 1000x1000 : <MTX64 GF(5^2)>>
+gap> e := MTX64_GAPEchelize(m1, rec(cleanerNeeded := false, multiplierNeeded := false));
+rec( colSelect := < MTX64 bitstring 100/1000>, rank := 100, 
+  remnant := < matrix 100x900 : <MTX64 GF(5^2)>>, 
+  rowSelect := < MTX64 bitstring 100/1000> )
+gap> MTX64_CleanExtend(e, m2);
+< MTX64 bitstring 100/1000>
+gap> e;
+rec( colSelect := < MTX64 bitstring 200/1000>, rank := 200, 
+  remnant := < matrix 200x800 : <MTX64 GF(5^2)>>, 
+  rowSelect := < MTX64 bitstring 200/2000> )
 gap> STOP_TEST("echelize.tst");
