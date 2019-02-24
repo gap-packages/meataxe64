@@ -34,4 +34,6 @@ Error, MTX64_CreateField: argument must be a prime power < 2^64, not a list (s\
 tring)
 gap> MTX64_CREATE_FIELD(-1);
 Error, MTX64_CreateField: argument must be a prime power < 2^64, not a integer
+gap> MTX64_Make8BitConversion( MTX64_FiniteField(257));
+Error, MTX64_Make8BitConversion: only defined for field sizes up to 256
 gap> STOP_TEST("field.tst");

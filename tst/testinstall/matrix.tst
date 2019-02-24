@@ -256,5 +256,89 @@ fail
 gap> m1 := MTX64_NewMatrix(MTX64_FiniteField(257), 3, 0);;
 gap> MTX64_ExtractVector(m1,0);
 [  ]
-gap> STOP_TEST("matrix.tst");
+gap> MTX64_InsertVector(m1,[],1);
+gap> m1 := MTX64_Matrix(Z(2^2)^0*[[1,1],[0,1]],4);;
+gap> x := MTX64_FiniteFieldElement(MTX64_FiniteField(4),2);;
+gap> MTX64_DSMad(2, x, m1, m1);
+gap> Display(m1);
+z = Z(4)
+ z^2 z^2
+   . z^2
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(4),10,10);;
+gap> v := Z(2)*[1..10];; ConvertToVectorRep(v,2);;
+gap> MTX64_InsertVector(m,v,1);
+gap> Display(m);
+ . . . . . . . . . .
+ 1 . 1 . 1 . 1 . 1 .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+gap> MTX64_ExtractVecGF2(m, 1);
+Error, field mismatch
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(2),10,10);;
+gap> MTX64_InsertVecGF2(m, "foo", 1);
+Error, MTX64_InsertVecGF2: vector should be a compressed GF2 vector
+gap> MTX64_InsertVecGF2(m, Z(2)*[1..10], 1);
+Error, MTX64_InsertVecGF2: vector should be a compressed GF2 vector
+gap> MTX64_InsertVecGF2(m, Z(4)*[1..10], 1);
+Error, MTX64_InsertVecGF2: vector should be a compressed GF2 vector
+gap> v := Z(4)*[1..10];; ConvertToVectorRep(v,4);;
+gap> MTX64_InsertVecGF2(m, v, 1);
+Error, MTX64_InsertVecGF2: vector should be a compressed GF2 vector
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(2),10,0);;
+gap> v := [Z(2)];; ConvertToVectorRep(v,2);; v := v{[]};;
+gap> MTX64_InsertVecGF2(m, v, 1);
+gap> MTX64_ExtractVecGF2(m, 1);
+<a GF2 vector of length 0>
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(9),10,10);;
+gap> v := Z(3)*[1..10];; ConvertToVectorRep(v,3);;
+gap> MTX64_InsertVector(m,v,1);
+gap> Display(m);
+ . . . . . . . . . .
+ 2 1 . 2 1 . 2 1 . 2
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+ . . . . . . . . . .
+gap> MTX64_InsertVec8Bit(m, "foo", 1);
+Error, MTX64_InsertVec8Bit: bad vector format
+gap> MTX64_InsertVec8Bit(m, Z(2)*[1..10], 1);
+Error, MTX64_InsertVec8Bit: bad vector format
+gap> MTX64_InsertVec8Bit(m, Z(4)*[1..10], 1);
+Error, MTX64_InsertVec8Bit: bad vector format
+gap> v := Z(4)*[1..10];; ConvertToVectorRep(v,4);;
+gap> MTX64_InsertVec8Bit(m, v, 1);
+fail
+gap> v := Z(2)*[1..10];; ConvertToVectorRep(v,2);;
+gap> MTX64_InsertVec8Bit(m, v, 1);
+Error, MTX64_InsertVec8Bit: bad vector format
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(7),10,0);;
+gap> v := [Z(7)];; ConvertToVectorRep(v,7);; v := v{[]};;
+gap> MTX64_InsertVec8Bit(m, v, 1);
+gap> m := MTX64_NewMatrix(MTX64_FiniteField(7^3),10,10);;
+gap> MTX64_ExtractVec8Bit(m, 1);
+Error, field mismatch
+gap> Reset(GlobalMersenneTwister, 33);;
+gap> m := MTX64_RandomMat(MTX64_FiniteField(NextPrimeInt(2^63)), 10,10);
+< matrix 10x10 : <MTX64 GF(9223372036854775837)>>
+gap> d := DirectoryTemporary();;
+gap> MTX64_WriteMatrix(m, Filename(d,"a"));
+true
+gap> m2 := MTX64_ReadMatrix(Filename(d,"a"));
+< matrix 10x10 : <MTX64 GF(9223372036854775837)>>
+gap> m2 = m;
+true
+gap> m3 := MTX64_ReadMatrix( 17);
+Error, MTX64_ReadMatrix: filename must be a string
+gap> MTX64_HashMatrix(m);
+-327586356389823045
 gap> STOP_TEST("matrix.tst");
