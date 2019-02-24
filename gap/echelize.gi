@@ -530,12 +530,7 @@ InstallOtherMethod(BaseMat, [IsMTX64Matrix],
 end);
 
 InstallOtherMethod(BaseMatDestructive, [IsMTX64Matrix],
-        function(m)    
-    local  res;
-    res := MTX64_GAPEchelize(m, rec(cleanerNeeded := false, multiplierNeeded := false,
-                   remnantNeeded := false));
-    return MTX64_RowSelect(res.rowSelect, m)[1];
-end);
+        BaseMat);
 
 InstallOtherMethod(SumIntersectionMat, [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
