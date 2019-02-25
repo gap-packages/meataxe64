@@ -254,9 +254,9 @@ gap> m1 := MTX64_Matrix(Z(121)*[[1,2,3,4],[5,6,7,8]],121);;
 gap> MTX64_InsertVecFFE(m1, Z(11)*[1,3,2,4],0);
 fail
 gap> m1 := MTX64_NewMatrix(MTX64_FiniteField(257), 3, 0);;
-gap> MTX64_ExtractVector(m1,0);
+gap> MTX64_ExtractVecFFE(m1,0);
 [  ]
-gap> MTX64_InsertVector(m1,[],1);
+gap> MTX64_InsertVecFFE(m1,[],1);
 gap> m1 := MTX64_Matrix(Z(2^2)^0*[[1,1],[0,1]],4);;
 gap> x := MTX64_FiniteFieldElement(MTX64_FiniteField(4),2);;
 gap> MTX64_DSMad(2, x, m1, m1);
@@ -290,6 +290,9 @@ Error, MTX64_InsertVecGF2: vector should be a compressed GF2 vector
 gap> v := Z(4)*[1..10];; ConvertToVectorRep(v,4);;
 gap> MTX64_InsertVecGF2(m, v, 1);
 Error, MTX64_InsertVecGF2: vector should be a compressed GF2 vector
+gap> v := Z(2)*[1..8];; ConvertToVectorRep(v,2);;
+gap> MTX64_InsertVecGF2(m, v, 1);
+Error, row length mismatch
 gap> m := MTX64_NewMatrix(MTX64_FiniteField(2),10,0);;
 gap> v := [Z(2)];; ConvertToVectorRep(v,2);; v := v{[]};;
 gap> MTX64_InsertVecGF2(m, v, 1);
@@ -309,6 +312,9 @@ gap> Display(m);
  . . . . . . . . . .
  . . . . . . . . . .
  . . . . . . . . . .
+gap> v := Z(3)*[1..9];; ConvertToVectorRep(v,9);;
+gap> MTX64_InsertVec8Bit(m,v,1);
+Error, row length mismatch
 gap> MTX64_InsertVec8Bit(m, "foo", 1);
 Error, MTX64_InsertVec8Bit: bad vector format
 gap> MTX64_InsertVec8Bit(m, Z(2)*[1..10], 1);
@@ -339,6 +345,13 @@ gap> m2 = m;
 true
 gap> m3 := MTX64_ReadMatrix( 17);
 Error, MTX64_ReadMatrix: filename must be a string
+gap> MTX64_WriteMatrix( m2, 11);
+Error, MTX64_WriteMatrix: filename must be a string
 gap> MTX64_HashMatrix(m);
 -327586356389823045
+gap> MTX64_RANDOM_MAT( MTX64_FiniteField(3), 10, 10, 10);
+Error, MTX64_RANDOM_MAT: <mtsource> must be a string (not the integer 10)
+gap> MTX64_RANDOM_MAT( MTX64_FiniteField(3), 10, 10, "123");
+Error, MTX64_RANDOM_MAT: <mtstr> must be a string with at least 2500 character\
+s
 gap> STOP_TEST("matrix.tst");
