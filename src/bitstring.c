@@ -313,12 +313,7 @@ static Obj FuncMTX64_BlistBitString(Obj self, Obj bs) {
 }
          
 static Obj FuncMTX64_BitStringBlist(Obj self, Obj bl) {
-    if (!IS_BLIST_REP(bl)) {
-        ConvBlist(bl);
-        if (!IS_BLIST_REP(bl)) {
-            ErrorMayQuit("MTX64_BitStringBlist: argument must be a blist",0,0);            
-        }
-    }
+    ConvBlist(bl);
     UInt len = LEN_BLIST(bl);
     Obj bs = MTX64_MakeBitString(len);
     DataOfBitStringObject(bs)[0] = len;
