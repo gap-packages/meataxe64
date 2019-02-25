@@ -354,4 +354,19 @@ Error, MTX64_RANDOM_MAT: <mtsource> must be a string (not the integer 10)
 gap> MTX64_RANDOM_MAT( MTX64_FiniteField(3), 10, 10, "123");
 Error, MTX64_RANDOM_MAT: <mtstr> must be a string with at least 2500 character\
 s
+gap> f := MTX64_FiniteField(19);;
+gap> m1 := MTX64_RandomMat( f, 100, 100);;
+gap> m2 := MTX64_RandomMat( f, 101, 100);;
+gap> m1*m2;
+Error, SLMultiply: matrices are incompatible shapes
+gap> m2*m1;
+< matrix 101x100 : <MTX64 GF(19)>>
+gap> m1*m1 = MTX64_SLMultiplyStrassenSquare(m1, m1, 1);
+true
+gap> m2*m1 = MTX64_SLMultiplyStrassenNonSquare(m2, m1, 1);
+true
+gap> MTX64_SLMultiplyStrassenNonSquare(m1, m2, 1);
+Error, Matrices Incompatible
+gap> MTX64_SLMultiplyStrassenSquare(m2, m1, 1);
+Error, Matrices must be square
 gap> STOP_TEST("matrix.tst");

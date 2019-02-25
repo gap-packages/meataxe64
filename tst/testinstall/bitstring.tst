@@ -17,6 +17,10 @@ gap> MTX64_GetEntryOfBitString(bs,3);
 1
 gap> MTX64_SetEntryOfBitString(bs,7);
 gap> MTX64_SetEntryOfBitString(bs,9);
+gap> MTX64_GetEntryOfBitString(bs,11);
+Error, MTX64_GetEntryOfBitString: position not an integer or out of range
+gap> MTX64_SetEntryOfBitString(bs,11);
+Error, MTX64_SetEntryOfBitString: position not an integer or out of range
 gap> bs1 := ShallowCopy(bs);
 < MTX64 bitstring 3/10>
 gap> MTX64_SetEntryOfBitString(bs,0);
@@ -60,6 +64,8 @@ gap> MTX64_PositionsBitString(bs2);
 [ 2, 3, 5, 6, 7, 9 ]
 gap> sub := MTX64_EmptyBitString(6);
 < MTX64 bitstring 0/6>
+gap> MTX64_PositionsBitString(sub);
+[  ]
 gap> MTX64_SetEntryOfBitString(sub,1);
 gap> MTX64_BSCombine(bs1, sub);
 [ < MTX64 bitstring 5/10>, < MTX64 bitstring 4/5> ]
@@ -70,4 +76,12 @@ gap> bs := MTX64_BitStringBlist(bl);
 < MTX64 bitstring 168/1000>
 gap> bl = MTX64_BlistBitString(bs);
 true
+gap> b1 := MTX64_EmptyBitString(10);;
+gap> b2:= MTX64_EmptyBitString(10);;
+gap> MTX64_BSShiftOr(b1, 3, b2);
+Error, BSShiftOr: destination bitstring not long enough
+gap> MTX64_BitStringBlist([true]);
+< MTX64 bitstring 1/1>
+gap> MTX64_BitStringBlist([17]);
+< MTX64 bitstring 0/1>
 gap> STOP_TEST("bitstring.tst");
