@@ -130,7 +130,7 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     tick=cha+chb+1;
     CM->r=cha;
     CM->c=chb;
-    M3EvenChop(CM,f->entbyte,f->entbyte);
+    M3EvenChop(CM,f->entbyte,f->entbyte,1,1);
     M3MOJs(CM);
     M3Read(CM);
 

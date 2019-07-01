@@ -7,6 +7,7 @@ gcc $1 -O3 -Wall -pthread zbc.c -L$BIN -lmtx -o $BIN/zbc
 gcc $1 -O3 -Wall -pthread zch.c -L$BIN -lmtx -o $BIN/zch
 gcc $1 -O3 -Wall -pthread zcn.c -L$BIN -lmtx -o $BIN/zcn
 gcc $1 -O3 -Wall -pthread zcp.c -L$BIN -lmtx -o $BIN/zcp
+gcc $1 -O3 -Wall -pthread zcs.c -L$BIN -lmtx -o $BIN/zcs
 gcc $1 -O3 -Wall -pthread zcv.c -L$BIN -lmtx -o $BIN/zcv
 gcc $1 -O3 -Wall -pthread zcx.c -L$BIN -lmtx -o $BIN/zcx
 gcc $1 -O3 -Wall -pthread zde.c -L$BIN -lmtx -o $BIN/zde
@@ -38,6 +39,7 @@ gcc $1 -O3 -Wall -pthread zs2.c -L$BIN -lmtx -o $BIN/zs2
 gcc $1 -O3 -Wall -pthread zsa.c -L$BIN -lmtx -o $BIN/zsa
 gcc $1 -O3 -Wall -pthread zsb.c -L$BIN -lmtx -o $BIN/zsb
 gcc $1 -O3 -Wall -pthread zsc.c -L$BIN -lmtx -o $BIN/zsc
+gcc $1 -O3 -Wall -pthread zsi.c -L$BIN -lmtx -o $BIN/zsi
 gcc $1 -O3 -Wall -pthread zsv.c -L$BIN -lmtx -o $BIN/zsv
 gcc $1 -O3 -Wall -pthread ztc.c -L$BIN -lmtx -o $BIN/ztc
 gcc $1 -O3 -Wall -pthread zte.c -L$BIN -lmtx -o $BIN/zte
@@ -45,3 +47,4 @@ gcc $1 -O3 -Wall -pthread ztr.c -L$BIN -lmtx -o $BIN/ztr
 gcc $1 -O3 -Wall -pthread zvp.c -L$BIN -lmtx -o $BIN/zvp
 gcc $1 -O3 -Wall -pthread zut.c -L$BIN -lmtx -o $BIN/zut
 gcc $1 -O3 -Wall -pthread zpk.c -L$BIN -lmtx -o $BIN/zpk
+gcc $1 -O3 -Wall -pthread zzs.c -L$BIN -lmtx -o $BIN/zzs

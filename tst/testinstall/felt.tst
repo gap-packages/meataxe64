@@ -18,7 +18,7 @@ gap> t[50000];
 gap> MTX64_MakeFELTfromFFETable(MTX64_FiniteField(181,3));;
 gap> t[10000];
 60422
-gap> FieldOfMTX64FELT(x);
+gap> MTX64_FieldOfElement(x);
 <MTX64 GF(5^3)>
 gap> y := MTX64_FiniteFieldElement(f,Z(5));
 <2 : <MTX64 GF(5^3)>>

@@ -37,7 +37,7 @@ MTX64_EchelizeLR := function(mat, optrec)
     local  f, n, m, ret, splitAt, a1, a2, optrec2, 
            res, a2s, a2np, res2, rs, a2p, a2ps, 
            r1, r2, k1, k1s, k1a, k1b, kl, ku;
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
     ret := rec();    
@@ -124,7 +124,7 @@ MTX64_CleanExtendInner := function( ech, mat, optrec)
            a1s, k1, k1s, ku, kl, k1b, mu, 
            ml;
     m := MTX64_Matrix_NumCols(mat);
-    f := FieldOfMTX64Matrix(mat);    
+    f := MTX64_FieldOfMatrix(mat);    
     n1 := MTX64_LengthOfBitString(ech.rowSelect);
     n2 := MTX64_Matrix_NumRows(mat);    
     n :=  n1 + n2;    
@@ -215,7 +215,7 @@ MTX64_EchelizeUD := function(mat, optrec)
     local  f, n, m, ret, splitAt, a1, a2, optrec2, 
            res,  a2s, a2np, res2, cs, a1s, r1, k1, 
            k1s, kl, ku, ml, mu, k1b;
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
     ret := rec();    
@@ -283,7 +283,7 @@ MTX64_EchelizeInner := function(mat, optrec)
     local  f, n, zeroRows, colSelect, multiplier, remnant, cleaner, a, 
            res, rs, k, zeroCols, cs, m, z,
            r;
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
     if optrec.failIfSingular and n <> m then
@@ -427,7 +427,7 @@ InstallOtherMethod(NullspaceMat, [IsMTX64Matrix],
     res := MTX64_GAPEchelize(TransposedMat(m), 
                    rec(cleanerNeeded := false, multiplierNeeded := false));
     r := MTX64_BSColRifZ(res.colSelect,MutableTransposedMat(res.remnant));   
-    MTX64_BSColPutS(res.colSelect, r, One(FieldOfMTX64Matrix(m)));
+    MTX64_BSColPutS(res.colSelect, r, One(MTX64_FieldOfMatrix(m)));
     return r;
 end);
 
@@ -436,7 +436,7 @@ end);
     
 MTX64_SEMT := function(mat)
     local  f, m, n, res, pivotcols, heads, i, ret, bs;    
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
     res := MTX64_Echelize(mat);    
@@ -457,7 +457,7 @@ end;
 
 MTX64_SEM := function(mat)
     local  f, m, n, res, pivotcols, heads, i, ret, bs;    
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     m := MTX64_Matrix_NumCols(mat);
     res := MTX64_GAPEchelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
@@ -515,7 +515,7 @@ InstallOtherMethod(TriangulizedMat, [IsMTX64Matrix],
     res := MTX64_GAPEchelize(m, rec(cleanerNeeded := false, multiplierNeeded := false));
     bs := MTX64_ComplementBitString(res.colSelect);
     sem := MTX64_BSColRifZ(bs, -res.remnant);
-    MTX64_BSColPutS(bs, sem, One(FieldOfMTX64Matrix(m)));
+    MTX64_BSColPutS(bs, sem, One(MTX64_FieldOfMatrix(m)));
     tm := ZeroMutable(m);
     MTX64_DCpy(sem, tm, 0, res.rank);
     return tm;
@@ -535,10 +535,10 @@ InstallOtherMethod(BaseMatDestructive, [IsMTX64Matrix],
 InstallOtherMethod(SumIntersectionMat, [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
     local  f, n1, m, n2, mat, res, sumend, i, sum, int;
-    f := FieldOfMTX64Matrix(m1);
+    f := MTX64_FieldOfMatrix(m1);
     n1 := MTX64_Matrix_NumRows(m1);
     m := MTX64_Matrix_NumCols(m1);
-    if f <> FieldOfMTX64Matrix(m2) or m <> MTX64_Matrix_NumCols(m2) then
+    if f <> MTX64_FieldOfMatrix(m2) or m <> MTX64_Matrix_NumCols(m2) then
         Error("Matrices incompatible");
     fi;
     n2 := MTX64_Matrix_NumRows(m2);

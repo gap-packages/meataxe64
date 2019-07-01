@@ -18,7 +18,7 @@ BindGlobal("MakeMeataxe64Matrix",
     if not IsMTX64Matrix(m) then
         Error("MakeMeataxe64Matrix: argument must be a matrix");
     fi;
-    f := FieldOfMTX64Matrix(m);
+    f := MTX64_FieldOfMatrix(m);
     q := MTX64_FieldOrder(f);
     bd := GF(q);
     r := rec();
@@ -116,7 +116,7 @@ InstallMethod(ShallowCopy, [IsMeataxe64MatrixRowReference],
     local  u, m, c;
     u := UnderlyingMatrixObj(r);
     m := UnderlyingMeataxe64Matrix(u);
-    c := MTX64_NewMatrix(FieldOfMTX64Matrix(m), 1, MTX64_Matrix_NumCols(m));
+    c := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), 1, MTX64_Matrix_NumCols(m));
     MTX64_DCpy(m, c, RowNumber(r), 1);
     return MakeMeataxe64Vector(c);
 end);

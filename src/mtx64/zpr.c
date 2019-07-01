@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "field.h"
+#include "bitstring.h"
 #include "io.h"
  
 int main(int argc,  char **argv)
@@ -14,11 +15,14 @@ int main(int argc,  char **argv)
     FIELD * f;
     Dfmt * v1;
     DSPACE ds;
-    int opt,chct,ch;
+    int opt,chct,ch,b1;
     uint64_t fdef,nor,noc;
     uint64_t degree,nopolys;
+    uint64_t *bs;
+    uint64_t siz;
     FELT fel;
     uint64_t i,j,k,fk;
+    uint64_t sp,de;        // sparse and dense blocks
     uint64_t header[5];
     LogCmd(argc,argv);
 
@@ -33,6 +37,23 @@ int main(int argc,  char **argv)
     fdef=header[1];
     nor=header[2];
     noc=header[3];
+    if(header[0]==2)    // bitstring
+    {
+        siz=8*((header[2]+63)/64 + 2);
+        bs=malloc(siz);
+        ERData(e,siz,(uint8_t *) bs);
+        ERClose(e);
+        printf(" %d %d\n",(int)bs[0],(int)bs[1]);
+        for(i=0;i<header[2];i++)
+        {
+            b1=BSBitRead(bs,i);
+            printf("%d",b1);
+            if( (i%80)==79 ) printf("\n");
+        }
+        if( (i%80)!=79 ) printf("\n");      
+        free(bs);
+        return 0;
+    }
     if(header[0]==3)    // permutations and maps
     {
         if(opt==0)
@@ -86,6 +107,31 @@ int main(int argc,  char **argv)
         free(f);
         free(v1);
         return 0;
+    }
+    if(header[0]==5)  // Sparsified matrix - drops through
+    {
+        ERData(e,8,(uint8_t *)&sp);
+        ERData(e,8,(uint8_t *)&de);
+        printf("%ld sparse blocks\n",sp);
+        for(i=0;i<sp;i++)
+        {
+            ERData(e,8,(uint8_t *)&j);
+            printf(" start %lu ",j);
+            ERData(e,8,(uint8_t *)&j);
+            printf(" length %lu ",j);
+            ERData(e,8,(uint8_t *)&j);
+            printf(" destination %lu\n",j);
+        }
+        nor=0;
+        printf("%ld dense blocks\n",de);
+        for(i=0;i<de;i++)
+        {
+            ERData(e,8,(uint8_t *)&j);
+            printf(" start %lu ",j);
+            ERData(e,8,(uint8_t *)&j);
+            printf(" length %lu\n",j);
+            nor+=j;
+        }        
     }
     if(opt==0)
     {

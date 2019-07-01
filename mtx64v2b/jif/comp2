@@ -1,4 +1,18 @@
 cd $SRC
+cp ../src2/zec2.c .
+gcc $1 -O3 -Wall -pthread zec2.c -L$BIN -lmtx -o $BIN/zec2
+cp ../src2/als1.c .
+gcc $1 -O3 -Wall -pthread als1.c -L$BIN -lmtx -o $BIN/als1
+cp ../src2/zem1.c .
+gcc $1 -O3 -Wall -pthread zem1.c -L$BIN -lmtx -o $BIN/zem1
+cp ../src2/albf.c .
+gcc $1 -O3 -Wall -pthread albf.c -L$BIN -lmtx -o $BIN/albf
+cp ../src2/albi.c .
+gcc $1 -O3 -Wall -pthread albi.c -L$BIN -lmtx -o $BIN/albi
+cp ../src2/alba.c .
+gcc $1 -O3 -Wall -pthread alba.c -L$BIN -lmtx -o $BIN/alba
+cp ../src2/albe.c .
+gcc $1 -O3 -Wall -pthread albe.c -L$BIN -lmtx -o $BIN/albe
 cp ../src2/bluf.c .
 gcc $1 -O3 -Wall -pthread bluf.c -L$BIN -lmtx -o $BIN/bluf
 cp ../src2/zfl1.c .
@@ -37,10 +51,14 @@ cp ../src2/ziv1.c .
 gcc $1 -O3 -Wall -pthread ziv1.c -L$BIN -lmtx -o $BIN/ziv1
 cp ../src2/zmu1.c .
 gcc $1 -O3 -Wall -pthread zmu1.c -L$BIN -lmtx -o $BIN/zmu1
+cp ../src2/zmu2.c .
+gcc $1 -O3 -Wall -pthread zmu2.c -L$BIN -lmtx -o $BIN/zmu2
 cp ../src2/znu1.c .
 gcc $1 -O3 -Wall -pthread znu1.c -L$BIN -lmtx -o $BIN/znu1
 cp ../src2/zpe1.c .
 gcc $1 -O3 -Wall -pthread zpe1.c -L$BIN -lmtx -o $BIN/zpe1
+cp ../src2/zpk1.c .
+gcc $1 -O3 -Wall -pthread zpk1.c -L$BIN -lmtx -o $BIN/zpk1
 cp ../src2/zpt1.c .
 gcc $1 -O3 -Wall -pthread zpt1.c -L$BIN -lmtx -o $BIN/zpt1
 cp ../src2/zrn1.c .

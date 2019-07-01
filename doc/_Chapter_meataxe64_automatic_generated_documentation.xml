@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This is an automatically generated file. -->
+<Chapter Label="Chapter_meataxe64_automatic_generated_documentation">
+<Heading>meataxe64 automatic generated documentation</Heading>
+
+<Section Label="Chapter_meataxe64_automatic_generated_documentation_Section_meataxe64_automatic_generated_documentation_of_global_functions">
+<Heading>meataxe64 automatic generated documentation of global functions</Heading>
+
+<ManSection>
+  <Func Arg="m" Name="MTX64_Echelize" />
+ <Returns>a record with components
+</Returns>
+ <Description>
+<P/>
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Func Arg="arg" Name="MTX64_GAPEchelize" />
+ <Description>
+<P/>
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Func Arg="felt" Name="MTX64_FieldOfElement" />
+ <Returns>the MeatAxe64 finite field in which <A>felt</A> is defined
+</Returns>
+ <Description>
+<P/>
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Func Arg="m" Name="MTX64_FieldOfMatrix" />
+ <Returns>the MeatAxe64 finite field over which <A>m</A> is defined
+</Returns>
+ <Description>
+<P/>
+ </Description>
+</ManSection>
+
+
+</Section>
+
+
+<Section Label="Chapter_meataxe64_automatic_generated_documentation_Section_meataxe64_automatic_generated_documentation_of_categories">
+<Heading>meataxe64 automatic generated documentation of categories</Heading>
+
+<ManSection>
+  <Filt Arg="arg" Name="IsMTX64FiniteField" Label="for IsObject"/>
+ <Returns><C>true</C> or <C>false</C>
+</Returns>
+ <Description>
+The category of MeatAxe64 finite fields. There is one such field for
+every prime power up to <M>2^{64}</M> inclusive. There should be only one &GAP;
+object, up to identity, which represents a field of any given order.
+They are unrelated to other finite field objects in
+&GAP; and are not fields in the &GAP; sense
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Filt Arg="arg" Name="IsMTX64BitString" Label="for IsObject"/>
+ <Returns><C>true</C> or <C>false</C>
+</Returns>
+ <Description>
+The category of MeatAxe64 bitstrings. Used heavily in Gaussian elimination
+to indicate locations of pivot rows and columns.
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Filt Arg="arg" Name="IsMTX64FiniteFieldElement" Label="for IsScalar and IsCommutativeElement"/>
+ <Returns><C>true</C> or <C>false</C>
+</Returns>
+ <Description>
+The category of MeatAxe64 finite field elements. They are not equal to
+other finite field elements in &GAP; and there is no automatic inclusion
+of subfields.
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Filt Arg="arg" Name="IsMTX64Matrix" Label="for IsScalar"/>
+ <Returns><C>true</C> or <C>false</C>
+</Returns>
+ <Description>
+The category of MeatAxe64 matrices. They are not matrices in the &GAP;
+sense (not even matrix objects) and are not lists of lists. There are no vectors,
+if needed they are represented by matrices of one row. MeatAxe64 matrices
+know their dimensions and field.
+ </Description>
+</ManSection>
+
+
+</Section>
+
+
+<Section Label="Chapter_meataxe64_automatic_generated_documentation_Section_meataxe64_automatic_generated_documentation_of_methods">
+<Heading>meataxe64 automatic generated documentation of methods</Heading>
+
+<ManSection>
+  <Oper Arg="q" Name="MTX64_FiniteField" Label="for IsPosInt"/>
+ <Returns>a MeatAxe64 finite field
+</Returns>
+ <Description>
+retrieves the MeatAxe64 finite field of order <A>q</A> which must be
+be a prime power less than or equal to <M>2^{64}</M>, creating it if needed.
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Oper Arg="p, d" Name="MTX64_FiniteField" Label="for IsPosInt, IsPosInt"/>
+ <Returns>a MeatAxe64 finite field
+</Returns>
+ <Description>
+retrieves the MeatAxe64 finite field of order <M>p^d</M>
+which must be a prime power less than or equal to <M>2^{64}</M>, creating it if needed.
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Oper Arg="f, x" Name="MTX64_FiniteFieldElement" Label="for IsMTX64FiniteField, IsInt"/>
+ <Returns>a MeatAxe64 finite field element
+</Returns>
+ <Description>
+creates the MeatAxe64 finite field element numbered <A>x</A> in the
+field <A>f</A>. The numbering of elements is defined in the MeatAxe64
+C library.
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Oper Arg="fld, ffe" Name="MTX64_FiniteFieldElement" Label="for IsMTX64FiniteField, IsFFE"/>
+ <Returns>a MeatAxe64 finite field element
+</Returns>
+ <Description>
+creates the MeatAxe64 finite field element corresponding to the &GAP;
+finite field elemnent <A>ffe</A> in the field <A>fld</A>.
+ </Description>
+</ManSection>
+
+
+<ManSection Label="MTX64_Matrix">
+  <Oper Arg="m" Name="MTX64_Matrix" Label="for IsMatrix and IsFFECollColl"/>
+  <Oper Arg="m, fld" Name="MTX64_Matrix" Label="for IsMatrix and IsFFECollColl,IsField and IsFFECollection and IsFinite"/>
+  <Oper Arg="m, q" Name="MTX64_Matrix" Label="for IsMatrix and IsFFECollColl, IsPosInt"/>
+  <Oper Arg="m, q, nor, noc" Name="MTX64_Matrix" Label="for IsMatrix and IsFFECollColl,IsPosInt, IsInt, IsInt"/>
+ <Description>
+constructs a Meataxe64 matrix from a &GAP;
+matrix, plus optional specification of the field and dimensions
+of the matrix. Specification of the dimensions is useful
+in the case where the number of rows is zero.
+<P/>
+ </Description>
+</ManSection>
+
+
+<ManSection>
+  <Oper Arg="m" Name="MTX64_ExtractMatrix" Label="for IsMTX64Matrix"/>
+ <Returns>a &GAP; matrix (compressed where appropriate) equal to the MeatAxe64 matrix <A>m</A>
+</Returns>
+ <Description>
+<P/>
+ </Description>
+</ManSection>
+
+
+</Section>
+
+
+</Chapter>
+

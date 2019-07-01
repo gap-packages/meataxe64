@@ -79,5 +79,8 @@ OSXifyAsmFile := function(infile, outfile)
 end;
         
 OSXifyAsmFile("src/mtx64/tfarm0.s","src/mtx64/osx-tfarm0.s"); 
-OSXifyAsmFile("src/mtx64/pcrits.s","src/mtx64/osx-pcrits.s"); 
+OSXifyAsmFile("src/mtx64/pc1.s","src/mtx64/osx-pc1.s"); 
+OSXifyAsmFile("src/mtx64/pc2.s","src/mtx64/osx-pc2.s"); 
+OSXifyAsmFile("src/mtx64/pc3.s","src/mtx64/osx-pc3.s"); 
+OSXifyAsmFile("src/mtx64/pc5.s","src/mtx64/osx-pc5.s"); 
 QUIT_GAP();

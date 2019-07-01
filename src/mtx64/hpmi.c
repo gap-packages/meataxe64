@@ -10,9 +10,6 @@
 #include "pcrit.h"
 #include "tabmake.h"
 
-// Uncomment for Gray mod 2, commented out grease level 4
-// #define NEW2 1
-
 void hpmiset(FIELD * f)
 {
     uint64_t bias;
@@ -23,27 +20,6 @@ void hpmiset(FIELD * f)
     if(f->mact[1]=='2') f->recbox=5000;
     if(f->charc==2)
     {
-#ifdef NEW2
-// this bit good
-        f->SeedMagic=7;
-        f->AfmtMagic=4;
-        f->abase=700;    // get this right eventually
-        f->GreaseMagic=4;
-        f->BwaMagic=5;
-        f->bwasize=32768;
-// I think this is probably correct
-        f->cauldron=1024;
-        f->bfmtcauld=128;
-        f->cfmtcauld=128;
-        f->dfmtcauld=128;
-        f->CfmtMagic=1;
-        f->alcove=32;
-        f->czer=0;
-        f->bzer=0;
-        f->bbrickbytes=4097;
-        f->alcovebytes=6;
-        f->BfmtMagic=1;
-#else
         f->AfmtMagic=1;
         f->alcovebytes=5;
         f->BfmtMagic=1;
@@ -60,8 +36,6 @@ void hpmiset(FIELD * f)
         f->bzer=0;
         f->bbrickbytes=4097;
         f->bwasize=16384;
-#endif
-
     }
     if(f->charc==3)
     {
@@ -85,24 +59,24 @@ void hpmiset(FIELD * f)
     }
     if( (f->charc>=5)&&(f->charc<=193) )
     {
-        f->AfmtMagic=2;
+        f->AfmtMagic=2;   // Always Table lookup on byte
 
 // CfmtMagic (2,16-bit) (4,10 bit) (5,8 bit 128) (6 8 bit 126)
         f->CfmtMagic=2;
-        if( (f->charc>=17) && (f->charc<=61) ) f->CfmtMagic=4;
+        if( (f->charc>=17) && (f->charc<=61) ) f->CfmtMagic=4; // 10 bits?
         if( (f->charc>=7) && (f->charc<=13) ) f->CfmtMagic=5;
         if(f->charc==5) f->CfmtMagic=6;
         if( (f->mact[0]<'d') && (f->CfmtMagic==4) ) f->CfmtMagic=2;  // no SSE4.1
 
-        f->BfmtMagic=1;
+        f->BfmtMagic=1;   // always just Dfmt
 
-        f->BwaMagic=1;
-        if(f->CfmtMagic==4) f->BwaMagic=4;
-        f->GreaseMagic=1;
-        f->SeedMagic=1;
-        if(f->CfmtMagic==4) f->SeedMagic=4;
-        if(f->CfmtMagic==5) f->SeedMagic=5;
-        if(f->CfmtMagic==6) f->SeedMagic=6;
+        f->BwaMagic=1;   // 16 bit multiply
+        if((f->CfmtMagic==4) || (f->mact[0] > 'l') ) f->BwaMagic=4; //32 bit mult.
+        f->GreaseMagic=1;  // follow addition chain
+        f->SeedMagic=1;     // one row 16 bit
+        if(f->CfmtMagic==4) f->SeedMagic=4;  // one row 10 bits
+        if(f->CfmtMagic==5) f->SeedMagic=5;  // two rows 8 bits
+        if(f->CfmtMagic==6) f->SeedMagic=6;  // three rows mod 5
         f->cauldron=64;
         if(f->CfmtMagic==4) f->cauldron=96;
         if(f->CfmtMagic==5) f->cauldron=128;
@@ -131,15 +105,10 @@ void hpmiset(FIELD * f)
         f->bwasize=16384;
         hpmitabas(f);
     }
-    if(f->charc==2) f->basestrass=10000;
-    if(f->charc==3) f->basestrass=10000;
-    if(f->pow>1) f->basestrass+=(f->basestrass/2);
     return;
 }
 
 
-extern void hpmi2a(DSPACE * ds, const Dfmt * d, Afmt * a,
-            uint64_t nora, uint64_t stride);
 void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
             uint64_t nora, uint64_t stride)
 {
@@ -158,12 +127,6 @@ void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
     const FIELD * f;
     uint8_t * f8;
     f=ds->f;
-    if(f->AfmtMagic==4)   // new characteristic 2
-    {
-
-        hpmi2a(ds,d,a,nora,stride);    // ix not used
-        return;
-    }
     f8=(uint8_t *)f;
     nz1=(ds->noc+f->alcove-1)/f->alcove;
     alen=f->abase+nora*f->alcovebytes;
@@ -428,7 +391,7 @@ int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
             pt3+=f->cauldron*f->parms[5];
         }
     }
-    if(f->SeedMagic==2)    // OLD characteristic 2
+    if(f->SeedMagic==2)    // Characteristic 2
     {
         for(i=0;i<8;i++)
         {
@@ -534,222 +497,125 @@ int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
             }
         }
     }
-    if(f->SeedMagic==7)    // New characteristic 2
-    {
-        memcpy(bwa+f->bfmtcauld,pt1,32*f->bfmtcauld);
-    }
     return *b;
 }
 
-uint8_t pg2[] = { 1, 2, 3, 1, 4, 5,
-                  2, 4, 6, 1, 6, 7,
-                  1, 8, 9, 2, 8,10,
-                  1,10,11, 4, 8,12,
-                  1,12,13, 2,12,14,
-                  1,14,15, 0 ,0,     0,0,0,0,0,0,0,0};
+uint8_t pg2[] = { 163 , 2 , 84, 165 , 1 , 3 , 1 ,
+                  88 , 169, 1 , 3 , 1 , 7 , 1 , 3 , 1 , 255 };
 
-uint8_t grease2[] = { 22,23,99,   22,24,100,  23,24,101,  24,99,102,
-                      22,25,111,  24,25,112,  25,100,113, 26,99,128,
-                      28,102,122, 27,22,123,  23,26,124,  23,25,125,
-                      25,99,126,  26,22,127,  29,23,154,  27,23,155,
-                      29,99,156,  26,100,157, 27,101,158, 28,23,159,
-                      25,101,186, 27,99,187,  30,22,188,  26,101,189,
-                      27,102,190, 29,22,191,  25,102,218, 26,24,219,
-                      26,102,221, 28,22,222,  27,24,223,  27,100,250,
-                      28,99,251,  28,24,253,  28,100,254, 28,101,255,
+//               0001 3/0011 4/0012 10/0112 11/0120 12/0121 13/0122
+uint8_t pg3[] = { 163,  2   ,  1   ,170,5  ,   3   ,   1   ,   1 ,
 
-                      7,9,33,     10,4,34,    7,1,35,     6,3,62,
-                      62,5,36,    36,4,37,    36,34,38,   5,3,63,
-                      63,10,64,   64,7,39,    39,6,40,    10,8,65,
-                      65,39,41,   8,2,107,    107,41,42,  107,64,43,
-                      33,1,105,   105,43,55,  55,2,56,    105,63,57,
-                      55,42,58,   55,8,59,    55,41,60,   55,40,61,
-                      62,61,62,   62,63,63,   36,35,110,  110,107,64,
-                      64,105,65,  64,7,77,    65,7,78,    3,2,109,
-                      107,3,108,  108,40,79,  79,5,80,    80,3,81,
-                      80,63,82,   80,62,83,   38,39,106,  106,105,84,
-                      84,36,85,   84,10,86,   85,10,87,
-                      10,6,104,   109,4,103,  103,1,103,  103,104,104,
-                      57,55,109,  109,104,105,109,103,106,57,36,110,
-                      110,104,107,110,105,108,110,106,109,110,103,110,
-                      11,12,12,
+// 6/0101 7/0102 8/0110 9/0111 27/1111 28/1112 29/1120 30/1121 31/1122
+   166,4 , 1    ,   3  ,   1  ,187,14  ,    1  ,   3   ,   1   ,   1  ,
 
+// 32/1200 33/1201 34/1202 35/1210 36/1211 37/1212 38/1220 39/1221
+      9   ,   1   ,   1   ,   3   ,   1   ,   1   ,   3   ,   1  ,
 
-                      11,17,17,
-                      11,19,19,
-                      11,20,20,
-                      11,21,21,
-                      18,20,44,   21,15,45,   18,12,46,   17,14,73,
+// 40/1222 15/1001 16/1002 17/1010 18/1011 19/1012 20/1020 21/1021
+      1   ,175,10 ,   1   ,   3   ,   1   ,   1   ,   3   ,   1  ,   
 
-                      11,14,14,
-
-                      73,16,47,   47,15,48,   47,45,49,   16,14,74,
-                      11,16,16,
-                      11,49,49,   11,18,18, 
-                      74,21,75,   75,18,50,   50,17,51,   21,19,76,
-                      11,51,51,
-                      76,50,52,   19,13,118,  118,52,53,  118,75,54,
-                      11,53,53,
-                      44,12,116,  116,54,66,  66,13,67,   116,74,68,
-                      11,13,13,   11,66,66,
-                      66,53,69,   66,19,70,   66,52,71,   66,51,72,
-                      11,66,66,
-                      73,72,73,   73,74,74,   47,46,121,  121,118,75,
-                      75,116,76,  75,18,88,   76,18,89,   14,13,120,
-                      11,88,88,   11,89,89,
-                      118,14,119, 119,51,90,  90,16,91,   91,14,92,
-                      11,73,73,
-                      91,74,93,   91,73,94,   49,50,117,  117,116,95,
-                      95,47,96,   95,21,97,   96,21,98,
-                      11,91,91,   11,95,95,   11,98,98,
-                      21,17,115,  120,15,114, 114,12,114, 114,115,115,
-                      11,15,15, 
-                      68,66,120,  120,115,116,120,114,117,68,47,121,
-                      121,115,118,121,116,119,121,117,120,121,114,121,
-  
-                      0,0};
+// 22/1022 23/1100 24/1101 25/1102 26/1110
+      1   ,   9   ,   1   ,   1   ,   3   , 255 };
 
 void BGrease(const FIELD * f, uint8_t * bwa, int sparsity)
 {
-    int i,r;
     if(sparsity==0) return;
-    r=f->cfmtcauld;
     if((f->GreaseMagic)==1)
     {
-        pcdasc(f->prog,bwa,f->parms);
+        pc5aca(f->prog,bwa,f->parms);
         return;
     }
     if((f->GreaseMagic)==2)
     {
-// using "Gray code" addition chain technology, mainly to test it.
-        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+        if(f->mact[0]>='m')
         {
-            for(i=0;i<8;i++)
-            {
-                pch2j(pg2,bwa,NULL);
-                bwa+=16*r;
-            }
+            pc2acm(pg2,bwa,2048);
             return;
         }
-        for(i=0;i<8;i++)
-        {
-                pch2a(pg2,bwa,NULL);
-                bwa+=16*r;
-        }
+        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+            pc2acj(pg2,bwa,2048);
+        else
+            pc2aca(pg2,bwa,2048);
         return;
     }
     if((f->GreaseMagic)==3)
     {
-        for(i=0;i<3;i++)
+        if(f->mact[0]>='m')
         {
-            pcad3(bwa+ 1*r,bwa+ 2*r,bwa+ 3*r);
-            pcad3(bwa+ 1*r,bwa+ 3*r,bwa+ 4*r);
-            pcad3(bwa+ 1*r,bwa+ 5*r,bwa+ 6*r);
-            pcad3(bwa+ 1*r,bwa+ 6*r,bwa+ 7*r);
-            pcad3(bwa+ 2*r,bwa+ 5*r,bwa+ 8*r);
-            pcad3(bwa+ 1*r,bwa+ 8*r,bwa+ 9*r);
-            pcad3(bwa+ 1*r,bwa+ 9*r,bwa+10*r);
-            pcad3(bwa+ 2*r,bwa+ 8*r,bwa+11*r);
-            pcad3(bwa+ 1*r,bwa+11*r,bwa+12*r);
-            pcad3(bwa+ 1*r,bwa+12*r,bwa+13*r);
-            pcad3(bwa+ 1*r,bwa+14*r,bwa+15*r);
-            pcad3(bwa+ 1*r,bwa+15*r,bwa+16*r);
-            pcad3(bwa+ 2*r,bwa+14*r,bwa+17*r);
-            pcad3(bwa+ 1*r,bwa+17*r,bwa+18*r);
-            pcad3(bwa+ 1*r,bwa+18*r,bwa+19*r);
-            pcad3(bwa+ 2*r,bwa+17*r,bwa+20*r);
-            pcad3(bwa+ 1*r,bwa+20*r,bwa+21*r);
-            pcad3(bwa+ 1*r,bwa+21*r,bwa+22*r);
-            pcad3(bwa+ 5*r,bwa+14*r,bwa+23*r);
-            pcad3(bwa+ 1*r,bwa+23*r,bwa+24*r);
-            pcad3(bwa+ 1*r,bwa+24*r,bwa+25*r);
-            pcad3(bwa+ 2*r,bwa+23*r,bwa+26*r);
-            pcad3(bwa+ 1*r,bwa+26*r,bwa+27*r);
-            pcad3(bwa+ 1*r,bwa+27*r,bwa+28*r);
-            pcad3(bwa+ 2*r,bwa+26*r,bwa+29*r);
-            pcad3(bwa+ 1*r,bwa+29*r,bwa+30*r);
-            pcad3(bwa+ 1*r,bwa+30*r,bwa+31*r);
-            pcad3(bwa+ 5*r,bwa+23*r,bwa+32*r);
-            pcad3(bwa+ 1*r,bwa+32*r,bwa+33*r);
-            pcad3(bwa+ 1*r,bwa+33*r,bwa+34*r);
-            pcad3(bwa+ 2*r,bwa+32*r,bwa+35*r);
-            pcad3(bwa+ 1*r,bwa+35*r,bwa+36*r);
-            pcad3(bwa+ 1*r,bwa+36*r,bwa+37*r);
-            pcad3(bwa+ 2*r,bwa+35*r,bwa+38*r);
-            pcad3(bwa+ 1*r,bwa+38*r,bwa+39*r);
-            pcad3(bwa+ 1*r,bwa+39*r,bwa+40*r);
-            bwa+=41*r;
-        }
-        return;
-    }
-    if((f->GreaseMagic)==4)    // new characteristic 2 grease
-    {
-        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
-        {
-            pch2j(grease2,bwa,NULL);
+            pc3acm(pg3,bwa,5248);
             return;
         }
-        pch2a(grease2,bwa,NULL);
+        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+            pc3acj(pg3,bwa,5248);
+        else
+            pc3aca(pg3,bwa,5248);
+        return;
     }
-    return;
+    printf("GreaseMagic error!\n");
+    exit(91);
 }
 
 void BwaMad(const FIELD *f, uint8_t * bwa, int sparsity, Afmt *af, Cfmt *c)
 {
     if(sparsity==0) return;
-// AS codes 5-193 (except 17-61 mact>='d' uses BwaMagic==4)
+// AS codes 5-193 16-bit multiply
     if(f->BwaMagic==1)
     {
         if( (f->mact[0]=='j')||(f->mact[0]>='l') )
         {
-            pcjas(af,bwa,c,f->parms);    // AVX2 16-bit
+            pc5bmwj(af,bwa,c,f->parms);    // AVX2 16-bit
             return;
         }
-        pcaas(af,bwa,c,f->parms);        // SSE2 16-bit
+        pc5bmwa(af,bwa,c,f->parms);        // SSE2 16-bit
         return;
     }
 // Mod 2 xor
     if(f->BwaMagic==2)
     {
-        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+        if(f->mact[0]>='m')
         {
-            pcjb2(af,bwa,c);    // AVX2
+            pc2bmm(af,bwa,c);    // AVX512
             return;
         }
-        pcab2(af,bwa,c);        // SSE2
+        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+        {
+            pc2bmj(af,bwa,c);    // AVX2
+            return;
+        }
+        pc2bma(af,bwa,c);        // SSE2
         return;
     }
 // Mod 3 Logic 6
     if(f->BwaMagic==3)
     {
-        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+        if(f->mact[0]>='m')
         {
-            pcjb3(af,bwa,c);    // AVX2
+            pc3bmm(af,bwa,c);        // AVX512
             return;
         }
-        pcab3(af,bwa,c);        // SSE2
+        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+        {
+            pc3bmj(af,bwa,c);    // AVX2
+            return;
+        }
+        pc3bma(af,bwa,c);        // SSE2
         return;
     }
-// AS codes 17-61 in 10 bit (needs SSE4.1)
+// AS codes 32-bit multiply
     if(f->BwaMagic==4)
     {
-        if( (f->mact[0]=='j')||(f->mact[0]>='l') )
+        if(f->mact[0]>='m')
         {
-            pcjat(af,bwa,c,f->parms);    // AVX2 32-bit
+            pc5bmdm(af,bwa,c,f->parms);    // AVX2512 32-bit
             return;
         }
-        pcdas(af,bwa,c,f->parms);        // SSE2 32-bit
-        return;
-    }
-// New characteristic 2 
-    if(f->BwaMagic==5)
-    {
         if( (f->mact[0]=='j')||(f->mact[0]>='l') )
         {
-            pch2j(af,bwa,c);    // AVX2
+            pc5bmdj(af,bwa,c,f->parms);    // AVX2 32-bit
             return;
         }
-        pch2a(af,bwa,c);        // SSE2
+        pc5bmdd(af,bwa,c,f->parms);        // SSE2 32-bit
         return;
     }
 }
@@ -784,7 +650,7 @@ void CZer(DSPACE * ds, Cfmt * c, uint64_t nor)
     for(i=0;i<nowords;i++) c64[i]=f->czer;
 }
 
-void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor)
+void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor, uint64_t stride)
 {
     long zlen,cpylen,z2,z0,bits,ix,i;
     uint8_t * sp;
@@ -816,7 +682,7 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor)
         cpylen=f->dfmtcauld-zlen;
         for(z0=0;z0<nor;z0++)
         {
-            dp=d+z0*ds->nob+z2*f->dfmtcauld;
+            dp=d+z0*stride+z2*f->dfmtcauld;
             sp=c+z0*f->cfmtcauld+z2*nor*f->cfmtcauld;
 
             if((f->CfmtMagic)==1)

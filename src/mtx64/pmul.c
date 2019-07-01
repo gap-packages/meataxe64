@@ -164,7 +164,7 @@ for(q1=0;q1<256;q1++)
         free(aa);
         free(bb);
         free(ix);
-        CtoD(dsbc,cc,c,nora);
+        CtoD(dsbc,cc,c,nora,dsbc->nob);
         AlignFree(cc);
         return;
     }

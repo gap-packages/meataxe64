@@ -4,7 +4,7 @@
 MTX64_CheckEchelize := function(a,r,o)
     local  q, ga, n, m, rk, gm, gk, gcs, grs, colOrder, rowOrder, ga2, 
            z, one, i, j, x, gr, gm2;
-    q := MTX64_FieldOrder(FieldOfMTX64Matrix(a));    
+    q := MTX64_FieldOrder(MTX64_FieldOfMatrix(a));    
     ga := MTX64_ExtractMatrix(a);
     n := MTX64_Matrix_NumRows(a);
     m := MTX64_Matrix_NumCols(a);

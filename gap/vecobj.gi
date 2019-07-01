@@ -19,7 +19,7 @@ BindGlobal("MakeMeataxe64Vector",
     if not IsMTX64Matrix(m) or MTX64_Matrix_NumRows(m) <> 1 then
         Error("MakeMeataxe64Vector: argument must be a matrix with one row");
     fi;
-    f := FieldOfMTX64Matrix(m);
+    f := MTX64_FieldOfMatrix(m);
     q := MTX64_FieldOrder(f);
     bd := GF(q);
     r := rec();
@@ -41,14 +41,14 @@ InstallMethod(\[\]\:\=, IsCollsXElms, [IsMeataxe64VectorObj, IsPosInt, IsFFE],
         function(v,i,x)
     local  m, f, z;
     m := UnderlyingMeataxe64Matrix(v);
-    f := FieldOfMTX64Matrix(m);
+    f := MTX64_FieldOfMatrix(m);
     z := MTX64_FiniteFieldElement(f, x);
     MTX64_SetEntry(m,0,i-1,z);
     return;
 end);
 
 InstallMethod(\{\}, [IsMeataxe64VectorObj, IsEmpty and IsList], 
-        {v,r} -> MakeMeataxe64Vector(MTX64_NewMatrix(FieldOfMTX64Matrix(UnderlyingMeataxe64Matrix(v)),1,0)));
+        {v,r} -> MakeMeataxe64Vector(MTX64_NewMatrix(MTX64_FieldOfMatrix(UnderlyingMeataxe64Matrix(v)),1,0)));
 
 InstallMethod(\{\}, [IsMeataxe64VectorObj, IsRange], 
         function(v,r)
@@ -63,7 +63,7 @@ InstallMethod(\{\}, [IsMeataxe64VectorObj, IsList],
         function(v,r)
     local  u, sub, i;
     u := UnderlyingMeataxe64Matrix(v);
-    sub := MTX64_NewMatrix(FieldOfMTX64Matrix(u),1,Length(r));
+    sub := MTX64_NewMatrix(MTX64_FieldOfMatrix(u),1,Length(r));
     for i in [1..Length(r)] do
         MTX64_SetEntry(sub, 0, i-1, MTX64_GetEntry(u, 0, r[i]-1));
     od;
@@ -87,7 +87,7 @@ InstallMethod(PositionLastNonZero, [IsMeataxe64VectorObj],
     local  u, len, z, i;
     u := UnderlyingMeataxe64Matrix(v);
     len := MTX64_Matrix_NumCols(u);
-    z := Zero(FieldOfMTX64Matrix(u));    
+    z := Zero(MTX64_FieldOfMatrix(u));    
     for i in [len-1, len-2..0] do
         if MTX64_GetEntry(u,0,i) <> z then
             return i+1;
@@ -140,7 +140,7 @@ InstallMethod(AddRowVector, IsCollsCollsElms,[IsMeataxe64VectorObj and IsMutable
         function(v1,v2, x)
     local  u1;
     u1 := UnderlyingMeataxe64Matrix(v1);    
-    MTX64_DSMad(1,u1, UnderlyingMeataxe64Matrix(v2), MTX64_FiniteFieldElement(FieldOfMTX64Matrix(u1),x));
+    MTX64_DSMad(1,u1, UnderlyingMeataxe64Matrix(v2), MTX64_FiniteFieldElement(MTX64_FieldOfMatrix(u1),x));
 end);
 
 InstallMethod(AddRowVector, IsCollsCollsElmsXX,[IsMeataxe64VectorObj and IsMutable, IsMeataxe64VectorObj, IsFFE, IsPosInt, IsPosInt],
@@ -156,14 +156,14 @@ InstallMethod(MultVector, IsCollsElms, [IsMeataxe64VectorObj and IsMutable, IsFF
         function(v,x)
     local  u;
     u := UnderlyingMeataxe64Matrix(v);    
-    MTX64_DSMad(1,MTX64_FiniteFieldElement(FieldOfMTX64Matrix(u),x), u);
+    MTX64_DSMad(1,MTX64_FiniteFieldElement(MTX64_FieldOfMatrix(u),x), u);
 end);
 
 InstallMethod(\*, IsCollsElms, [IsMeataxe64VectorObj, IsFFE],
         function(v,x)
     local  u, f;
     u := UnderlyingMeataxe64Matrix(v);
-    f := FieldOfMTX64Matrix(u);
+    f := MTX64_FieldOfMatrix(u);
     return MakeMeataxe64Vector(u*MTX64_FiniteFieldElement(f,x));
 end);
 
@@ -213,7 +213,7 @@ InstallMethod(Characteristic, [IsMeataxe64VectorObj],
 InstallMethod(ZeroVector, [IsInt, IsMeataxe64VectorObj],
   function(len, v)
     local  f;
-    f := FieldOfMTX64Matrix(UnderlyingMeataxe64Matrix(v));
+    f := MTX64_FieldOfMatrix(UnderlyingMeataxe64Matrix(v));
     return MakeMeataxe64Vector(MTX64_NewMatrix(f, 1, len));
 end);
 
@@ -221,14 +221,14 @@ end);
 InstallMethod(ZeroVector, [IsInt, IsMeataxe64MatrixObj],
   function(len, m)
     local  f;
-    f := FieldOfMTX64Matrix(UnderlyingMeataxe64Matrix(m));
+    f := MTX64_FieldOfMatrix(UnderlyingMeataxe64Matrix(m));
     return MakeMeataxe64Vector(MTX64_NewMatrix(f, 1, len));
 end);
 
 InstallMethod(Vector, [IsList, IsMeataxe64VectorObj],
         function(l,v)
     local  f,w;
-    f := FieldOfMTX64Matrix(UnderlyingMeataxe64Matrix(v));
+    f := MTX64_FieldOfMatrix(UnderlyingMeataxe64Matrix(v));
     w := MTX64_NewMatrix(f,1,Length(l));
     MTX64_InsertVector(w,l,0);
     return MakeMeataxe64Vector(w);
@@ -272,7 +272,7 @@ InstallMethod(Randomize, [IsMeataxe64VectorObj and IsMutable, IsRandomSource],
         function(v, rs)
     local  u, f, q, m, i;
     u := UnderlyingMeataxe64Matrix(v);
-    f := FieldOfMTX64Matrix(u);
+    f := MTX64_FieldOfMatrix(u);
     q := MTX64_FieldOrder(f);
     m := MTX64_Matrix_NumCols(u);
     for i in [0..m-1] do
@@ -302,7 +302,7 @@ InstallMethod(CopySubVector, [IsMeataxe64VectorObj, IsMeataxe64VectorObj and IsM
     
     if IsRange(scols) and IsRange(dcols) and
        scols[2]-scols[1] = 1 and dcols[2] - dcols[1] = 1 then
-        v := MTX64_NewMatrix(FieldOfMTX64Matrix(us),Length(scols));
+        v := MTX64_NewMatrix(MTX64_FieldOfMatrix(us),Length(scols));
         MTX64_DCut(us,0,1,scols[1]-1,v);
         MTX64_DPaste(v,0,1,dcols[1]-1,ud);
         return;

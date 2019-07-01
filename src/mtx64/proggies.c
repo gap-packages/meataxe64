@@ -52,7 +52,8 @@ MOJ M3FieldMOJ (uint64_t fdef)          // make field moj
     return mj;
 }
 
-void M3EvenChop (M3 a, uint64_t divr, uint64_t divc)   
+void M3EvenChop (M3 a, uint64_t divr, uint64_t divc, 
+                 uint64_t padr, uint64_t padc)   
 {
     uint64_t def,rem,i;
 /*  Then allocate the sizes lists  */
@@ -62,6 +63,7 @@ void M3EvenChop (M3 a, uint64_t divr, uint64_t divc)
     def=a->nor/a->r;
     def=(def/divr)*divr;
     rem=a->nor-(def*a->r);
+// so def is basic local size and rem is remainder to distribute
     for(i=0;i<a->r;i++)
     {
         a->rnor[i]=def;
@@ -71,6 +73,9 @@ void M3EvenChop (M3 a, uint64_t divr, uint64_t divc)
             rem-=divr;
         }
     }
+    if((rem%padr)!=0) a->rextra=padr-(rem%padr);
+          else        a->rextra=0;
+    rem+=a->rextra;
     a->rnor[a->r-1]+=rem;
 /*  similarly noc  */
     def=a->noc/a->c;
@@ -86,6 +91,9 @@ void M3EvenChop (M3 a, uint64_t divr, uint64_t divc)
             rem-=divc;
         }
     }
+    if((rem%padc)!=0) a->cextra=padc-(rem%padc);
+          else        a->cextra=0;
+    rem+=a->cextra;
     a->cnoc[a->c-1]+=rem;
 }
 
@@ -121,54 +129,43 @@ void * M3ReadThd(void * pp)
     Dfmt *bufin, *bufout;
     M3 a;
     uint64_t * stt;
-    uint64_t i,j,colsf,maxnor;
+    uint64_t i,j,colsf,maxnor,rowread,rowzero;
     EFIL * ef;
 
     a=(M3) pp;
     f=TFPointer(a->fmoj);
     ef=ERHdr(a->fn,hdr);
     DSSet(f,a->noc,&dsin);
-    if(a->c==1)
+// possible later optimization to avoid move if 1 column block and no padding
+/* ought to do sanity checks */
+    maxnor=0;
+    for(i=0;i<a->r;i++) if(a->rnor[i]>maxnor) maxnor=a->rnor[i];
+    bufin=malloc(maxnor*dsin.nob);
+
+    for(i=0;i<a->r;i++)
     {
-        for(i=0;i<a->r;i++)
+        if(a->fl!=NULL) TFFlowWait(a->fl);
+        if((i+1)!=(a->r)) rowread=a->rnor[i];
+             else         rowread=a->rnor[i]-a->rextra;
+        rowzero=a->rnor[i]-rowread;
+        ERData(ef,rowread*dsin.nob,bufin);
+        colsf=0;
+        for(j=0;j<a->c;j++)
         {
-            if(a->fl!=NULL) TFFlowWait(a->fl);
-            bufout=TFAllocate( a->m[i][0] , a->rnor[i]*dsin.nob );
+            DSSet(f,a->cnoc[j],&dsout);
+            bufout=TFAllocate( a->m[i][j] , 16 + (a->rnor[i]*dsout.nob) );
             stt=(uint64_t *) bufout;
             stt[0]=a->rnor[i];
-            stt[1]=a->noc;
-            ERData(ef,a->rnor[i]*dsin.nob,bufout+16);
-            TFStable(a->m[i][0]);
-            TFRelease(a->m[i][0]);
+            stt[1]=a->cnoc[j];
+            DCut(&dsin, rowread, colsf, bufin, &dsout, bufout+16);
+            if(rowzero!=0)
+                memset(bufout+16+rowread*dsout.nob,0,rowzero*dsout.nob);
+            colsf+=a->cnoc[j];
+            TFStable(a->m[i][j]);
+            TFRelease(a->m[i][j]);
         }
     }
-    else
-    {
-/* ought to do sanity checks */
-        maxnor=0;
-        for(i=0;i<a->r;i++) if(a->rnor[i]>maxnor) maxnor=a->rnor[i];
-        bufin=malloc(maxnor*dsin.nob);
-
-        for(i=0;i<a->r;i++)
-        {
-            if(a->fl!=NULL) TFFlowWait(a->fl);
-            ERData(ef,a->rnor[i]*dsin.nob,bufin);
-            colsf=0;
-            for(j=0;j<a->c;j++)
-            {
-                DSSet(f,a->cnoc[j],&dsout);
-                bufout=TFAllocate( a->m[i][j] , a->rnor[i]*dsout.nob );
-                stt=(uint64_t *) bufout;
-                stt[0]=a->rnor[i];
-                stt[1]=a->cnoc[j];
-                DCut(&dsin, a->rnor[i], colsf, bufin, &dsout, bufout+16);
-                colsf+=a->cnoc[j];
-                TFStable(a->m[i][j]);
-                TFRelease(a->m[i][j]);
-            }
-        }
-        free(bufin);
-    }
+    free(bufin);
     ERClose1(ef,a->silent);
     TFDownJobs();
     return pp;    // never used!
@@ -178,7 +175,7 @@ void * M3WriteThd(void *pp)
 {
     uint64_t hdr[5];
     FIELD * f;
-    uint64_t i,j,maxnor,colsf;
+    uint64_t i,j,maxnor,colsf,rowwrite;
     DSPACE dsin,dsout;
     M3 a;
     EFIL * ef;
@@ -198,19 +195,20 @@ void * M3WriteThd(void *pp)
     bufout=malloc(maxnor*dsout.nob);
     for(i=0;i<a->r;i++)
     {
-        memset(bufout,0,dsout.nob*maxnor);
+        if((i+1)!=(a->r)) rowwrite=a->rnor[i];
+             else         rowwrite=a->rnor[i]-a->rextra;
+        memset(bufout,0,dsout.nob*rowwrite);
         colsf=0;
         for(j=0;j<a->c;j++)
         {
-
             TFWait(a->m[i][j]);
             bufin=TFPointer(a->m[i][j]);
             DSSet(f,a->cnoc[j],&dsin);
-            DPaste(&dsin,bufin+16,a->rnor[i],colsf,&dsout,bufout);
+            DPaste(&dsin,bufin+16,rowwrite,colsf,&dsout,bufout);
             colsf+=a->cnoc[j];
             TFRelease(a->m[i][j]);
         }
-        EWData(ef,dsout.nob*a->rnor[i],bufout);
+        EWData(ef,dsout.nob*rowwrite,bufout);
         if(a->fl!=NULL) TFFlowUp(a->fl);
     }
     EWClose1(ef,a->silent);

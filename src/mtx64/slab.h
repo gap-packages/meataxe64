@@ -11,12 +11,6 @@ extern void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
 extern void SLMad(const FIELD * f, const Dfmt * a, const Dfmt * b,
                   Dfmt * temp, Dfmt * c, 
                   uint64_t nora, uint64_t noca, uint64_t nocb);
-void TSMul(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
-     const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
-           Dfmt * c);
-void TSMad(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
-     const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
-           Dfmt * c, uint64_t cstride);
 
 extern void SLTra(const FIELD *f, const Dfmt *a, Dfmt *b,
                   uint64_t nora, uint64_t noca);

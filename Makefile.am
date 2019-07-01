@@ -20,9 +20,9 @@ lib_LTLIBRARIES = meataxe64.la
 #
 
 if SYS_IS_OSX
-ASM_SOURCES = src/mtx64/osx-pcrits.s    src/mtx64/osx-tfarm0.s 
+ASM_SOURCES = src/mtx64/osx-pc1.s src/mtx64/osx-pc2.s src/mtx64/osx-pc3.s src/mtx64/osx-pc5.s   src/mtx64/osx-tfarm0.s 
 else
-ASM_SOURCES = src/mtx64/pcrits.s src/mtx64/tfarm0.s 
+ASM_SOURCES = src/mtx64/pc1.s src/mtx64/pc2.s src/mtx64/pc3.s src/mtx64/pc5.s src/mtx64/pc1.s src/mtx64/tfarm0.s 
 endif
 
 meataxe64_la_SOURCES = \
@@ -41,8 +41,6 @@ meataxe64_la_SOURCES = \
    src/mtx64/io.c \
    src/mtx64/slab.c \
    src/mtx64/dfmtf.c \
-   src/mtx64/fasp.c \
-   src/mtx64/fchp.c \
    src/mtx64/fech.c \
    src/mtx64/fmul.c \
    src/mtx64/fpef.c \
@@ -54,6 +52,7 @@ meataxe64_la_SOURCES = \
    src/mtx64/funs5.c \
    src/mtx64/mmul.c \
    src/mtx64/mpef.c \
+   src/mtx64/gauss.c \
    src/mtx64/proggies.c \
    src/mtx64/tfarm1.c \
    src/mtx64/tfarm2.c \
@@ -69,7 +68,7 @@ meataxe64_la_LDFLAGS += -Wl,$(GAPROOT)/bin/$(GAPARCH)/gap.dll
 endif
 
 
-src/mtx64/osx-tfarm0.s src/mtx64/osx-pcrits.s: src/mtx64/tfarm0.s src/mtx64/pcrits.s etc/asmfix.g
+src/mtx64/osx-%.s : src/mtx64/%.s etc/asmfix.g
 	$(GAPROOT)/bin/gap.sh -A -q etc/asmfix.g 
 
 

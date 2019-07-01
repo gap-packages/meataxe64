@@ -19,7 +19,8 @@ void fMultiply(const char * tmp,const char *m1, int s1,
     EFIL *e1,*e2,*e3;
     Dfmt *am,*bm,*cm;
     uint64_t fdef,siz,sizac,sizb,chops,nor1,noc1,nor2,noc2;
-    DSPACE ds1,ds2;;
+    DSPACE ds1,ds2;
+    uint64_t i,j;
     EPeek(m1,hdr1);
     EPeek(m2,hdr2);
     if( (hdr1[0]==1) && (hdr2[0]==1) )  //flat matrix multiply
@@ -31,6 +32,11 @@ void fMultiply(const char * tmp,const char *m1, int s1,
         noc1=hdr1[3];
         nor2=hdr2[2];
         noc2=hdr2[3];
+        if( (noc1!=nor2) || (fdef!=hdr2[1]) )
+        {
+            printf("Matrices incompatible\n");
+            exit(27);
+        }
         DSSet(f,noc1,&ds1);
         DSSet(f,noc2,&ds2);
 // first look if matrix "small" - N^3 < 10^6
@@ -84,6 +90,38 @@ void fMultiply(const char * tmp,const char *m1, int s1,
     if( (hdr1[0]==3) && (hdr2[0]==3) )
     {
         fMulMaps(m1,s1,m2,s2,m3,s3);
+        return;
+    }
+    if( (hdr1[0]==3) && (hdr2[0]==1) )    // map * matrix
+    {
+        e1=ERHdr(m1,hdr1);
+        e2=ERHdr(m2,hdr2);
+        fdef=hdr2[1];
+        f = malloc(FIELDLEN);
+        FieldSet(fdef,f);
+        nor1=hdr1[2];
+        noc1=hdr1[3];
+        nor2=hdr2[2];
+        noc2=hdr2[3];
+        DSSet(f,noc2,&ds2);
+        if(noc1!=nor2)
+        {
+            printf("map and matrix incompatible\n");
+            exit(7);
+        }
+        hdr2[2]=nor1;
+        e3=EWHdr(m3,hdr2);
+        bm=malloc(ds2.nob*nor2);
+        ERData(e2,ds2.nob*nor2,bm);
+        ERClose1(e2,s2);
+        for(i=0;i<nor1;i++)
+        {
+            ERData(e1,8,(uint8_t *)&j);
+            EWData(e3,ds2.nob,bm+j*ds2.nob);
+        }
+        ERClose1(e1,s1);
+        EWClose1(e3,s3);
+        free(bm);
         return;
     }
     printf("fMultiply cannot handle these matrix types\n");

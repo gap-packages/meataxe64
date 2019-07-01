@@ -32,8 +32,8 @@ BIND_GLOBAL("MTX64_MatrixType",MemoizeFunction(function(q)
     return NewType(fam, IsMutable and IsMTX64Matrix and IsDataObjectRep);
 end, rec(flush := false)));
 
-BIND_GLOBAL("FieldOfMTX64Matrix", m -> FamilyObj(m)!.field);
-BIND_GLOBAL("FieldOfMTX64FELT", e -> FamilyObj(e)!.field);
+InstallGlobalFunction(MTX64_FieldOfMatrix, m -> FamilyObj(m)!.field);
+InstallGlobalFunction(MTX64_FieldOfElement, e -> FamilyObj(e)!.field);
 
 #
 # Fields
@@ -160,7 +160,7 @@ InstallMethod( MTX64_FiniteFieldElement, "for a meataxe64 field and an FFE",
     elif d = 1 then
         x := IntFFE(ffe);
     elif IsCoeffsModConwayPolRep(ffe) and ffe![2] = d and Length(ffe![1]) = d then
-        # Ugly dependency on the Conway Pol interbnal rep
+        # Ugly dependency on the Conway Pol internal rep
         x := NumberFFVector(Reversed(ffe![1]),p);
     else
         cb := CanonicalBasis(AsVectorSpace(GF(p),GF(p,d)));
@@ -179,13 +179,6 @@ InstallOtherMethod( MTX64_FiniteFieldElement, "for an FFE, choose default field"
         [IsFFE],
         ffe-> MTX64_FiniteFieldElement(MTX64_FiniteField(Characteristic(ffe), DegreeFFE(ffe)), ffe));
 
-
-
-
-InstallGlobalFunction( MTX64_FieldOfElement, "",
-function(e)
-    return FamilyObj(e)!.field;
-end);
 
 InstallMethod( ViewString, "for a meataxe64 field element",
                [ IsMTX64FiniteFieldElement ],
@@ -330,7 +323,7 @@ BindGlobal( "MTX64_InsertVector",
     if IS_VECFFE(v) and fail <> MTX64_InsertVecFFE(m, v, row) then
         return;
     fi;
-    f := FieldOfMTX64Matrix(m);    
+    f := MTX64_FieldOfMatrix(m);    
     for i in [1..Length(v)] do
         m[row+1, i] := MTX64_FiniteFieldElement(f, v[i]);
     od;
@@ -428,7 +421,7 @@ end);
 BindGlobal( "MTX64_ExtractVector", 
         function(m,row)
     local  f,q;
-    f := FieldOfMTX64Matrix(m);    
+    f := MTX64_FieldOfMatrix(m);    
     q := MTX64_FieldOrder(f);
     if q = 2 then
         return MTX64_ExtractVecGF2(m, row);        
@@ -450,7 +443,7 @@ end);
 InstallMethod(MTX64_ExtractMatrix, [IsMTX64Matrix],
         function(m)
     local  f, q, gm, len, i;
-    f := FieldOfMTX64Matrix(m);
+    f := MTX64_FieldOfMatrix(m);
     q := MTX64_FieldOrder(f);    
     gm := [];
     len := MTX64_Matrix_NumRows(m);
@@ -470,7 +463,7 @@ InstallMethod( ViewString, "for a meataxe64 matrix",
                [ IsMTX64Matrix ],
 function(m)
     local f;
-    f := FieldOfMTX64Matrix(m);    
+    f := MTX64_FieldOfMatrix(m);    
     return STRINGIFY("< matrix "
                    , MTX64_Matrix_NumRows(m)
                    , "x"
@@ -578,11 +571,11 @@ end);
 
 InstallMethod(AdditiveInverseMutable, "for meataxe64 matrices",
         [IsMTX64Matrix],
-        m-> -One(FieldOfMTX64Matrix(m))*m);
+        m-> -One(MTX64_FieldOfMatrix(m))*m);
 
 InstallMethod(ZeroMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
-        m ->  MTX64_NewMatrix(FieldOfMTX64Matrix(m),
+        m ->  MTX64_NewMatrix(MTX64_FieldOfMatrix(m),
                 MTX64_Matrix_NumRows(m), MTX64_Matrix_NumCols(m)));
 
 
@@ -606,7 +599,7 @@ InstallMethod(OneMutable, "for a meataxe64 matrix",
     if n <> MTX64_Matrix_NumCols(m) then
         Error("Not square");
     fi;
-    return MTX64_IdentityMat(n,FieldOfMTX64Matrix(m));
+    return MTX64_IdentityMat(n,MTX64_FieldOfMatrix(m));
 end);
 
 InstallMethod(OneSameMutability, "for a meataxe64 matrix",
@@ -633,7 +626,7 @@ InstallMethod(IsOne, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         function(m)
     local  f, n, i, j;
-    f := FieldOfMTX64Matrix(m);
+    f := MTX64_FieldOfMatrix(m);
     n := MTX64_Matrix_NumCols(m);
     if n <> MTX64_Matrix_NumRows(m) then
         return false;
@@ -674,10 +667,10 @@ BindGlobal("MTX64_Submatrix",
     nor := MTX64_Matrix_NumRows(m);
     noc := MTX64_Matrix_NumCols(m);
     if startx = 1 and lenx = noc then
-        sm := MTX64_NewMatrix(FieldOfMTX64Matrix(m), leny, noc);
+        sm := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), leny, noc);
         MTX64_DCpy(m, sm, starty-1, leny);
     else
-        sm := MTX64_NewMatrix(FieldOfMTX64Matrix(m), leny, lenx);
+        sm := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), leny, lenx);
         MTX64_DCut(m, starty-1, leny, startx-1, sm);
     fi;
     return sm;

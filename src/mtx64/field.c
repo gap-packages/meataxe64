@@ -12,6 +12,11 @@
 #include "linf.h"
 #include "tuning.h"
 
+
+// size of uint16_t table for extracing small characteristic from
+// large fields in PExtract, where both Barrett and lookup needed.
+#define EXTIVCNT 1000
+
 //  Malloc that aligns to the page - 4096
 
 uint8_t * AlignMalloc(size_t len)
@@ -615,9 +620,21 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     if( f->charc==7) f->spaclev=4;
     if( f->charc==5) f->spaclev=5;
     if( f->charc==3) f->spaclev=6;
-    f->bong=1;
-    for(i=0;i<f->spaclev;i++) f->bong=f->bong*f->charc;
-    if(f->charc==2) f->bong=256;
+    f->digit=1;
+    for(i=0;i<f->spaclev;i++)
+        f->digit=f->digit*f->charc;
+    if(f->charc==2) f->digit=256;
+    i=f->fdef;
+    f->nodigits=0;
+    if(f->digit>1)
+    {
+        while(i>1)
+        {
+            i=i/f->digit;
+            f->nodigits++;
+        }
+    }
+
     switch(f->paktyp)
     {
         case 0:
@@ -1227,11 +1244,9 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     }
 
 // now for the linf tables
-    f->pextype=5;    // default DUnpak, %, DPak
     f->pastype=5;    
     if(f->fdef==4)
     {
-        f->pextype=1;
         f->pastype=1;
         while( (((long)ftab8)&1) != 0 ) ftab8++;  // align 16 bits
         f->Tlfx=ftab8-f8;
@@ -1258,7 +1273,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
 
     if(f->fdef==8)
     {
-        f->pextype=2;
         f->pastype=2;
         while( (((long)ftab8)&3) != 0 ) ftab8++;  // align 32 bits
         f->Tlfx=ftab8-f8;
@@ -1286,7 +1300,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
 
     if(f->fdef==9)
     {
-        f->pextype=3;
         f->pastype=3;
         while( (((long)ftab8)&3) != 0 ) ftab8++;  // align 32 bits
         f->Tlfx=ftab8-f8;
@@ -1318,7 +1331,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     }
     if(f->fdef==16)
     {
-        f->pextype=4;
         f->pastype=4;
         while( (((long)ftab8)&3) != 0 ) ftab8++;  // align 32 bits
         f->Tlfx=ftab8-f8;
@@ -1344,7 +1356,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                       4096*a4+256*a3+16*a2+a1;                
                }
     }
-    if( (f->pextype==5) && (f->charc==2) )
+    if( (f->fdef>=32) && (f->charc==2) )
     {
         while( (((long)ftab8)&7) != 0 ) ftab8++;  // align 64 bits
         f->Tlfx=ftab8-f8;
@@ -1363,10 +1375,9 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                   0x100000000000000*a8+0x1000000000000*a7+
                   0x10000000000*a6+0x100000000*a5+0x1000000*a4+0x10000*a3+0x100*a2+a1;
                }
-        f->pextype=6;
         f->spaclev=8;
     }
-    if( (f->pextype==5) && (f->charc==3) )
+    if( (f->fdef>=27) && (f->charc==3) )
     {
         while( (((long)ftab8)&7) != 0 ) ftab8++;  // align 64 bits
         f->Tlfx=ftab8-f8;
@@ -1382,9 +1393,8 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                   lfz[243*a6+81*a5+27*a4+9*a3+3*a2+a1]=
                   0x10000000000*a6+0x100000000*a5+0x1000000*a4+0x10000*a3+0x100*a2+a1;
              }
-        f->pextype=6;
     }
-    if( (f->pextype==5) && (f->charc==5) )
+    if(f->charc==5)  
     {
         while( (((long)ftab8)&7) != 0 ) ftab8++;  // align 64 bits
         f->Tlfx=ftab8-f8;
@@ -1399,9 +1409,8 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                 lfz[625*a5+125*a4+25*a3+5*a2+a1]=
                 0x100000000*a5+0x1000000*a4+0x10000*a3+0x100*a2+a1;
             }
-        f->pextype=6;
     }
-    if( (f->pextype==5) && (f->charc==7) )
+    if (f->charc==7)
     {
         while( (((long)ftab8)&7) != 0 ) ftab8++;  // align 64 bits
         f->Tlfx=ftab8-f8;
@@ -1415,9 +1424,8 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                lfz[343*a4+49*a3+7*a2+a1]=
                0x1000000*a4+0x10000*a3+0x100*a2+a1;
            }
-        f->pextype=6;
     }
-    if( (f->pextype==5) && (f->charc>=11) && (f->charc<=19) )
+    if( (f->charc>=11) && (f->charc<=19) )
     {
         while( (((long)ftab8)&7) != 0 ) ftab8++;  // align 64 bits
         f->Tlfx=ftab8-f8;
@@ -1430,9 +1438,51 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
               lfz[f->charc*f->charc*a3+f->charc*a2+a1]=
               0x10000*a3+0x100*a2+a1;
           }
-        f->pextype=6;
     }
-    if( (f->pextype==6) && (f->paktyp==3) ) f->pastype=6;
+
+//  sort out pextype - how to do PExtract
+
+    f->pextype=5;      // default - ulitmately obsolete
+    if(f->ppaktyp<=3)  // prime 8 bits or bigger
+    {
+        f->pextype=6;
+        pcbarprp(f->paktyp,f->ppaktyp,f->charc,f->pow,
+                            f->fdef-1,&(f->barpar[0]));
+    }
+    if( (f->ppaktyp>=4) && (f->ppaktyp<=7) )   // charc 3,5,7,11,13
+    {
+        if(f->fdef==9) f->pextype=3;   // GF9
+        if(f->paktyp==3) f->pextype=7;  // 27,81,243,25,125,49,121,169
+// next is uint16_t FELT but still less than digit
+        if( (f->paktyp==2)&&(f->nodigits==1) ) f->pextype=10;
+        if((f->paktyp<3)&&(f->nodigits>1))
+        {
+            pcbarprp(f->paktyp,2,f->digit, f->nodigits,
+                            f->fdef-1,&(f->barpar[0]));
+            f->atatime=EXTIVCNT/f->nodigits;
+//  each chunk but the last must be an integral number of bytes
+            while((f->atatime%f->pentbyte)!=0) 
+                    f->atatime--;
+            if(f->atatime==0)
+            {
+                printf("EXTIVCNT too low at %d- aborting\n",EXTIVCNT);
+                exit(62);
+            }
+            f->pextype=9;
+        }
+// otherwise default so far
+    }
+    if(f->ppaktyp==8)  // characteristic 2
+    {
+        if(f->pow==2) f->pextype=1;  // GF4
+        if(f->pow==3) f->pextype=2;  // GF8
+        if(f->pow==4) f->pextype=4;  // GF16
+        if(f->paktyp==3) f->pextype=7;  // 32,64,128,256
+        if(f->paktyp <3) f->pextype=8;  // field 16 bits or bigger
+    }
+
+    if(f->paktyp==3) f->pastype=6;
+    if((f->paktyp==2)&&(f->charc<=13)&&(f->fdef!=16807) ) f->pastype=7;
 
 /*  Now for the transpose tables 2-16 */
     if(f->fdef<=16)
@@ -1506,7 +1556,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         }
     }
     f->hwm=ftab8-f8;
-    f->basestrass=4000;
     return 1;
 }
 
@@ -2126,95 +2175,6 @@ FELT DUnpak(const DSPACE * ds, uint64_t col, const Dfmt * d)
     return x;
 }
 
-int MakeMexM(DSPACE * ds, uint64_t firstcol, uint64_t nocols, uint64_t * mex)
-{
-    const FIELD * f;
-    int paktyp,entbyte;
-    uint64_t fdef,powq,i,ix0,ix1;
-
-    f=ds->f;
-    ix0=0;  ix1=0;     // avoid compiler warnings
-    if(ds->ground==0)
-    {
-        paktyp=f->paktyp;
-        entbyte=f->entbyte;
-        fdef=f->fdef;
-    }
-         else     
-    {
-        paktyp=f->ppaktyp;
-        entbyte=f->pentbyte;
-        fdef=f->charc;
-    }
-    if(paktyp==3) // 8 bit Dfmt
-    {
-        mex[0]=8*nocols-6;
-        mex[1]=firstcol;
-        powq=1;
-        for(i=1;i<nocols;i++)
-        {
-            powq=powq*fdef;
-            mex[1+i]=powq;
-        }
-        return 1+nocols;
-    }
-    if(paktyp<=2) // 16,32,64 bit Dfmt
-    {
-        mex[0]=8*nocols+(paktyp-2);
-        mex[1]=firstcol;
-        powq=1;
-        for(i=1;i<nocols;i++)
-        {
-            mex[2*i]=firstcol+i;
-            powq=powq*fdef;
-            mex[1+2*i]=powq;
-        }
-        return 2*nocols;
-    }
-// ix0=firstcol/entbyte!
-    switch(paktyp)
-    {
-      case 4:
-        ix0=firstcol/2;
-        ix1=(firstcol+nocols-1)/2;
-        break;
-      case 5:
-        ix0=firstcol/3;
-        ix1=(firstcol+nocols-1)/3;
-        break;
-      case 6:
-        ix0=firstcol/4;
-        ix1=(firstcol+nocols-1)/4;
-        break;
-      case 7:
-        ix0=firstcol/5;
-        ix1=(firstcol+nocols-1)/5;
-        break;
-      case 8:
-        ix0=firstcol/8;
-        ix1=(firstcol+nocols-1)/8;
-        break;
-    }
-    mex[1]=ix0;
-    if(nocols==((ix1-ix0+1)*entbyte))  // just bytes
-    {
-        mex[0]=8*nocols-6;
-        powq=1;
-        for(i=1;i<nocols;i++)
-        {
-            powq=powq*fdef;
-            mex[1+i]=powq;
-        } 
-    }
-    if( (ix0==ix1) && ((ix1*entbyte)!=(nocols-1)) )        // middle of a byte
-    {
-        mex[0]=1;
-// what about D0 E0 ?
-// going to need M0 as well
-    }
-    return 0;   // temporary avoid compiler warnings
-}
-
 uint64_t DNzl(const DSPACE * ds, const Dfmt * d)
 {
     const FIELD * f;
@@ -2776,7 +2736,7 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         {
             for(r=0;r<nor;r++)
             {
-                pcjxor(c8,a8,b8,ds->nob);  // AVX2
+                pc1xorj(c8,a8,b8,ds->nob);  // AVX2
                 a8+=astride;
                 b8+=bstride;
                 c8+=cstride;
@@ -2785,7 +2745,7 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         for(r=0;r<nor;r++)
         {
-            pcaxor(c8,a8,b8,ds->nob);  // SSE
+            pc1xora(c8,a8,b8,ds->nob);  // SSE
             a8+=astride;
             b8+=bstride;
             c8+=cstride;
@@ -2801,7 +2761,7 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         c8=c;
         for(r=0;r<nor;r++)
         {
-            pcbif(c8,a8,b8,ds->nob,add8);  // AVX2
+            pcbif(c8,a8,b8,ds->nob,add8);
             a8+=astride;
             b8+=bstride;
             c8+=cstride;
@@ -3195,7 +3155,7 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         {
             for(r=0;r<nor;r++)
             {
-                pcjxor(c8,a8,b8,ds->nob);  // AVX2
+                pc1xorj(c8,a8,b8,ds->nob);  // AVX2
                 a8+=astride;
                 b8+=bstride;
                 c8+=cstride;
@@ -3204,7 +3164,7 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         for(r=0;r<nor;r++)
         {
-            pcaxor(c8,a8,b8,ds->nob);  // AVX2
+            pc1xora(c8,a8,b8,ds->nob);  // SSE
             a8+=astride;
             b8+=bstride;
             c8+=cstride;
@@ -3996,28 +3956,32 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
     }
 }
 
+
 void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
               uint64_t nor, uint64_t psiz)
 {
     DSPACE dsp;
-    Dfmt *ptp;
-    const Dfmt *ptq;
+    Dfmt *ptp,*ptp1;
+    const Dfmt *ptq, *ptq1;;
     const FIELD * f;
     FELT fq,fp,fr;
-    FELT fel[8];
-    int col,ent;
-    uint64_t i,j,k,dfmt;
+    uint64_t i,j,k,col,dfmt,colstodo,mply;
+    uint64_t eltsleft;
+    uint64_t *lfz;
     uint16_t * lfx;
     uint16_t wk1;
     uint32_t * lfy1,*lfy2;
     uint32_t wk2;
-    uint64_t * lfz;
+    int bymem,byused,bytesout;
+    uint16_t iv[EXTIVCNT];
+    uint16_t *ivp,*ivp1;
+    uint64_t leftiniv,dofromiv,ptodo,pthistime;
 
     f=ds->f;
     PSSet(f,ds->noc,&dsp);
     switch (f->pextype)
     {
-      case 1:
+      case 1:   // GF4
         lfx=(uint16_t *) ((uint8_t *)f + f->Tlfx);
         for(i=0;i<nor;i++)
         {
@@ -4039,7 +4003,7 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
             }
         }
         return;
-      case 2:
+      case 2:    // GF8
         lfy1=(uint32_t *) ((uint8_t *)f + f->Tlfx);
         for(i=0;i<nor;i++)
         {
@@ -4067,7 +4031,7 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
             *(ptp+2*psiz)=(wk2>>16)&255;
         }
         return;
-      case 3:
+      case 3:    // GF9
         lfy1=(uint32_t *) ((uint8_t *)f + f->Tlfx);
         lfy2=lfy1+81;
         for(i=0;i<nor;i++)
@@ -4105,7 +4069,7 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
             }
         }
         return;
-      case 4:
+      case 4:    // GF16
         lfy1=(uint32_t *) ((uint8_t *)f + f->Tlfx);
         for(i=0;i<nor;i++)
         {
@@ -4136,7 +4100,7 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
         }
         return;
 
-      case 5:
+      case 5:    // default - ulitmately to be obsolete
         for(i=0;i<nor;i++)
         {
             ptq=mq+i*ds->nob;
@@ -4157,7 +4121,10 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
             }
         }
         return;
-      case 6:
+      case 6:    // primes 17-2^64, simple Barrett
+        pcbarrett(&(f->barpar[0]), mq, mp, nor*ds->noc, psiz);
+        return;
+      case 7:    // all one-byte fields, including char 2.  lookup.
         lfz=(uint64_t *) ((uint8_t *)f + f->Tlfx);
         for(i=0;i<nor;i++)
         {
@@ -4166,61 +4133,222 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
             col=0;
             while(col<ds->noc)
             {
-                for(j=0;j<f->pentbyte;j++)
+                dfmt=0;
+                mply=1;
+                colstodo=f->pentbyte;
+                if(col+f->pentbyte>ds->noc) colstodo=ds->noc-col;
+                for(j=0;j<colstodo;j++)
                 {
-                    if((col+j)<ds->noc) fel[j]=DUnpak(ds,col+j,ptq);
-                        else            fel[j]=0;
+                    dfmt+=mply*lfz[*(ptq++)];
+                    mply=mply*f->charc;
                 }
-                ent=0;
-                while(ent<f->pow)
+                ptp1=ptp;
+                for(j=0;j<f->pow;j++)
                 {
+                    *ptp1 = dfmt&255;
+                    dfmt=dfmt>>8;
+                    ptp1+=psiz;
+                }
+                ptp++;
+                col+=f->pentbyte;
+            }
+        }
+        return;
+      case 8:    // char 2 of two or more bytes
+        lfz=(uint64_t *) ((uint8_t *)f + f->Tlfx);
+        bymem=8;
+        if(f->paktyp==1) bymem=4;
+        if(f->paktyp==2) bymem=2;
+        byused=(f->pow+7)>>3;
+        for(i=0;i<nor;i++)
+        {
+            ptq=mq+i*ds->nob;
+            ptp=mp+i*dsp.nob;
+            col=0;
+            while(col<ds->noc)
+            {
+                ptp1=ptp;
+                for(k=0;k<byused;k++)
+                {
+                    ptq1=ptq+k;
                     dfmt=0;
-                    if(f->charc==2)
+                    mply=1;
+                    colstodo=f->pentbyte;
+                    if(col+f->pentbyte>ds->noc) colstodo=ds->noc-col;
+                    for(j=0;j<colstodo;j++)
                     {
-                        for(j=1;j<=f->pentbyte;j++)
-                        {
-                            k=f->pentbyte-j;
-                            fq=fel[k]&255;
-                            fel[k]=fel[k]>>8;
-                            dfmt=(dfmt<<1)+lfz[fq];
-                        }
+                        dfmt+=mply*lfz[*(ptq1)];
+                        ptq1+=bymem;
+                        mply=mply*f->charc;
                     }
-                    else
+                    bytesout=f->pow-8*k;
+                    if(bytesout>8) bytesout=8;
+                    for(j=0;j<bytesout;j++)
                     {
-                        if( (ent+f->spaclev)<f->pow)
-                        {
-                            for(j=1;j<=f->pentbyte;j++)
-                            {
-                                k=f->pentbyte-j;
-                                fr=fel[k]/f->bong;
-                                fq=fel[k]-fr*f->bong;
-                                fel[k]=fr;
-                                dfmt=dfmt*f->charc+lfz[fq];
-                            }
-                        }
-                        else
-                        {
-                            for(j=1;j<=f->pentbyte;j++)
-                            {
-                                k=f->pentbyte-j;
-                                dfmt=dfmt*f->charc+lfz[fel[k]];
-                            }
-                        }
-                    }
-                    for(j=0;j<f->spaclev;j++)
-                    {
-                        if(ent>=f->pow) break;
-                        *(ptp+(ent++)*psiz)=dfmt&255;
+                        *ptp1 = dfmt&255;
                         dfmt=dfmt>>8;
+                        ptp1+=psiz;
                     }
                 }
                 col+=f->pentbyte;
                 ptp++;
+                ptq+=bymem*f->pentbyte;
             }
         }
         return;
+      case 9:
+        lfz=(uint64_t *) ((uint8_t *)f + f->Tlfx);
+        eltsleft=nor*ds->noc;
+        ptq=mq;     // Dfmt* so 8 bits
+        ptp=mp;
+        while(eltsleft!=0)
+        {
+            colstodo=eltsleft;
+            if(colstodo>f->atatime) colstodo=f->atatime;
+//  {{ 1 {{   aim now is to do colstodo inputs
+            pcbarrett(&(f->barpar[0]), ptq, (Dfmt *)&(iv[0]),
+                      colstodo, 2*colstodo);
+//  -- 2 --   so now we want to convert colstodo inputs from iv to ptp
+            ivp=(uint16_t *) &(iv[0]);
+
+            leftiniv=colstodo;
+            while(leftiniv>0)
+            {
+                dofromiv=leftiniv;
+                if(dofromiv>f->pentbyte) dofromiv=f->pentbyte;
+//  {{ 3 {{  aim now is to do dofromiv inputs from ivp to ptp1
+//           but now dofrominv is at most f->pentbyte
+                ptodo=f->pow;
+                ivp1=ivp;
+                ptp1=ptp;
+                while(ptodo>0)
+                {
+                    pthistime=ptodo;
+                    if(pthistime>f->spaclev) pthistime=f->spaclev;
+//  {{ 4 {{  aim now do pthistime outputs from ivp1 to ptp1
+                    dfmt=0;
+                    mply=1;
+                    for(j=0;j<dofromiv;j++)
+                    {
+                        dfmt+=mply*lfz[*ivp1];
+                        mply=mply*f->charc;
+                        ivp1++;
+                    }
+                    for(j=0;j<pthistime;j++)
+                    {
+                        *ptp1 = dfmt&255;
+                        dfmt>>=8;
+                        ptp1+=psiz;
+                    }
+//  }} 4 }}
+                    ptodo-=pthistime;
+                    ivp1+=colstodo-dofromiv;
+                }
+//  }} 3 }}  done them
+                leftiniv-=dofromiv;
+                ivp+=dofromiv;
+                ptp++;
+            }
+//  }} 1 }}   done them.
+            ptq+=colstodo*f->bytesper;
+            eltsleft-=colstodo;
+        }
+        return;
+      case 10:    // two byte fields needing no Barrett
+        lfz=(uint64_t *) ((uint8_t *)f + f->Tlfx);
+        for(i=0;i<nor;i++)
+        {
+            ivp=(uint16_t *) (mq+i*ds->nob);
+            ptp=mp+i*dsp.nob;
+            col=0;
+            while(col<ds->noc)
+            {
+                dfmt=0;
+                mply=1;
+                colstodo=f->pentbyte;
+                if(col+f->pentbyte>ds->noc) colstodo=ds->noc-col;
+                for(j=0;j<colstodo;j++)
+                {
+                    dfmt+=mply*lfz[*(ivp++)];
+                    mply=mply*f->charc;
+                }
+                ptp1=ptp;
+                for(j=0;j<f->pow;j++)
+                {
+                    *ptp1 = dfmt&255;
+                    dfmt=dfmt>>8;
+                    ptp1+=psiz;
+                }
+                ptp++;
+                col+=f->pentbyte;
+            }
+        }
+        return;
+      default:
+        printf("Unknown pextype %d\n",(int)f->pextype);
+        exit(82); 
     }
 }
+#ifdef NEVER
+            ptp1=ptp;
+            fullblocks=colstodo/f->pentbyte;
+            for(i=0;i<fullblocks;i++)
+            {
+                dfmt=0;
+                mply=1;
+                for(j=0;j<f->pentbyte;j++)
+                {
+                    dfmt+=mply*lfz[*(iv[i*f->pentbyte+j*colstodo])];
+                    mply=mply*f->charc;
+                }
+                for(j=0;j<f->spaclev;j++)
+                {
+                    *ptp1 = dfmt&255;
+                    dfmt=dfmt>>8;
+                    ptp1+=psiz;
+                }
+            }
+            lastblock=colstodo-f->pentbyte*fullblocks;
+            if(lastblock!=0)
+            {
+                dfmt=0;
+                mply=1;
+                for(j=0;j<lastblock;j++)
+                {
+                    dfmt+=mply*lfz[*(iv[i*f->pentbyte+j*colstodo])];
+                    mply=mply*f->charc;
+                }
+                for(j=0;j<f->pow;j++)
+                {
+                    *ptp1 = dfmt&255;
+                    dfmt=dfmt>>8;
+                    ptp1+=psiz;
+                }
+            }
+
+        }
+        return;
+////
+    dfmt=0;
+    mply=1;
+    intsin=colsleft;
+    if(intsin>f->pentbyte) intsin=f->pentbyte;
+    for(j=0;j<intsin;j++)
+    {
+        dfmt+=mply*lfz[*(pti++)];
+        mply=mply*f->charc;
+    }
+////
+    bytesout=f->pow;
+    if(bytesout>f->spaclev) bytesout=f->spaclev;
+    for(j=0;j<bytesout;j++)
+    {
+        *ptp1 = dfmt&255;
+        dfmt>>=8;
+        ptp1+=psiz;
+    }
+////
+#endif
 
 void PAssemble(const DSPACE * ds, const Dfmt *mp, Dfmt *mq,
               uint64_t nor, uint64_t psiz)
@@ -4233,7 +4361,7 @@ void PAssemble(const DSPACE * ds, const Dfmt *mp, Dfmt *mq,
     uint16_t wk1;
     uint32_t *lfb1, *lfb2;
     uint32_t wk2;
-    uint64_t wk2a,wk2b;
+    uint64_t wk2a,wk2b,wk2aa,pmult;
     uint64_t i,j,k,m;
     uint64_t lefttodo;
     uint64_t * lfx;
@@ -4250,7 +4378,17 @@ void PAssemble(const DSPACE * ds, const Dfmt *mp, Dfmt *mq,
         lfb2=lfb1+243;
     }
     if( f->pastype==4 ) lfb1=(uint32_t *) ((uint8_t *)f + f->Tlfa);
-    if( f->pastype==6 ) lfx=(uint64_t *) ((uint8_t *)f + f->Tlfx);
+    if(f->pastype==6) lfx=(uint64_t *) ((uint8_t *)f + f->Tlfx);
+    pmult=256;
+    if(f->pastype==7)
+    {
+        lfx=(uint64_t *) ((uint8_t *)f + f->Tlfx);
+        if(f->charc==3) pmult=243;
+        if(f->charc==5) pmult=125;
+        if(f->charc==7) pmult=49;
+        if(f->charc==11) pmult=121;
+        if(f->charc==13) pmult=169;
+    }
     for(i=0;i<nor;i++)
     {
         lefttodo=ds->noc;
@@ -4316,6 +4454,8 @@ void PAssemble(const DSPACE * ds, const Dfmt *mp, Dfmt *mq,
                 lefttodo-=8;
             }
             break;
+          case 5:
+            break;
           case 6:
             while(lefttodo>=f->pentbyte)
             {
@@ -4335,7 +4475,36 @@ void PAssemble(const DSPACE * ds, const Dfmt *mp, Dfmt *mq,
                 lefttodo-=f->pentbyte;
             }
             break;
+          case 7:
+            while(lefttodo>=f->pentbyte)
+            {
+                wk2a=0;
+                wk2aa=0;
+                wk2b=1;
+                for(j=0;j<f->pentbyte;j++)
+                {
+                    wk2a+=wk2b*lfx[*(ptp+j*psiz)];
+                    wk2b*=f->charc;
+                }
+                wk2b=1;
+                for(j=f->pentbyte;j<f->pow;j++)
+                {
+                    wk2aa+=wk2b*lfx[*(ptp+j*psiz)];
+                    wk2b*=f->charc;
+                }
+                for(j=0;j<f->pentbyte;j++)
+                {
+                    *((uint16_t *)ptq)=(wk2aa&255)*pmult+(wk2a&255);
+                    ptq+=2;
+                    wk2a=wk2a>>8;
+                    wk2aa=wk2aa>>8;
+                }
+                ptp++;
+                lefttodo-=f->pentbyte;
+            }
+            break;
           default:
+printf("pastype is %d\n",f->pastype);
             break;
         }
 //  Do the remaining columns by steam

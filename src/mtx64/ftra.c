@@ -28,6 +28,13 @@ void fTranspose(const char *tmp, const char *in, int sin,
     char ** tempfn;
     char x[500];
 
+    EPeek(in,hdr);
+    if(hdr[0]==3)   // permutation
+    {
+        fInvert(tmp,in,sin,out,sout);
+        return;
+    }
+
     e1=ERHdr(in,hdr);
     fdef=hdr[1];
     nora=hdr[2];
@@ -130,7 +137,6 @@ void fTranspose(const char *tmp, const char *in, int sin,
     free(f);
     free(am);
     free(bm);
-    printf("Transpose - chopping into %ld pieces\n",chops);
 }
 
 /* end of ftra.c  */

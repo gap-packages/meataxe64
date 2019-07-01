@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include "field.h"
 
-/* NOTE - prog only 32 entries in field.h but longest is 26 so it's OK */
+/* NOTE - prog only 40 entries in field.h but longest is 33 so it's OK */
 uint8_t achain[] = {
   5,23,4,   164,2,2,1,6,83,1,8,6,10,83,2,9,166,6,168,8,164,86,6,172,9,255,
   7,10,3,   163,1,1,82,2,2,4,83,5,255,

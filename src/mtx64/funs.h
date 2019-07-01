@@ -65,38 +65,7 @@ void fMulMatrixMap(const char *m1, int s1, const char *x2, int s2,
                        const char *m3, int s3);
 void fMulMaps(const char *m1, int s1, const char *x2, int s2,
                        const char *m3, int s3);
-
-// The remainder is to be considered, and either removed
-// or put into the first part
-
-
-
-/*
- * Chop on disc for operations such as ftr, fmu
- * fname is the input file
- * tmp is a root for forming temporary names
- * rchops and cchops show respectively how may rows and columns of files we want
- * returns a 2 dimensional array of names
- * of the temporary files produced by the chopping operation
- * To get the (i,j) filename you need (*tmpnames)[i][j]
- * It is an assumption of this routine that neither rchops nor cchops is zero
- * and that the input file has at least rchops rows and cchops columns
- * The program will exit non-zero if these conditions aren't met
- * This function will always do silent close operations
- */
-extern char ***fchp(const char *fname, const char *tmp, unsigned int rchops, unsigned int cchops);
-
-/*
- * Reassemble from disc after operations such as ftr, fmu
- * fname is the output file
- * tmpnames is the 2 dimensional array of temporary names
- * rchops and cchops show respectively how may rows and columns of files we want
- * To get the (i,j) filename you need (*tmpnames)[i][j]
- * It is an assumption of this routine that neither rchops nor cchops is zero
- * The program will exit non-zero if these conditions aren't met
- * This function will always do logging close operations
- */
-extern void fasp(const char *fname, char ***tmpnames, unsigned int rchops, unsigned int cchops);
-
+void fRandomMatrix(const char *m1, int s1, uint64_t fdef, 
+                       uint64_t nor, uint64_t noc);
 
 /* end of funs.h  */

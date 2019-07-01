@@ -68,8 +68,10 @@ UInt IS_MTX64_FELT(Obj x) {
   return (IS_DATOBJ(x) && DoFilter(IsMTX64FiniteFieldElement, x));
 }
 
+static Obj MTX64_FieldOfMatrix;
+
 Obj FieldOfMatrix(Obj m) {
-  return CALL_1ARGS(FieldOfMTX64Matrix, m);
+  return CALL_1ARGS(MTX64_FieldOfMatrix, m);
 }
 
 UInt IS_MTX64_Matrix(Obj m) {
@@ -106,9 +108,9 @@ Obj MakeMtx64Felt(Obj field, FELT x) {
   return f;
 }
 
-static Obj FieldOfMTX64FELT;
+static Obj MTX64_FieldOfElement;
 
-Obj FieldOfFELT(Obj f) { return CALL_1ARGS(FieldOfMTX64FELT, f); }
+Obj FieldOfFELT(Obj f) { return CALL_1ARGS(MTX64_FieldOfElement, f); }
 
 /* Functions that deal with the layout of a matrix in a bag */
 
@@ -786,10 +788,6 @@ static Obj FuncMTX64_ReadMatrix(Obj self, Obj fname) {
   return mx;
 }
 
-// rather tediously it seems I need to roll my own random numbers a bit.
-// too hard to seed the MT stuff in integer.c and the very nice arc4random functions
-// don't seem to work on Linux (although I may be being stupid)
-
 
 
 static inline UInt random64(UInt4 *source) {
@@ -1020,8 +1018,8 @@ static Int InitKernel(StructInitInfo *module) {
                         &IsMTX64FiniteFieldElement);
 
   // Access via family
-  ImportFuncFromLibrary("FieldOfMTX64Matrix", &FieldOfMTX64Matrix);
-  ImportFuncFromLibrary("FieldOfMTX64FELT", &FieldOfMTX64FELT);
+  ImportFuncFromLibrary("MTX64_FieldOfMatrix", &MTX64_FieldOfMatrix);
+  ImportFuncFromLibrary("MTX64_FieldOfElement", &MTX64_FieldOfElement);
 
   // Construct various lookup tables
   ImportFuncFromLibrary("MTX64_GetFFEfromFELTTable",

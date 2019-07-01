@@ -7,7 +7,7 @@ MTX64_SpinRelative := function(seeds, gens, isInvol, ech)
     local  n, f, sb, e, rs, nextseeds, done, i, r1, gen, vecs, ims, 
            newrank, newsb;
     n := MTX64_Matrix_NumCols(seeds);    
-    f := FieldOfMTX64Matrix(seeds);    
+    f := MTX64_FieldOfMatrix(seeds);    
     sb := MTX64_NewMatrix(f,n-ech.rank,n);
     e := ShallowCopy(ech);
     rs := MTX64_CleanExtend(e, seeds);
@@ -43,13 +43,13 @@ end;
 MTX64_Spin := function(seeds, gens, opts...)
     local  n, f, isInvol, e;
     n := MTX64_Matrix_NumCols(seeds);    
-    f := FieldOfMTX64Matrix(seeds);    
+    f := MTX64_FieldOfMatrix(seeds);    
     if Length(opts) > 1 then
         isInvol := opts[2];
     else
         isInvol := List(gens, x->false);
     fi;
-    if not ForAll(gens, gen -> IsMTX64Matrix(gen) and FieldOfMTX64Matrix(gen) = f and MTX64_Matrix_NumCols(gen) = n and 
+    if not ForAll(gens, gen -> IsMTX64Matrix(gen) and MTX64_FieldOfMatrix(gen) = f and MTX64_Matrix_NumCols(gen) = n and 
                MTX64_Matrix_NumRows(gen) = n) then
         Error("Generators and seed incompatible");
     fi;
@@ -84,7 +84,7 @@ end;
 
 MTX64_CPInner := function(mat)
     local  f, n, v, sp, facs, e;
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);    
     v := MTX64_NewMatrix(f,1,n);    
     v[1,1] := One(f);
@@ -107,7 +107,7 @@ MTX64_CP := function(mat, ind)
     local  facs, vecs, one, f, pols;
     facs := MTX64_CPInner(mat);
     vecs := List(facs, x->x[1]);    
-    one := One(GF(MTX64_FieldOrder(FieldOfMTX64Matrix(mat))));
+    one := One(GF(MTX64_FieldOrder(MTX64_FieldOfMatrix(mat))));
     f := FamilyObj(one);    
     pols := List(vecs, function(v)
         Add(v, one);        
@@ -118,7 +118,7 @@ end;
 
 MTX64_Sparsify := function(mat, b)
     local  f, n, seeds, o, i, sp;
-    f := FieldOfMTX64Matrix(mat);
+    f := MTX64_FieldOfMatrix(mat);
     n := MTX64_Matrix_NumRows(mat);
     seeds := MTX64_NewMatrix(f, b, n);
     o := One(f);    

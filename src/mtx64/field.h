@@ -29,6 +29,7 @@ typedef struct
     uint64_t sqpower;
     uint64_t sqpower2;
 
+    uint64_t barpar[8];   // Barrett parameters for PExtract
 
     uint64_t entbyte;
     uint64_t bytesper;
@@ -51,7 +52,9 @@ typedef struct
      int   pmultyp;
      int   pmadtyp;
      int   spaclev;
-     int   bong;
+     int   digit;
+     int   nodigits;
+     int   atatime;
 
      int   Tlog16;
      int   Talog16;
@@ -107,6 +110,7 @@ typedef struct
      uint64_t maxchop;
 
      int   linfscheme;
+     int   nomatlinf;
      int   pextype;
      int   pastype;
 
@@ -114,9 +118,6 @@ typedef struct
      int   Tlfa;
 
      int   Ttra;
-     int   basestrass;
- 
-
 
 }   FIELD;
 
@@ -148,10 +149,6 @@ extern FELT FieldDiv(const FIELD * f, FELT a, FELT b);
 
 extern void DSSet(const FIELD * f, uint64_t noc, DSPACE * ds);
 extern void PSSet(const FIELD * f, uint64_t noc, DSPACE * ds);
-extern int  MakeMexG(DSPACE * ds, uint64_t * cols, uint64_t nocol,
-                     uint64_t * mex);
-extern int  MakeMexM(DSPACE * ds, uint64_t firstcol, uint64_t nocol,
-                     uint64_t * mex);
 extern FELT DUnpak(const DSPACE * ds, uint64_t col, const Dfmt * d);
 extern void DPak(const DSPACE * ds, uint64_t col, Dfmt * d, FELT a);
 extern void DAdd(const DSPACE * ds, uint64_t nor,

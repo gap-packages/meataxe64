@@ -1,0 +1,67 @@
+zrd a1 8 28901 28901
+zmu a1 a1 a2
+zrd a1 16 25012 25012
+zmu a1 a1 a2
+zrd a1 32 19876 19876
+zmu a1 a1 a2
+zrd a1 27 16543 16543
+zmu a1 a1 a2
+zrd a1 81 13987 13987
+zmu a1 a1 a2
+zrd a1 243 12987 12987
+zmu a1 a1 a2
+zrd a1 625 8888 8888
+zmu a1 a1 a2
+zrd a1 343 9012 9012
+zmu a1 a1 a2
+zrd a1 2401 8123 8123
+zmu a1 a1 a2
+zrd a1 16807 7210 7210
+zmu a1 a1 a2
+zrd a1 14641 7890 7890
+zmu a1 a1 a2
+zrd a1 161051 7123 7123
+zmu a1 a1 a2
+zrd a1 28561 7890 7890
+zmu a1 a1 a2
+zrd a1 83521 6210 6210
+zmu a1 a1 a2
+zrd a1 6561 8901 8901
+zmu a1 a1 a2
+zrd a1 59049 8123 8123
+zmu a1 a1 a2
+zrd a1 128 17123 17123
+zmu a1 a1 a2
+zrd a1 729 11111 11111
+zmu a1 a1 a2
+zrd a1 2187 9765 9765
+zmu a1 a1 a2
+zrd a1 19683 8345 8345
+zmu a1 a1 a2
+zrd a1 3125 8012 8012
+zmu a1 a1 a2
+zrd a1 15625 7012 7012
+zmu a1 a1 a2
+zrd a1 78125 6567 6567
+zmu a1 a1 a2
+zrd a1 512 13333 13333
+zmu a1 a1 a2
+zrd a1 2048 12345 12345
+zmu a1 a1 a2
+zrd a1 8192 11678 11678
+zmu a1 a1 a2
+zrd a1 64 18210 18210
+zmu a1 a1 a2
+zrd a1 256 16543 16543
+zmu a1 a1 a2
+zrd a1 1024 12987 12987
+zmu a1 a1 a2
+zrd a1 4096 11987 11987
+zmu a1 a1 a2
+zrd a1 16384 11223 11223
+zmu a1 a1 a2
+zrd a1 32768 11111 11111
+zmu a1 a1 a2
+zrd a1 65536 10678 10678
+zmu a1 a1 a2
+check_log.sh logfile ../reg/val4log

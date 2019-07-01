@@ -15,8 +15,9 @@
 #include "pmul.h"
 #include "bitstring.h"
 #include "dfmtf.h"
+#include "gauss.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 
 int  FieldSet1(uint64_t fdef, FIELD * f, int flags)
 {
@@ -89,16 +90,12 @@ void BCMul(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
     const FIELD *f;
 
     f=dsa->f;
-// if the matrices are too small to warrant HPMI, use DMul anyway
-// values below should be about 30.  202 for testing only.
-#ifndef DEBUG
-// taken out while I debug the new mod2
-    if( (nora<30) || (dsa->noc<30) || (dsbc->noc<30) )
+// if the matrices are tiny use DMul
+    if( (nora<3) || (dsa->noc<3) || (dsbc->noc<3) )
     {
         DFMul(dsa,dsbc,nora,a,astride,b,bstride,c);
         return;
     }
-#endif
     if(f->linfscheme!=0)  // linear functions case?
     {
         LLMul(dsa,dsbc,nora,a,astride,b,bstride,c);
@@ -221,29 +218,88 @@ void TSMul(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
      const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
            Dfmt * c)
 {
-    int lev;           // Strassen magic number
+    int lev;           // Strassen recursion level
     uint64_t thresh;
     const FIELD *f;
-    uint64_t r1,r2,r3,r4,r5;
+    uint64_t r1,r2,r3,r4,r5,r6;
    
     f=dsa->f;
 // compute lev (Strassen level) and divis (2^lev)
+// r1 r2 r3 the three dimensions of the slab
+// for power of two and threshold
     r1=nora;
     r2=dsa->noc;
     r3=dsbc->noc;
-    r4=dsa->nob/f->bytesper;
-    r5=dsbc->nob/f->bytesper;
-    thresh=f->basestrass;    // Strassen threshold
+// r4 r5 the number of bytes per row for power of 2
+    r4=dsa->nob;  // fullness of bytes
+    r5=dsbc->nob;  // checked later
+// r6 the number of cauldrons for power of 2
+    if( (f->cauldron!=0) && ((f->pow==1) || (f->linfscheme==1)))
+    {
+        r6=(dsbc->noc+f->cauldron-1)/f->cauldron;
+// allow cauldrons to be increased for Strassen if there are enough
+        if( ((r6%2)==1) && (r6>20)  ) r6++;
+        if( ((r6%4)==2) && (r6>60)  ) r6+=2;
+        if( ((r6%8)==4) && (r6>160) ) r6+=4;
+    }
+    else         r6=0;
+#ifdef DEBUG
+printf("r1 %lu   r2 %lu   r3 %lu   r4 %lu   r5 %lu   r6 %lu  ",
+        r1,r2,r3,r4,r5,r6);
+#endif
+
+    thresh=11111;   // not set yet or default
+    if( (f->cauldron!=0) && (f->pow==1) )  // HPMI primes
+    {
+        if(f->fdef==2) thresh=12000;
+        if(f->fdef==3) thresh=15000;
+        if(f->fdef==5) thresh=2500;
+        if( (f->fdef>=7) && (f->fdef<=13) ) thresh=3000;
+        if( (f->fdef>=17) && (f->fdef<=61) ) thresh=1600;
+        if( (f->fdef>=67) && (f->fdef<=193) ) thresh=1500;
+    }
+    if( (f->cauldron!=0) && (f->linfscheme==1) )  // HPMI non-primes
+    {
+        thresh=10000;  // for those not measured yet
+        if(f->fdef==4) thresh=7000;
+        if(f->fdef==9) thresh=18000;
+        if(f->fdef==16) thresh=12000;
+        if( (f->charc>=67)  && (f->charc<=193) ) thresh=4500;
+    }
+    if( (thresh==11111) && (f->linfscheme==1) )  // linf over Dfmt primes
+    {
+        thresh=110;
+    }
+    if(thresh==11111)  // remaining cases are Dfmt
+    {
+        if(f->madtyp==2)  thresh=1800;  // 8-bit prime > 193
+        if(f->madtyp==4)  thresh=100;   // 16-bit prime
+        if(f->madtyp==5)  thresh=40;    // Zech logs
+        if(f->madtyp==6)  thresh=40;    // Zech logs  untested
+        if(f->madtyp==7)  thresh=40;    // Zech logs
+        if(f->madtyp==8)  thresh=40;    // Zech logs xor untested
+        if(f->madtyp==9)  thresh=20;    // 32-bit prime
+        if(f->madtyp==10) thresh=2;     // qmul 32-bit
+        if(f->madtyp==12)
+        {
+            if(f->pow==1) thresh=25;    // 64-bit prime
+               else       thresh=2;     // qmul 64-bit
+        }
+    }
     lev=0;
     while(1)
     {
         if( (r1<thresh) || (r2<thresh) || (r3<thresh) ) break;
-        if( ((r1&1)==1) || ((r2&1)==1) || ((r3&1)==1) ) break;
-        if( ((r4&1)==1) || ((r5&1)==1) ) break;
-        if( ((r4/2)*f->entbyte) != (r2/2) ) break;
+        if( ((r1&1)==1) || ((r2&1)==1) || ((r3&1)==1) ||
+            ((r4&1)==1) || ((r5&1)==1) || ((r6&1)==1) ) break;
         lev++;
-        r1/=2;  r2/=2;  r3/=2;  r4/=2;  r5/=2;  
+        r1/=2;  r2/=2;  r3/=2;  r4/=2;  r5/=2;   r6/=2;
     }
+    if( (dsa->noc%f->entbyte)!=0 ) lev=0;
+    if( (dsbc->noc%f->entbyte)!=0 ) lev=0;
+#ifdef DEBUG
+printf("thresh %lu   lev %d\n",thresh,lev);
+#endif
     SWMul(dsa,dsbc,nora,a,astride,b,bstride,c,lev);
 }
 
@@ -292,14 +348,6 @@ void SLMul(const FIELD * f, const Dfmt * a, const Dfmt * b,
     DSSet(f,nocb,&dsbc);
     TSMul(&dsa,&dsbc,nora,a,dsa.nob,b,dsbc.nob,c);
     return;
-}
-
-// not used a the moment
-void TSMad(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
-     const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
-           Dfmt * c, uint64_t cstride)
-{
-    BCMad(dsa,dsbc,nora,a,astride,b,bstride,c,cstride);
 }
 
 extern void SLMad(const FIELD * f, const Dfmt * a, const Dfmt * b,
@@ -876,10 +924,8 @@ void RowRif(DSPACE * ds, uint64_t * bs, Dfmt * xs, Dfmt * xn, Dfmt * x)
 
 // "recursive" echelize routine
 
-#define MINROWS 300
-#define MINCOLS 300
-
-uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
+uint64_t RCEch(GAUSS * gs, DSPACE * ds, Dfmt *a, 
+             uint64_t *rs, uint64_t *cs, 
              FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor)
 {
     uint64_t colleft,colright,i,j,rk1,rk2,rank,rowtop,rowbottom;
@@ -890,8 +936,11 @@ uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
     uint64_t *rs1,*cs1,*rs2,*cs2,*rf,*cf;
     DSPACE ds1,ds2,ds3,ds4,dsrem,dsm;
     f=ds->f;
-    if( (nor<=MINROWS) || (ds->noc<=MINCOLS) )
-        return DfEch(ds,a,rs,cs,det,m,c,r,nor);
+    if( (nor<=gs->maxrows) && (ds->noc<=gs->maxcols) )
+    {
+        rank = BCEch(gs,ds,a,rs,cs,det,m,c,r,nor,0);
+        return rank;
+    }
     memset(rs,0,16+8*((nor+63)/64));
     memset(cs,0,16+8*((ds->noc+63)/64));
 
@@ -931,7 +980,7 @@ uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
         r1=(Dfmt *) malloc(i);
         i=16+((nor+63)/64)*8;
         rs1=malloc(i);
-        rk1=RCEch(&ds1,a1,rs1,cs,&det1,m1,c1,r1,nor);
+        rk1=RCEch(gs,&ds1,a1,rs1,cs,&det1,m1,c1,r1,nor);
         free(a1);
 // special cases rk1=nor and rk1=0 ?
         colright=ds->noc-colleft;
@@ -959,7 +1008,7 @@ uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
         rs2=malloc(i);
         i=16+((colright+63)/64)*8;
         cs2=malloc(i);
-        rk2=RCEch(&ds2,a2np,rs2,cs2,&det2,m2,c2,r2,nor-rk1);
+        rk2=RCEch(gs,&ds2,a2np,rs2,cs2,&det2,m2,c2,r2,nor-rk1);
         free(a2np);
         rank=rk1+rk2;
         DSSet(f,rank,&dsm);
@@ -1038,7 +1087,7 @@ uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
         r1=(Dfmt *) malloc(i);
         i=16+((ds->noc+63)/64)*8;
         cs1=malloc(i);
-        rk1 = RCEch(ds, a, rs, cs1, &det1, m1, c1, r1, rowtop);
+        rk1 = RCEch(gs,ds, a, rs, cs1, &det1, m1, c1, r1, rowtop);
         a2 = a + rowtop*ds->nob;
         i = SLSize(f,rowbottom, rk1);
         a2p = malloc(i);
@@ -1059,7 +1108,7 @@ uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
         cs2=malloc(i);
         i = 16+((rowbottom + 63)/64)*8;
         rs2 = malloc(i);
-        rk2 = RCEch(&ds2, a2np, rs2, cs2, &det2, m2, c2, r2, rowbottom);
+        rk2 = RCEch(gs,&ds2, a2np, rs2, cs2, &det2, m2, c2, r2, rowbottom);
         free(a2np);
         rank = rk1 + rk2;
         DSSet(f, rank, &dsm);
@@ -1139,7 +1188,12 @@ uint64_t RCEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs,
 uint64_t SLEch(DSPACE * ds, Dfmt *a, uint64_t *rs, uint64_t *cs, 
              FELT * det, Dfmt *m, Dfmt *c, Dfmt *r, uint64_t nor)
 {
-    return RCEch(ds,a,rs,cs,det,m,c,r,nor);
+    GAUSS * gs;
+    uint64_t rank;
+    gs=GaussCreate(ds->f);
+    rank = RCEch(gs,ds,a,rs,cs,det,m,c,r,nor);
+    GaussDestroy(gs);
+    return rank;
 }
 
 

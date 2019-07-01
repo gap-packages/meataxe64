@@ -15,6 +15,8 @@ typedef struct
     uint64_t c;              // D
     uint64_t * rnor;         // D
     uint64_t * cnoc;         // D
+    uint64_t rextra;         // D
+    uint64_t cextra;         // D
     MOJ ** m;                // E
     MOJ fl;                  // F
 
@@ -24,7 +26,7 @@ typedef M3S * M3;
  M3  M3Cons(const char * fn, int sil); // construct and set filename
 void M3Peek(M3 a);            // get fdef nor noc by peeking
 MOJ  M3FieldMOJ (uint64_t fdef);  // make field moj
-void M3EvenChop (M3 a, uint64_t divr, uint64_t divc);  // even sized chunks
+void M3EvenChop (M3 a, uint64_t divr, uint64_t divc, uint64_t padr, uint64_t padc);
 void M3MOJs  (M3 a);          // allocate MOJs
 void M3MOJArray (M3 a);       // allocate MOJ array but not MOJs
 void M3Read (M3 a);           // kick off read thread

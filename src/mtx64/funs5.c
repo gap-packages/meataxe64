@@ -103,22 +103,34 @@ FELT fTrace(const char *m1, int s1)
 {
     EFIL *e;
     uint64_t fdef,nor,noc;
+    uint64_t i,j,k;
     FIELD * f;
     Dfmt * v1;
     DSPACE ds;
     FELT fel,fel1;
     uint64_t hdr[5];
-    int i;
 
     e = ERHdr(m1,hdr);
-    fdef=hdr[1];
     nor=hdr[2];
     noc=hdr[3];
+    if(hdr[0]==3)
+    {
+        k=0;
+        for(i=0;i<nor;i++)
+        {
+	    ERData(e,8,(uint8_t *) &j);
+            if(i==j) k++;
+        }
+        ERClose1(e,s1);
+        fel=(FELT) k;
+        return k;
+    }
     if(nor!=noc)
     {
         printf("Only square matrices have a trace\n");
         exit(30);
     }
+    fdef=hdr[1];
     f = malloc(FIELDLEN);
     FieldASet1(fdef,f,NOMUL);
     DSSet(f,noc,&ds);
@@ -301,6 +313,61 @@ void fMulMaps(const char *x1, int s1, const char *x2, int s2,
         EWClose1(e3,s3);
         free(map);
     }
+}
+
+uint64_t pseed;
+uint64_t pseed1;
+uint64_t pseed2;
+static uint64_t prand(void)
+{
+    uint64_t x;
+    x=1;
+    x=x<<63;
+    if((x&pseed)!=0) pseed=(pseed<<1)^0x3b4f0bf89;
+    else pseed=pseed<<1;
+    pseed1=(pseed1*17)%1000003;
+    pseed2=(pseed2*19)%1000033;
+    return pseed+pseed1+pseed2;
+}
+
+void fRandomMatrix(const char *m1, int s1, uint64_t fdef, 
+                       uint64_t nor, uint64_t noc)
+{
+    EFIL *e1;
+    uint64_t hdr[5];
+    FIELD * f;
+    DSPACE ds;
+    Dfmt * v;
+    uint64_t i,j;
+    FELT elt;
+
+    hdr[0]=1;
+    hdr[1]=fdef;
+    hdr[2]=nor;
+    hdr[3]=noc;
+    hdr[4]=0;
+    e1 = EWHdr(m1,hdr);
+    f = malloc(FIELDLEN);
+    FieldASet(fdef,f);
+    DSSet(f,noc,&ds);
+    v=malloc(ds.nob);
+    pseed=31;
+    pseed1=pseed;
+    pseed2=pseed;
+    for(i=0;i<nor;i++)
+    {
+        memset(v,0,ds.nob);
+	DPak(&ds,i,v,1);      // identity matrix bit
+        for(j=nor;j<noc;j++)
+        {
+            elt=prand()%fdef;
+	    DPak(&ds,j,v,elt);
+        }
+        EWData(e1,ds.nob,v);
+    }
+    EWClose1(e1,s1);
+    free(f);
+    free(v);
 }
 
 /******  end of funs5.c    ******/
