@@ -944,7 +944,7 @@ Obj FuncMTX64_HashMatrix(Obj self, Obj m) {
 }
 
 
-
+    
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs[] = {
