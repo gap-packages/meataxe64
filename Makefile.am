@@ -22,7 +22,7 @@ lib_LTLIBRARIES = meataxe64.la
 if SYS_IS_OSX
 ASM_SOURCES = src/mtx64/osx-pc1.s src/mtx64/osx-pc2.s src/mtx64/osx-pc3.s src/mtx64/osx-pc5.s   src/mtx64/osx-tfarm0.s 
 else
-ASM_SOURCES = src/mtx64/pc1.s src/mtx64/pc2.s src/mtx64/pc3.s src/mtx64/pc5.s src/mtx64/pc1.s src/mtx64/tfarm0.s 
+ASM_SOURCES = src/mtx64/pc1.s src/mtx64/pc2.s src/mtx64/pc3.s src/mtx64/pc5.s  src/mtx64/tfarm0.s 
 endif
 
 meataxe64_la_SOURCES = \
