@@ -645,7 +645,7 @@ pcbarb11:         /* input is not 32 bits */
         addq   $8,%rsi      /* next 64-bit number  */
         jmp    pcbarb2
 pcbarb12:
-        movzw 0(%rsi),%rax  /* 16 bit load with zero extension  */
+        movzwq 0(%rsi),%rax  /* 16 bit load with zero extension  */
         addq   $2,%rsi       /* next 16 bit number  */
         jmp    pcbarb2
 
