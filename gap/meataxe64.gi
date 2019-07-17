@@ -503,13 +503,13 @@ end);
     
         
 
-InstallOtherMethod(\[\], "for a meataxe64 matrix and two indices", [IsMTX64Matrix, IsPosInt, IsPosInt], 
+InstallOtherMethod(MatElm, "for a meataxe64 matrix and two indices", [IsMTX64Matrix, IsPosInt, IsPosInt], 
         function(m, i, j)
     return MTX64_GetEntry(m, i-1, j-1);
 end);
 
 
-InstallOtherMethod(\[\]\:\=, "for a meataxe64 matrix and two indices and a FELT", 
+InstallOtherMethod(SetMatElm, "for a meataxe64 matrix and two indices and a FELT", 
         [IsMTX64Matrix and IsMutable, IsPosInt, IsPosInt, IsMTX64FiniteFieldElement], 
         function(m, i, j, x)
     MTX64_SetEntry(m, i-1, j-1, x);
