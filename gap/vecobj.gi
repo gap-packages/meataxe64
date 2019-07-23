@@ -5,9 +5,10 @@
 #
 # The idea is to hide the MTX64 FELT's completely and pretend to be arrays of GAP FFEs
 # vectors will just be wrapped matrices with one row. 
-# we'll also need "row reference" objects although it seems those should be generated generically
+# we'll also need "row reference" objects although it seems those should be 
+# generated generically
 #
-# we're going with attribute storing. This is never a good choice for small objects anyway.
+# we're going with attribute storing. Meataxe64  is never a good choice for small objects anyway.
 #
 
 
@@ -35,7 +36,7 @@ InstallMethod(Length, [IsMeataxe64VectorObj],
         v-> MTX64_Matrix_NumCols(UnderlyingMeataxe64Matrix(v)));
 
 InstallMethod(\[\], [IsMeataxe64VectorObj, IsPosInt],
-        {v,i} -> MTX64_GetEntry(UnderlyingMeataxe64Matrix(v), 0, i-1));
+        {v,i} -> FFEfromFELT(MTX64_GetEntry(UnderlyingMeataxe64Matrix(v), 0, i-1)));
 
 InstallMethod(\[\]\:\=, IsCollsXElms, [IsMeataxe64VectorObj, IsPosInt, IsFFE],
         function(v,i,x)
@@ -126,10 +127,10 @@ InstallMethod(\-, IsIdenticalObj, [IsMeataxe64VectorObj, IsMeataxe64VectorObj],
         {v1,v2} -> MakeMeataxe64Vector(UnderlyingMeataxe64Matrix(v1)-UnderlyingMeataxe64Matrix(v2)));
 
 InstallMethod(\<, IsIdenticalObj, [IsMeataxe64VectorObj, IsMeataxe64VectorObj],
-        {v1,v2} -> MakeMeataxe64Vector(UnderlyingMeataxe64Matrix(v1) < UnderlyingMeataxe64Matrix(v2)));
+        {v1,v2} -> UnderlyingMeataxe64Matrix(v1) < UnderlyingMeataxe64Matrix(v2));
 
 InstallMethod(\=, IsIdenticalObj, [IsMeataxe64VectorObj, IsMeataxe64VectorObj],
-        {v1,v2} -> MakeMeataxe64Vector(UnderlyingMeataxe64Matrix(v1) = UnderlyingMeataxe64Matrix(v2)));
+        {v1,v2} -> UnderlyingMeataxe64Matrix(v1) = UnderlyingMeataxe64Matrix(v2));
 
 InstallMethod(AddRowVector, [IsMeataxe64VectorObj and IsMutable, IsMeataxe64VectorObj],
         function(v1,v2)
