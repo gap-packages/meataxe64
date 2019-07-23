@@ -21,6 +21,7 @@
 /doc/_*.xml
 
 .deps/
+.DS_Store
 .dirstamp
 .libs/
 
@@ -42,6 +43,8 @@
 /Makefile.in
 /src/pkgconfig.h
 /src/stamp-h1
+
+/src/mtx64/osx*
 
 *.la
 *.lo
