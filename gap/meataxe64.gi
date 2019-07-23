@@ -311,7 +311,7 @@ InstallOtherMethod(Random, [IsMTX64FiniteField],
 # row is zero based
 #
 
-BindGlobal( "MTX64_InsertVector",
+InstallGlobalFunction( "MTX64_InsertVector",
         function(m,v,row)
     local  f, i;
     if IsGF2VectorRep(v) and fail <> MTX64_InsertVecGF2(m,v,row) then
@@ -324,6 +324,9 @@ BindGlobal( "MTX64_InsertVector",
         return;
     fi;
     f := MTX64_FieldOfMatrix(m);    
+    if Length(v) <> MTX64_Matrix_NumCols(m) then
+        Error("MTX64_InsertVector: row length mismatch");
+    fi;
     for i in [1..Length(v)] do
         m[row+1, i] := MTX64_FiniteFieldElement(f, v[i]);
     od;
@@ -408,7 +411,7 @@ InstallOtherMethod(MTX64_Matrix, [IsList,
 end);
         
 
-BindGlobal("MTX64_RandomMat", 
+InstallGlobalFunction("MTX64_RandomMat", 
         function(f, n, m)
     return MTX64_RANDOM_MAT( f, n , m, GlobalMersenneTwister!.state);
 end);
@@ -418,7 +421,7 @@ end);
 #
 # row is zero based
 #
-BindGlobal( "MTX64_ExtractVector", 
+InstallGlobalFunction( "MTX64_ExtractVector", 
         function(m,row)
     local  f,q;
     f := MTX64_FieldOfMatrix(m);    
@@ -578,6 +581,8 @@ InstallMethod(ZeroMutable, "for a meataxe64 matrix",
         m ->  MTX64_NewMatrix(MTX64_FieldOfMatrix(m),
                 MTX64_Matrix_NumRows(m), MTX64_Matrix_NumCols(m)));
 
+InstallOtherMethod(IsZero, [IsMTX64Matrix],
+        m -> ForAll([0..MTX64_Matrix_NumRows(m)-1], i-> fail = MTX64_DNzl(m,i)));
 
 MTX64_IdentityMat := function(n, field)
     local  m, o, i;
@@ -661,7 +666,7 @@ InstallMethod(\<,  "for meataxe64 matrices", IsIdenticalObj,
 end);
 
 
-BindGlobal("MTX64_Submatrix",
+InstallGlobalFunction("MTX64_Submatrix",
         function(m, starty, leny, startx, lenx)
     local  nor, noc, sm;
     nor := MTX64_Matrix_NumRows(m);
@@ -737,10 +742,8 @@ InstallMethod(\<,  "for meataxe bitstrings",
 end);
 
 
-BindGlobal("MTX64_RowSelect", function(bs,m)
+InstallGlobalFunction("MTX64_RowSelect", function(bs,m)
     return MTX64_RowSelectShifted(bs,m,0);
 end);
 
 
-InstallOtherMethod(IsZero, [IsMTX64Matrix],
-        m -> ForAll([0..MTX64_Matrix_NumRows(m)-1], i-> fail = MTX64_DNzl(m,i)));
