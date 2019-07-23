@@ -101,9 +101,9 @@ DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl,
 #! @Description Constructs a new Meataxe64 matrix with <A>n</A> rows and
 #! <A>m</A> columns over the field <A>f</A>.The entries are uniformly
 #! pseudo-randomly chosen from <A>f</A> using the <Ref
-#! Var="GlobalMersenneTwister"/> random source. This function is significantly
+#! Var="GlobalMersenneTwister" BookName="ref"/> random source. This function is significantly
 #! more efficient that filling in random entries individually, or using <Ref
-#! Func="RandomMat"/> and then converting the result. 
+#! Func="RandomMat" BookName="ref"/> and then converting the result. 
 #! @Arguments f, n, m
 DeclareGlobalFunction( "MTX64_RandomMat" );
 #! 
@@ -126,7 +126,6 @@ DeclareGlobalFunction( "MTX64_FieldOfMatrix" );
 #! vector and matrix are not compatible. For &GAP;'s built-in comrpessed
 #! vectors over small fields this will be much more efficient than inserting
 #! the entries one by one.
-
 DeclareGlobalFunction( "MTX64_InsertVector" );
 
 #! @Arguments m, row
@@ -159,48 +158,3 @@ DeclareGlobalFunction( "MTX64_Submatrix" );
 #! the number of rows of <A>m</A>
 DeclareGlobalFunction( "MTX64_RowSelect");
 
-#! @Section Standard Operations applicable to Meataxe64 objects
-#! 
-#! Methods are installed for many standard operations applied to Meataxe64
-#! objects. In this section we briefly list the more important ones  with 
-#! some notes where the behaviour may not be as expected.
-#! 
-#! <Ref Oper="&lt;"/> for Meataxe64 fields orders fields by their size. For
-#! Meataxe64 finite field elements, it orders them according to the internal
-#! numbering used by the C meataxe.
-#!
-#! Standard arithmetic operations such as <Ref Attr="Zero"/> and <Ref
-#! Attr="*"/> are installed for Meataxe64 finite field elements, and where
-#! relevant for the fields.
-#!
-#! A limited set of Collection operations such as <Ref Attr="Size"/>, <Ref
-#! Attr="AsList"/>, <Ref Attr="AsSSortedList"/> and <Ref Attr="Random"/> are
-#! provided for Meataxe64 finite fields, for convenience.
-#! 
-#! The list access operation <C>\[\]</C> can be used to do the same
-#! thing as <Ref Func="MTX64_ExtractVector"/>, except that in this case the row
-#! indexing is one based.
-#! 
-#! The list assignment operation <C>\[\]\:\=</C> can be used to do the same
-#! thing as <Ref Func="MTX64_InsertVector"/>, except that in this case the row
-#! indexing is one based.
-#! 
-#! <Ref Oper="ShallowCopy"/> applied to a Meataxe64 matrix produces a new
-#! matrix which does not share its rows with the original, unlike standard
-#! &GAP;  matrices.
-#! 
-#! Arithmetic operations are installed for operations among Meataxe64 matrices and
-#! between matrices and finite field elements. There is no automatic coercion
-#! between fields, and matrix dimensions must match correctly (unbound entries
-#! are not treated as zero). This includes transposition.
-#!
-#! <Ref Oper="MatElm"/> and <Ref Oper="SetMatElm"/> methods are installed for
-#! matrices which do the same as <Ref Func="MTX64_GetEntry"/> and
-#! <Ref Func="MTX64_SetEntry"/> but using one-based indexing. This supports access
-#! like <C>m[i,j]</C> for reading and writing.
-#! 
-#! Meataxe64 matrices are only equal or comparable with <Ref Oper="&lt;"/> if they
-#! are defined over the same field and of the same shape. The ordering is a
-#! linear ordering, but is not otherwise defined.
-#! 
-#! 

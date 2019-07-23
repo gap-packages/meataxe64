@@ -3,6 +3,54 @@
 #
 # Implementations
 #
+#! @Chapter datatypes
+#! @Section Standard Operations applicable to Meataxe64 objects
+#! 
+#! Methods are installed for many standard operations applied to Meataxe64
+#! objects. In this section we briefly list the more important ones  with 
+#! some notes where the behaviour may not be as expected.
+#!
+#! <List>
+#! <Item><Ref Oper="&lt;" BookName="ref"/> for Meataxe64 fields orders fields by their size. For
+#! Meataxe64 finite field elements, it orders them according to the internal
+#! numbering used by the C meataxe.</Item>
+#!
+#! <Item> Standard arithmetic operations such as <Ref Attr="Zero" BookName="ref"/> and <Ref
+#! Attr="*" BookName="ref"/> are installed for Meataxe64 finite field elements, and where
+#! relevant for the fields.</Item>
+#!
+#! <Item>A limited set of collection operations such as <Ref Attr="Size" BookName="ref"/>, <Ref
+#! Attr="AsList" BookName="ref"/>, <Ref Attr="AsSSortedList" BookName="ref"/> and <Ref Attr="Random" BookName="ref"/> are
+#! provided for Meataxe64 finite fields, for convenience, although such fields
+#! are not properly collections.</Item>
+#! 
+#! <Item>The list access operation <C>\[\]</C> can be used to do the same
+#! thing as <Ref Func="MTX64_ExtractVector"/>, except that in this case the row
+#! indexing is one based.</Item>
+#! 
+#! <Item>The list assignment operation <C>\[\]\:\=</C> can be used to do the same
+#! thing as <Ref Func="MTX64_InsertVector"/>, except that in this case the row
+#! indexing is one based.</Item>
+#! 
+#! <Item><Ref Oper="ShallowCopy" BookName="ref"/> applied to a Meataxe64 matrix produces a new
+#! matrix which does not share its rows with the original, unlike standard
+#! &GAP;  matrices.</Item>
+#! 
+#! <Item>Arithmetic operations are installed for operations among Meataxe64 matrices and
+#! between matrices and finite field elements. There is no automatic coercion
+#! between fields, and matrix dimensions must match correctly (unbound entries
+#! are not treated as zero). This includes transposition.</Item>
+#!
+#! <Item><Ref Oper="MatElm" BookName="ref"/> and <Ref Oper="SetMatElm" BookName="ref"/> methods are installed for 
+#! matrices which do the same as <Ref Func="MTX64_GetEntry"/> and
+#! <Ref Func="MTX64_SetEntry"/> but using one-based indexing. This supports access
+#! like <C>m[i,j]</C> for reading and writing.</Item>
+#! 
+#! <Item>Meataxe64 matrices are only equal or comparable with <Ref Oper="&lt;" BookName="ref"/> if they
+#! are defined over the same field and of the same shape. The ordering is a
+#! linear ordering, but is not otherwise defined.</Item>
+#! 
+#! </List>
 
 #
 # Types and Families -- these variables and functions are imported and used by the C code
