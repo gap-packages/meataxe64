@@ -53,7 +53,7 @@ MTX64_Spin := function(seeds, gens, opts...)
                MTX64_Matrix_NumRows(gen) = n) then
         Error("Generators and seed incompatible");
     fi;
-    e := MTX64_Echelize(MTX64_NewMatrix(f,0,n), rec(cleanerNeeded := false));
+    e := MTX64_Echelize(MTX64_NewMatrix(f,0,n));
     Unbind(e.det); 
     Unbind(e.multiplier);
     Unbind(e.cleaner);    
@@ -76,7 +76,7 @@ end;
 
 MTX64_OnSubQuo := function(basis, gens)
     local  ech;
-    ech := MTX64_Echelize(basis, rec(cleanerNeeded := false));
+    ech := MTX64_Echelize(basis);
     return rec(sub := List(gens, x-> MTX64_OnSubMat(basis, x, ech)),
                quo := List(gens, x-> MTX64_OnQuoMat(basis, x, ech)));
     
@@ -97,7 +97,7 @@ MTX64_CPInner := function(mat)
     # cludge
     v := MTX64_Submatrix(sp.sb,sp.ech.rank,1,1,n)*mat;
     MTX64_DPaste(v,sp.ech.rank,1,0,sp.sb);    
-    e := MTX64_Echelize(sp.sb, rec(remnantNeeded := false, multiplierNeeded := false));    
+    e := MTX64_Echelize(sp.sb);    
     Add(facs, e.cleaner);
     return facs;
 end;
