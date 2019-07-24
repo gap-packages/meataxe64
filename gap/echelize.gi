@@ -1,4 +1,3 @@
-
 #
 # This file contains an implementation of a more efficient slab scale
 # echelize. It is expected that, once the right algorithm is determined,
@@ -38,8 +37,8 @@ MTX64_EchelizeLR := function(mat, optrec)
            res, a2s, a2np, res2, rs, a2p, a2ps, 
            r1, r2, k1, k1s, k1a, k1b, kl, ku;
     f := MTX64_FieldOfMatrix(mat);
-    n := MTX64_Matrix_NumRows(mat);
-    m := MTX64_Matrix_NumCols(mat);
+    n := MTX64_NumRows(mat);
+    m := MTX64_NumCols(mat);
     ret := rec();    
     Info(InfoMTX64_NG,1, "EchelizeLR  on ",n,"*",m," matrix over GF(",MTX64_FieldOrder(f),")");    
     splitAt := Minimum(QuoInt(m+1,2),Int(n* (5/4)));
@@ -123,10 +122,10 @@ MTX64_CleanExtendInner := function( ech, mat, optrec)
            newcleaner, rs, cs, rem1,
            a1s, k1, k1s, ku, kl, k1b, mu, 
            ml;
-    m := MTX64_Matrix_NumCols(mat);
+    m := MTX64_NumCols(mat);
     f := MTX64_FieldOfMatrix(mat);    
     n1 := MTX64_LengthOfBitString(ech.rowSelect);
-    n2 := MTX64_Matrix_NumRows(mat);    
+    n2 := MTX64_NumRows(mat);    
     n :=  n1 + n2;    
     r1 := ech.rank;
     Info(InfoMTX64_NG,3,"MTX64_CleanExtend: Existing rank ",r1);    
@@ -216,8 +215,8 @@ MTX64_EchelizeUD := function(mat, optrec)
            res,  a2s, a2np, res2, cs, a1s, r1, k1, 
            k1s, kl, ku, ml, mu, k1b;
     f := MTX64_FieldOfMatrix(mat);
-    n := MTX64_Matrix_NumRows(mat);
-    m := MTX64_Matrix_NumCols(mat);
+    n := MTX64_NumRows(mat);
+    m := MTX64_NumCols(mat);
     ret := rec();    
     Info(InfoMTX64_NG,1, "EchelizeUD  on ",n,"*",m," matrix over GF(",MTX64_FieldOrder(f),")");    
     splitAt := Minimum(QuoInt(n+1,2),Int(m* (5/4)));
@@ -249,8 +248,8 @@ end;
 
 MTX64_NumZeroRowsCols := function(mat)
     local  n, m, best, zr, i, x;
-    n := MTX64_Matrix_NumRows(mat);
-    m := MTX64_Matrix_NumCols(mat);
+    n := MTX64_NumRows(mat);
+    m := MTX64_NumCols(mat);
     best := m;    
     zr := n;    
     for i in [0..n-1] do
@@ -284,8 +283,8 @@ MTX64_EchelizeInner := function(mat, optrec)
            res, rs, k, zeroCols, cs, m, z,
            r;
     f := MTX64_FieldOfMatrix(mat);
-    n := MTX64_Matrix_NumRows(mat);
-    m := MTX64_Matrix_NumCols(mat);
+    n := MTX64_NumRows(mat);
+    m := MTX64_NumCols(mat);
     if optrec.failIfSingular and n <> m then
         return fail;
     fi;    
@@ -406,6 +405,20 @@ InstallGlobalFunction(MTX64_GAPEchelize, function(mat, opt...)
     return MTX64_EchelizeInner(mat, optrec);
 end);
 
+#! @Chapter Gaussian Elimination Functions
+#! @Section Methods installed for Standard &GAP; operations
+#! Based on <Ref  Func="MTX64_Echelize"/> and <Ref 
+#! Func="MTX64_GAPEchelize"/> methods are installed for a number of
+#! standard &GAP; operations for Meataxe64 matrices.
+#! These include <Ref BookName="ref" Oper="RankMat"/>, <Ref BookName="ref" Oper="InverseMutable"/>,
+#! <Ref BookName="ref" Oper="NullspaceMat"/>, <Ref BookName="ref" Oper="SemiEchelonMat"/> (including
+#! its destructive variants and variants computing transforming
+#! matrice), <Ref BookName="ref" Oper="SolutionMat"/>, <Ref BookName="ref" Oper="TriangulizedMat"/>,
+#! <Ref BookName="ref" Oper="BaseMat"/> (and destructive variant) and
+#! <Ref BookName="ref" 
+#! Oper="SumIntersectionMat"/>. 
+
+
 InstallOtherMethod(RankMat, [IsMTX64Matrix],
         m -> MTX64_GAPEchelize(m, rec(multiplierNeeded := false, 
                                                        cleanerNeeded := false, remnantNeeded := false)).rank);
@@ -437,8 +450,8 @@ end);
 MTX64_SEMT := function(mat)
     local  f, m, n, res, pivotcols, heads, i, ret, bs;    
     f := MTX64_FieldOfMatrix(mat);
-    n := MTX64_Matrix_NumRows(mat);
-    m := MTX64_Matrix_NumCols(mat);
+    n := MTX64_NumRows(mat);
+    m := MTX64_NumCols(mat);
     res := MTX64_Echelize(mat);    
     pivotcols := MTX64_PositionsBitString(res.colSelect);
     heads := ListWithIdenticalEntries(m,0);
@@ -458,8 +471,8 @@ end;
 MTX64_SEM := function(mat)
     local  f, m, n, res, pivotcols, heads, i, ret, bs;    
     f := MTX64_FieldOfMatrix(mat);
-    n := MTX64_Matrix_NumRows(mat);
-    m := MTX64_Matrix_NumCols(mat);
+    n := MTX64_NumRows(mat);
+    m := MTX64_NumCols(mat);
     res := MTX64_GAPEchelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
     pivotcols := MTX64_PositionsBitString(res.colSelect);
     heads := ListWithIdenticalEntries(m,0);
@@ -486,7 +499,7 @@ MTX64_SolutionsMat := function(a, bs)
     bss := MTX64_ColSelect(res.colSelect, bs);
     bp := bss[1];
     c := bss[2] + bss[1]*res.remnant;
-    n := MTX64_Matrix_NumRows(c);
+    n := MTX64_NumRows(c);
     solvables := MTX64_EmptyBitString(n);
     for i in [0..n-1] do
         if MTX64_DNzl(c,i) = fail then
@@ -536,12 +549,12 @@ InstallOtherMethod(SumIntersectionMat, [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
     local  f, n1, m, n2, mat, res, sumend, i, sum, int;
     f := MTX64_FieldOfMatrix(m1);
-    n1 := MTX64_Matrix_NumRows(m1);
-    m := MTX64_Matrix_NumCols(m1);
-    if f <> MTX64_FieldOfMatrix(m2) or m <> MTX64_Matrix_NumCols(m2) then
+    n1 := MTX64_NumRows(m1);
+    m := MTX64_NumCols(m1);
+    if f <> MTX64_FieldOfMatrix(m2) or m <> MTX64_NumCols(m2) then
         Error("Matrices incompatible");
     fi;
-    n2 := MTX64_Matrix_NumRows(m2);
+    n2 := MTX64_NumRows(m2);
     mat := MTX64_NewMatrix(f,n1+n2,2*m);
     MTX64_DPaste(m1,0,n1,0,mat);
     MTX64_DPaste(m1,0,n1,m,mat);
@@ -555,7 +568,7 @@ InstallOtherMethod(SumIntersectionMat, [IsMTX64Matrix, IsMTX64Matrix],
         fi;
     od;
     sum := MTX64_Submatrix(res.vectors, 1, sumend, 1, m);
-    int := MTX64_Submatrix(res.vectors, sumend+1, MTX64_Matrix_NumRows(res.vectors)-sumend, m+1, m);
+    int := MTX64_Submatrix(res.vectors, sumend+1, MTX64_NumRows(res.vectors)-sumend, m+1, m);
     return [sum, int];
 end);
     

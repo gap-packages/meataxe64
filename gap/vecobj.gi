@@ -22,7 +22,7 @@ InstallGlobalFunction(UnderlyingMeataxe64Matrix,
 BindGlobal("MakeMeataxe64Vector",
         function(m)
     local  f, q, bd, r;
-    if not IsMTX64Matrix(m) or MTX64_Matrix_NumRows(m) <> 1 then
+    if not IsMTX64Matrix(m) or MTX64_NumRows(m) <> 1 then
         Error("MakeMeataxe64Vector: argument must be a matrix with one row");
     fi;
     f := MTX64_FieldOfMatrix(m);
@@ -37,7 +37,7 @@ end);
 
 
 InstallMethod(Length, [IsMeataxe64VectorObj],
-        v-> MTX64_Matrix_NumCols(UnderlyingMeataxe64Matrix(v)));
+        v-> MTX64_NumCols(UnderlyingMeataxe64Matrix(v)));
 
 InstallMethod(\[\], [IsMeataxe64VectorObj, IsPosInt],
         {v,i} -> FFEfromFELT(MTX64_GetEntry(UnderlyingMeataxe64Matrix(v), 0, i-1)));
@@ -91,7 +91,7 @@ InstallMethod(PositionLastNonZero, [IsMeataxe64VectorObj],
         function(v)
     local  u, len, z, i;
     u := UnderlyingMeataxe64Matrix(v);
-    len := MTX64_Matrix_NumCols(u);
+    len := MTX64_NumCols(u);
     z := Zero(MTX64_FieldOfMatrix(u));    
     for i in [len-1, len-2..0] do
         if MTX64_GetEntry(u,0,i) <> z then
@@ -279,7 +279,7 @@ InstallMethod(Randomize, [IsMeataxe64VectorObj and IsMutable, IsRandomSource],
     u := UnderlyingMeataxe64Matrix(v);
     f := MTX64_FieldOfMatrix(u);
     q := MTX64_FieldOrder(f);
-    m := MTX64_Matrix_NumCols(u);
+    m := MTX64_NumCols(u);
     for i in [0..m-1] do
         MTX64_SetEntry(u, 0, i, MTX64_FiniteFieldElement(f, Random(rs, [0..q-1])));
     od;
@@ -323,7 +323,7 @@ InstallMethod(WeightOfVector, [IsMeataxe64VectorObj],
     local  u, wt, i;
     u := UnderlyingMeataxe64Matrix(v);
     wt := 0;    
-    for i in [0..MTX64_Matrix_NumCols-1] do
+    for i in [0..MTX64_NumCols-1] do
         if 0 <> MTX64_ExtractFieldElement(MTX64_GetEntry(u,0,i)) then
             wt := wt+1;
         fi;

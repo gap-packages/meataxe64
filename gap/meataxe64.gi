@@ -49,6 +49,12 @@
 #! <Item>Meataxe64 matrices are only equal or comparable with <Ref Oper="&lt;" BookName="ref"/> if they
 #! are defined over the same field and of the same shape. The ordering is a
 #! linear ordering, but is not otherwise defined.</Item>
+#!
+#! <Item>List access via <C>\[\]</C> and <C>\[\]\:\=</C> is supported for
+#! bit strings, with the bits returned as the integers 0 and 1. Note
+#! however that bits can only be set to 1, not to 0. Indices in this case
+#! are one-based. </Item>
+#! 
 #! 
 #! </List>
 
@@ -372,7 +378,7 @@ InstallGlobalFunction( "MTX64_InsertVector",
         return;
     fi;
     f := MTX64_FieldOfMatrix(m);    
-    if Length(v) <> MTX64_Matrix_NumCols(m) then
+    if Length(v) <> MTX64_NumCols(m) then
         Error("MTX64_InsertVector: row length mismatch");
     fi;
     for i in [1..Length(v)] do
@@ -481,7 +487,7 @@ InstallGlobalFunction( "MTX64_ExtractVector",
     elif q<= MAXSIZE_GF_INTERNAL then
         return MTX64_ExtractVecFFE(m,row);
     else
-        return List([1..MTX64_Matrix_NumCols(m)], i->
+        return List([1..MTX64_NumCols(m)], i->
                     FFEfromFELT(m[row+1,i]));
     fi;
 end);
@@ -497,7 +503,7 @@ InstallMethod(MTX64_ExtractMatrix, [IsMTX64Matrix],
     f := MTX64_FieldOfMatrix(m);
     q := MTX64_FieldOrder(f);    
     gm := [];
-    len := MTX64_Matrix_NumRows(m);
+    len := MTX64_NumRows(m);
     for i in [1..len] do
         gm[i] := MTX64_ExtractVector(m, i-1);
     od;
@@ -516,9 +522,9 @@ function(m)
     local f;
     f := MTX64_FieldOfMatrix(m);    
     return STRINGIFY("< matrix "
-                   , MTX64_Matrix_NumRows(m)
+                   , MTX64_NumRows(m)
                    , "x"
-                   , MTX64_Matrix_NumCols(m)
+                   , MTX64_NumCols(m)
                   , " : "
                   , ViewString(f)
                   , ">");
@@ -542,7 +548,7 @@ InstallMethod(\*, "for meataxe64 matrix and FELT", [IsMTX64Matrix, IsMTX64Finite
         function(m,x)
     local  copy;
     copy := ShallowCopy(m);        
-    MTX64_DSMul(MTX64_Matrix_NumRows(m), x, copy);
+    MTX64_DSMul(MTX64_NumRows(m), x, copy);
     return copy;
 end);
 
@@ -608,7 +614,7 @@ InstallMethod(\+, "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
     local  nrows;
-    nrows := MTX64_Matrix_NumRows(m1);
+    nrows := MTX64_NumRows(m1);
     return MTX64_DAdd(nrows, m1,m2);
 end);
 
@@ -616,7 +622,7 @@ InstallMethod(\-, "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
     local  nrows;
-    nrows := MTX64_Matrix_NumRows(m1);
+    nrows := MTX64_NumRows(m1);
     return MTX64_DSub(nrows, m1,m2);
 end);
 
@@ -627,10 +633,10 @@ InstallMethod(AdditiveInverseMutable, "for meataxe64 matrices",
 InstallMethod(ZeroMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         m ->  MTX64_NewMatrix(MTX64_FieldOfMatrix(m),
-                MTX64_Matrix_NumRows(m), MTX64_Matrix_NumCols(m)));
+                MTX64_NumRows(m), MTX64_NumCols(m)));
 
 InstallOtherMethod(IsZero, [IsMTX64Matrix],
-        m -> ForAll([0..MTX64_Matrix_NumRows(m)-1], i-> fail = MTX64_DNzl(m,i)));
+        m -> ForAll([0..MTX64_NumRows(m)-1], i-> fail = MTX64_DNzl(m,i)));
 
 MTX64_IdentityMat := function(n, field)
     local  m, o, i;
@@ -648,8 +654,8 @@ InstallMethod(OneMutable, "for a meataxe64 matrix",
         [IsMTX64Matrix],
         function(m)
     local  n;
-    n := MTX64_Matrix_NumRows(m);
-    if n <> MTX64_Matrix_NumCols(m) then
+    n := MTX64_NumRows(m);
+    if n <> MTX64_NumCols(m) then
         Error("Not square");
     fi;
     return MTX64_IdentityMat(n,MTX64_FieldOfMatrix(m));
@@ -680,8 +686,8 @@ InstallMethod(IsOne, "for a meataxe64 matrix",
         function(m)
     local  f, n, i, j;
     f := MTX64_FieldOfMatrix(m);
-    n := MTX64_Matrix_NumCols(m);
-    if n <> MTX64_Matrix_NumRows(m) then
+    n := MTX64_NumCols(m);
+    if n <> MTX64_NumRows(m) then
         return false;
     fi;
     for i in [1..n-1] do
@@ -698,27 +704,27 @@ end);
 InstallMethod(\=,  "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
-    return MTX64_Matrix_NumCols(m1) = MTX64_Matrix_NumCols(m2) and
-           MTX64_Matrix_NumRows(m1) = MTX64_Matrix_NumRows(m2) and
-           0 = MTX64_compareMatrices(m1,m2);
+    return MTX64_NumCols(m1) = MTX64_NumCols(m2) and
+           MTX64_NumRows(m1) = MTX64_NumRows(m2) and
+           0 = MTX64_CompareMatrices(m1,m2);
 end);
 
 InstallMethod(\<,  "for meataxe64 matrices", IsIdenticalObj,
         [IsMTX64Matrix, IsMTX64Matrix],
         function(m1,m2)
-    if MTX64_Matrix_NumCols(m1) <> MTX64_Matrix_NumCols(m2) or
-       MTX64_Matrix_NumRows(m1) <> MTX64_Matrix_NumRows(m2) then
+    if MTX64_NumCols(m1) <> MTX64_NumCols(m2) or
+       MTX64_NumRows(m1) <> MTX64_NumRows(m2) then
         Error("No ordering for matrices of different shapes");
     fi;
-    return 0 > MTX64_compareMatrices(m1,m2);
+    return 0 > MTX64_CompareMatrices(m1,m2);
 end);
 
 
 InstallGlobalFunction("MTX64_Submatrix",
         function(m, starty, leny, startx, lenx)
     local  nor, noc, sm;
-    nor := MTX64_Matrix_NumRows(m);
-    noc := MTX64_Matrix_NumCols(m);
+    nor := MTX64_NumRows(m);
+    noc := MTX64_NumCols(m);
     if startx = 1 and lenx = noc then
         sm := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), leny, noc);
         MTX64_DCpy(m, sm, starty-1, leny);
@@ -780,13 +786,13 @@ end);
 InstallMethod(\=,  "for meataxe bitstrings",
         [IsMTX64BitString, IsMTX64BitString],
         function(bs1,bs2) 
-    return 0 = MTX64_compareBitStrings(bs1,bs2);
+    return 0 = MTX64_CompareBitStrings(bs1,bs2);
 end);
 
 InstallMethod(\<,  "for meataxe bitstrings",
         [IsMTX64BitString, IsMTX64BitString],
         function(bs1,bs2) 
-    return 0 > MTX64_compareBitStrings(bs1,bs2);
+    return 0 > MTX64_CompareBitStrings(bs1,bs2);
 end);
 
 
@@ -794,4 +800,41 @@ InstallGlobalFunction("MTX64_RowSelect", function(bs,m)
     return MTX64_RowSelectShifted(bs,m,0);
 end);
 
+# This should probably be in a different file
+#! @Chapter Parallel Computations
+#! @Section File-based Parallel Algorithms
+#! The C Meataxe64 includes a number of parallel implementations of
+#! challenging computations. These take their inputs and return their
+#! results in disk files, which can be read and written using <Ref
+#! Func="MTX64_WriteMatrix"/> and <Ref Func="MTX64_ReadMatrix"/>. They use
+#! a number of threads specified in the file <C>src/mtx64/tuning.h</C>.
+#! Each requires a <A>tmpdir</A> parameter intended to be a directory
+#! suitable for temporary files, but which is currently unused.
+#!
+#! <ManSection> <Func Name="MTX64_fMultiply" Arg="tmpdir, fn1, fn2, fn3"/>
+#! <Description> This function multiplies the matrices in files <A>fn1</A>
+#! and <A>fn2</A> (in that order) and writes the result into file
+#! <A>fn3</A>.</Description></ManSection> 
+#!
+#! <ManSection> <Func Name="MTX64_fMultiplyAdd" Arg="tmpdir, fn1, fn2, fn3,
+#! fn4"/>
+#! <Description> This function multiplies the matrices in files <A>fn1</A>
+#! and <A>fn2</A> (in that order) adds the result to teh matrix in
+#! <A>fn3</A> and writes the result into file
+#! <A>fn4</A>.</Description></ManSection> 
+#!
+#! <ManSection> <Func Name="MTX64_fTranspose" Arg="tmpdir, fn1, fn2"/>
+#! <Description> This function computes the transpose of the matrix in
+#! filex <A>fn1</A>  and writes the result into file
+#! <A>fn2</A>.</Description></ManSection> 
+#!
+#! <ManSection> <Func Name="MTX64_fProduceNREF" Arg="tmpdir, fn1, fn2, fn3"/>
+#! <Description> This function computes the negative reduced echelon form
+#! of the matrix in file <A>fn1</A>, which is returned in two parts. A
+#! bitsstring in file <A>fn2</A> which indicates the locations of pivot
+#! columns and a remnant in <A>fn3</A> which contains the entries from the
+#! non-pivot columns of the pivot rows. There is currently no way to read
+#! in the bitstring from the file.</Description></ManSection> 
+#!
+#! More functions should be added here.
 

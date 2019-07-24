@@ -6,8 +6,8 @@ MTX64_CheckEchelize := function(a,r,o)
            z, one, i, j, x, gr, gm2;
     q := MTX64_FieldOrder(MTX64_FieldOfMatrix(a));    
     ga := MTX64_ExtractMatrix(a);
-    n := MTX64_Matrix_NumRows(a);
-    m := MTX64_Matrix_NumCols(a);
+    n := MTX64_NumRows(a);
+    m := MTX64_NumCols(a);
     if n <> Length(ga) then
         Error("input matrix number of rows wrong");
     fi;

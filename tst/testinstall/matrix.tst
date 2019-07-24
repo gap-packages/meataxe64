@@ -6,9 +6,9 @@ gap> f := MTX64_FiniteField(61);
 <MTX64 GF(61)>
 gap> m := MTX64_NewMatrix(f,8,12);
 < matrix 8x12 : <MTX64 GF(61)>>
-gap> MTX64_Matrix_NumRows(m);
+gap> MTX64_NumRows(m);
 8
-gap> MTX64_Matrix_NumCols(m);
+gap> MTX64_NumCols(m);
 12
 gap> MTX64_GetEntry(m,0,0);
 <0 : <MTX64 GF(61)>>

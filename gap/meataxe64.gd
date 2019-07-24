@@ -62,6 +62,16 @@ DeclareOperation( "MTX64_FiniteField", [IsPosInt]);
 DeclareOperation( "MTX64_FiniteField", [IsPosInt, IsPosInt]);
 #! @EndGroup
 
+#! <ManSection>
+#!  <Func Name="MTX64_FieldOrder" Arg="f"/>
+#!  <Func Name="MTX64_FieldCharacteristic" Arg="f"/>
+#!  <Func Name="MTX64_FieldDegree" Arg="f"/>
+#! <Description>
+#! These functions provide access to basic information about a MeatAxe64 field.
+#! </Description></ManSection>
+#! 
+ 
+
 #! @BeginGroup MTX64_FiniteFieldElement
 #! @Description creates a MeatAxe64 finite field element in a given field
 #! <A>f</A>. The element may be specified by number: the numbering of elements runs from 0 to <M>q-1</M> and is defined
@@ -81,6 +91,12 @@ DeclareOperation( "MTX64_FiniteFieldElement",
 #! @Arguments felt
 #! @Returns the MeatAxe64 finite field in which <A>felt</A> is defined
 DeclareGlobalFunction( "MTX64_FieldOfElement" );
+#! 
+#! <ManSection>
+#!  <Func Name="MTX64_NewMatrix" Arg="f, nor, noc"/>
+#! <Description>
+#! Returns a new mutable zero matrix over the field <A>f</A> with <A>nor</A> rows
+#! and <A>noc</A> columns.</Description></ManSection>
 
 #! @BeginGroup MTX64_Matrix
 #! @Description constructs a Meataxe64 matrix from a &GAP;
@@ -106,6 +122,14 @@ DeclareOperation( "MTX64_Matrix", [IsMatrix and IsFFECollColl,
 #! Func="RandomMat" BookName="ref"/> and then converting the result. 
 #! @Arguments f, n, m
 DeclareGlobalFunction( "MTX64_RandomMat" );
+#! 
+#! 
+#! <ManSection>
+#!  <Func Name="MTX64_NumCols" Arg="m"/>
+#!  <Func Name="MTX64_NumRows" Arg="m"/> <Description>
+#! These function return the dimensions of the matrix. Unlike in the C API
+#! every  matrix knows how many rows it has. Unlike in &GAP;
+#! even a matrix with no rows knows how many columns it has.</Description></ManSection>
 #! 
 #! <ManSection>
 #!  <Func Name="MTX64_GetEntry" Arg="m, i, j"/>
@@ -152,9 +176,92 @@ DeclareGlobalFunction( "MTX64_Submatrix" );
 #! bits</Description> 
 #! </ManSection>
 #! 
+#! <ManSection> 
+#! <Func Name="MTX64_GetEntryOfBitstring" Arg="bitstring, position"/>
+#!  <Description> <C>MTX64_GetEntryOfBitstring</C> returns 0 or 1 according to
+#! whether the <A>position</A> entry of bitstring <A>bitstring</A> is unset or set.
+#!  </Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_SetEntryOfBitstring" Arg="bitstring, position"/>
+#!  <Description> <C>MTX64_SetEntryOfBitstring</C> sets the 
+#!  <A>position</A> entry of bitstring <A>bitstring</A> (to 1). There is no way
+#! to set an entry to zero in the underlying Meataxe64 C library.
+#!  </Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_BitStringBlist" Arg="blist"/>
+#! <Func Name="MTX64_BlistBitstring" Arg="bitstring"/>
+#!  <Description>Convert between the MeatAxe64 bitstrings and GAP's Boolean lists</Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_LengthOfBitString" Arg="bitstring"/>
+#! <Func Name="MTX64_WeightOfBitstring" Arg="bitstring"/>
+#!  <Description>The length of a bitstring is the number of bits in it, the
+#! weight is the number of one bits.</Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_PositionsBitString" Arg="bitstring"/>
+#!  <Description>Returns a &GAP; list containing the indices of the set bits of
+#! <A>bitstring</A> 
+#! </Description> 
+#! </ManSection>
+#! 
+
+#! @Section Additional Matrix Functions
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_CompareMatrices" Arg="m1, m2"/>
+#!  <Description> This function underlies the comparison of matrices used by
+#! <C>&lt;</C> and <C>=</C>. For compatible matrices <A>m1</A> and <A>m2</A> it
+#! returns a negative, zero or positive integer according to whether <A>m1</A>
+#! is less than, equal to, or greater than <A>m2</A>.
+#! </Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_ReadMatrix" Arg="fn"/>
+#! <Func Name="MTX64_WriteMatrix" Arg="m, fn"/>
+#!  <Description> These functions allow reading and writing of matrices to disk
+#! in the Meataxe64 file format, which is defined in the C library documentation
+#! </Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_HashMatrix" Arg="m"/>
+#!  <Description> This function implements an efficient hash function for a
+#! MeatAxe64 matrix. All entries of the matrix contribute to the hash.
+#! </Description> 
+#! </ManSection>
+#! 
+#!
+#! @Section Additional Bitstring Functions
+#! <ManSection> 
+#! <Func Name="MTX64_CompareBitStrings" Arg="b1, b2"/>
+#!  <Description> This function underlies the comparison of bitstrings used by
+#! <C>&lt;</C> and <C>=</C>. For bitstrings <A>b1</A> and <A>b2</A> it
+#! returns a negative, zero or positive integer according to whether <A>b1</A>
+#! is less than, equal to, or greater than <A>b2</A>.
+#! </Description> 
+#! </ManSection>
+
+#! 
 #! @Arguments bs, m 
 #! @Returns a new Meataxe64 matrix containing only those rows of <A>m</A> whose
 #! corresponding entry in <A>bs</A> is set. The length of <A>bs</A> must match
 #! the number of rows of <A>m</A>
 DeclareGlobalFunction( "MTX64_RowSelect");
-
+#! 
+#! <ManSection> 
+#! <Func Name="MTX64_ColSelect" Arg="bitstring, matrix"/>
+#!  <Description> <C>MTX64_ColSelect</C> returns a matrix composed of the
+#!  columns of <A>matrix</A> corresponding to the set bits in <A>bitstring</A>
+#! whose length should match the number columns of <A>matrix</A>. The return
+#! value this has as many columns as the weight of <A>bitstring</A> and as many
+#! rows as <A>matrix</A>
+#!  </Description> 
+#! </ManSection>

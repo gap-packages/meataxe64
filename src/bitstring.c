@@ -292,7 +292,7 @@ static Obj FuncMTX64_ShallowCopyBitString(Obj self, Obj bs) {
 
 // Order may not be consistent with GAP lists. Differing lengths are OK because
 // the length field at the beginning is compared first
-static Obj FuncMTX64_compareBitStrings(Obj self, Obj bs1, Obj bs2) {
+static Obj FuncMTX64_CompareBitStrings(Obj self, Obj bs1, Obj bs2) {
   CHECK_MTX64_BitString(bs1);
   CHECK_MTX64_BitString(bs2);
   UInt len = DataOfBitStringObject(bs1)[0];
@@ -334,7 +334,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_GetEntryOfBitString, 2, "bs, pos"),
     GVAR_FUNC(MTX64_EmptyBitString, 1, "len"),
     GVAR_FUNC(MTX64_BSShiftOr, 3, "bs1, shift, bs2"),
-    GVAR_FUNC(MTX64_compareBitStrings, 2, "bs1, bs2"),
+    GVAR_FUNC(MTX64_CompareBitStrings, 2, "bs1, bs2"),
     GVAR_FUNC(MTX64_ColSelect, 2, "bs, m"),
     GVAR_FUNC(MTX64_RowSelectShifted, 3, "bs, m, shift"),
     GVAR_FUNC(MTX64_RowCombine, 3, "bs, m1, m2"),

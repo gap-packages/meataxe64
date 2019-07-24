@@ -238,12 +238,12 @@ static Obj FuncMTX64_NewMatrix(Obj self, Obj field, Obj nor, Obj noc) {
   return NEW_MTX64_Matrix(field, INT_INTOBJ(nor), INT_INTOBJ(noc));
 }
 
-static Obj FuncMTX64_Matrix_NumRows(Obj self, Obj m) {
+static Obj FuncMTX64_NumRows(Obj self, Obj m) {
   CHECK_MTX64_Matrix(m);
   return INTOBJ_INT(HeaderOfMatrix(m)->nor);
 }
 
-static Obj FuncMTX64_Matrix_NumCols(Obj self, Obj m) {
+static Obj FuncMTX64_NumCols(Obj self, Obj m) {
   CHECK_MTX64_Matrix(m);
   return INTOBJ_INT(HeaderOfMatrix(m)->noc);
 }
@@ -460,7 +460,7 @@ static Obj FuncMTX64_ShallowCopyMatrix(Obj self, Obj m) {
 }
 
 // Order may not be consistent with GAP lists
-static Obj FuncMTX64_compareMatrices(Obj self, Obj m1, Obj m2) {
+static Obj FuncMTX64_CompareMatrices(Obj self, Obj m1, Obj m2) {
   CHECK_MTX64_Matrices(m1, m2, 2);
   Obj f = FieldOfMatrix(m1);
   UInt noc = HeaderOfMatrix(m1)->noc;
@@ -944,6 +944,22 @@ Obj FuncMTX64_HashMatrix(Obj self, Obj m) {
 }
 
 
+/* Obj FuncMTX64_CharPoly(Obj self, Obj m) { */
+/*     CHECK_MTX64_Matrix(m); */
+/*     UInt n = HeaderOfMatrix(m)->noc; */
+/*     if (n != HeaderOfMatrix(m)->nor) */
+/*         ErrorMayQuit("MTX64_CharPoly: non-square matrix"); */
+/*     Obj fld = MTX64_FieldOfMatrix(m); */
+/*     DSPACE dsp; */
+/*     DSSet(DataOfFieldObject(fld), 2, &dsp); */
+
+
+/*     Dfmt **polystart = malloc(sizeof(Dfmt *)*n); // pointers to matrix starts */
+/*     DSPACE ds; */
+/*     SetDSpaceOfMTX64_Matrix(m, &ds); */
+/*     UInt npol = Dcp(&ds, DataOfMTX64_Matrix(m), polys, polystart); */
+/*     //  */
+    
     
 
 // Table of functions to export
@@ -965,8 +981,8 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_FieldDiv, 3, "f,a,b"),
 
     GVAR_FUNC(MTX64_NewMatrix, 3, "f,nor,noc"),
-    GVAR_FUNC(MTX64_Matrix_NumRows, 1, "m"),
-    GVAR_FUNC(MTX64_Matrix_NumCols, 1, "m"),
+    GVAR_FUNC(MTX64_NumRows, 1, "m"),
+    GVAR_FUNC(MTX64_NumCols, 1, "m"),
     GVAR_FUNC(MTX64_GetEntry, 3, "m,i,j"),
     GVAR_FUNC(MTX64_SetEntry, 4, "m,i,j,x"),
 
@@ -980,7 +996,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_DNzl, 2, "m, row"),
 
     GVAR_FUNC(MTX64_ShallowCopyMatrix, 1, "m"),
-    GVAR_FUNC(MTX64_compareMatrices, 2, "m1, m2"),
+    GVAR_FUNC(MTX64_CompareMatrices, 2, "m1, m2"),
     GVAR_FUNC(MTX64_RANDOM_MAT, 4, "f, nor, noc, state"),
 
     GVAR_FUNC(MTX64_MakeFELTfromFFETable, 1, "q"),

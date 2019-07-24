@@ -30,11 +30,11 @@ BindGlobal("MakeMeataxe64Matrix",
     return r;    
 end);
 
-InstallMethod(NumberRows,[IsMeataxe64MatrixObj],MTX64_Matrix_NumRows);
-InstallMethod(NumberColumns,[IsMeataxe64MatrixObj],MTX64_Matrix_NumCols);
-InstallMethod(Length,[IsMeataxe64MatrixObj],MTX64_Matrix_NumRows);
+InstallMethod(NumberRows,[IsMeataxe64MatrixObj],MTX64_NumRows);
+InstallMethod(NumberColumns,[IsMeataxe64MatrixObj],MTX64_NumCols);
+InstallMethod(Length,[IsMeataxe64MatrixObj],MTX64_NumRows);
 InstallMethod(DimensionsMat, [IsMeataxe64MatrixObj], 
-        m -> [MTX64_Matrix_NumRows, MTX64_Matrix_NumCols]);
+        m -> [MTX64_NumRows, MTX64_NumCols]);
 InstallMethod(RankMat, [IsMeataxe64MatrixObj], m->RankMat(UnderlyingMeataxe64Matrix(m)));
 InstallMethod(RankMatDestructive, [IsMeataxe64MatrixObj], RankMat);
 
@@ -86,7 +86,7 @@ InstallMethod(PositionNonZero, [IsMeataxe64MatrixRowReference],
     m := UnderlyingMeataxe64Matrix(u);    
     res := MTX64_DNzl(m, RowNumber(r));
     if res = fail then
-        return MTX64_Matrix_NumCols(m)+1;
+        return MTX64_NumCols(m)+1;
     else
         return res+1;
     fi;
@@ -117,7 +117,7 @@ InstallMethod(ShallowCopy, [IsMeataxe64MatrixRowReference],
     local  u, m, c;
     u := UnderlyingMatrixObj(r);
     m := UnderlyingMeataxe64Matrix(u);
-    c := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), 1, MTX64_Matrix_NumCols(m));
+    c := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), 1, MTX64_NumCols(m));
     MTX64_DCpy(m, c, RowNumber(r), 1);
     return MakeMeataxe64Vector(c);
 end);
