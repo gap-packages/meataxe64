@@ -1,5 +1,8 @@
-DeclareAttribute("UnderlyingMeataxe64Matrix", IsVectorObj);
-DeclareSynonym("IsMeataxe64VectorObj", IsVectorObj and HasUnderlyingMeataxe64Matrix);
+DeclareGlobalFunction("UnderlyingMeataxe64Matrix");
 
-DeclareAttribute("UnderlyingMeataxe64Matrix", IsMatrixObj);
-DeclareSynonym("IsMeataxe64MatrixObj", IsMatrixObj and HasUnderlyingMeataxe64Matrix);
+DeclareRepresentation("IsMeataxe64VecMatObjRep", IsAttributeStoringRep, 
+        ["UnderlyingMeataxe64Matrix"]);
+
+DeclareSynonym("IsMeataxe64MatrixObj", IsMeataxe64VecMatObjRep and IsMatrixObj);
+DeclareSynonym("IsMeataxe64VectorObj", IsMeataxe64VecMatObjRep and IsVectorObj);
+

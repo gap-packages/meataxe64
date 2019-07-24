@@ -8,10 +8,15 @@
 # we'll also need "row reference" objects although it seems those should be 
 # generated generically
 #
-# we're going with attribute storing. Meataxe64  is never a good choice for small objects anyway.
+# we're going with attribute storing. Meataxe64  is never a good choice for small 
+# objects anyway. This does have some issues with mutability
 #
 
 
+
+
+InstallGlobalFunction(UnderlyingMeataxe64Matrix,
+        m -> m!.UnderlyingMeataxe64Matrix);
 
 
 BindGlobal("MakeMeataxe64Vector",
@@ -23,11 +28,10 @@ BindGlobal("MakeMeataxe64Vector",
     f := MTX64_FieldOfMatrix(m);
     q := MTX64_FieldOrder(f);
     bd := GF(q);
-    r := rec();
+    r := rec(UnderlyingMeataxe64Matrix := m);
     ObjectifyWithAttributes(r,
-            NewType(FamilyObj(bd), IsAttributeStoringRep and IsMutable and 
-                    IsMeataxe64VectorObj and HasBaseDomain), 
-            BaseDomain, bd, UnderlyingMeataxe64Matrix, m);
+            NewType(FamilyObj(bd), IsMutable and IsMeataxe64VectorObj and HasBaseDomain), 
+            BaseDomain, bd);
     return r;    
 end);
 
@@ -157,7 +161,7 @@ InstallMethod(MultVector, IsCollsElms, [IsMeataxe64VectorObj and IsMutable, IsFF
         function(v,x)
     local  u;
     u := UnderlyingMeataxe64Matrix(v);    
-    MTX64_DSMad(1,MTX64_FiniteFieldElement(MTX64_FieldOfMatrix(u),x), u);
+    MTX64_DSMul(1,MTX64_FiniteFieldElement(MTX64_FieldOfMatrix(u),x), u);
 end);
 
 InstallMethod(\*, IsCollsElms, [IsMeataxe64VectorObj, IsFFE],

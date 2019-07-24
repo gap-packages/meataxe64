@@ -21,11 +21,12 @@ BindGlobal("MakeMeataxe64Matrix",
     f := MTX64_FieldOfMatrix(m);
     q := MTX64_FieldOrder(f);
     bd := GF(q);
-    r := rec();
+    r := rec( UnderlyingMeataxe64Matrix := m);
     ObjectifyWithAttributes(r,
             NewType(CollectionsFamily(FamilyObj(bd)), 
-                    IsAttributeStoringRep and IsMutable and IsMeataxe64MatrixObj and HasBaseDomain), 
-            BaseDomain, bd, UnderlyingMeataxe64Matrix, m);
+                    IsAttributeStoringRep and IsMutable and IsMeataxe64MatrixObj 
+                    and HasBaseDomain), 
+            BaseDomain, bd);
     return r;    
 end);
 
