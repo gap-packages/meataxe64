@@ -333,6 +333,9 @@ gap> MTX64_InsertVec8Bit(m, v, 1);
 gap> m := MTX64_NewMatrix(MTX64_FiniteField(7^3),10,10);;
 gap> MTX64_ExtractVec8Bit(m, 1);
 Error, field mismatch
+gap> v := Z(2)*[1..11];; ConvertToVectorRep(v,2);;
+gap> MTX64_InsertVector(m, v, 2);
+Error, MTX64_InsertVector: row length mismatch
 gap> Reset(GlobalMersenneTwister, 33);;
 gap> m := MTX64_RandomMat(MTX64_FiniteField(NextPrimeInt(2^63)), 10,10);
 < matrix 10x10 : <MTX64 GF(9223372036854775837)>>

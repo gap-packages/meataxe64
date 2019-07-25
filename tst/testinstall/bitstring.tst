@@ -90,4 +90,10 @@ gap> MTX64_fProduceNREF(".", "a", "cs", "r");
 100
 gap> bs := MTX64_ReadBitString("cs");
 < MTX64 bitstring 100/110>
+gap> MTX64_ReadBitString(1);
+Error, MTX64_ReadBitString: filename must be a string
+gap> MTX64_ReadBitString("a");
+Error, File does not contain a BitString
+gap> MTX64_ReadMatrix("cs");
+Error, File does not contain a matrix
 gap> STOP_TEST("bitstring.tst");
