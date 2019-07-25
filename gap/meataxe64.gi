@@ -808,8 +808,8 @@ end);
 #! results in disk files, which can be read and written using <Ref
 #! Func="MTX64_WriteMatrix"/> and <Ref Func="MTX64_ReadMatrix"/>. They use
 #! a number of threads specified in the file <C>src/mtx64/tuning.h</C>.
-#! Each requires a <A>tmpdir</A> parameter intended to be a directory
-#! suitable for temporary files, but which is currently unused.
+#! Each requires a <A>tmpdir</A> parameter which should be the pathname of
+#! a directory suitable for temporary files. 
 #!
 #! <ManSection> <Func Name="MTX64_fMultiply" Arg="tmpdir, fn1, fn2, fn3"/>
 #! <Description> This function multiplies the matrices in files <A>fn1</A>
@@ -833,7 +833,17 @@ end);
 #! of the matrix in file <A>fn1</A>, which is returned in two parts. A
 #! bitsstring in file <A>fn2</A> which indicates the locations of pivot
 #! columns and a remnant in <A>fn3</A> which contains the entries from the
-#! non-pivot columns of the pivot rows. </Description></ManSection> 
+#! non-pivot columns of the pivot rows. The rank is returned </Description></ManSection> 
 #!
-#! More functions should be added here.
+#! <ManSection> <Func Name="MTX64_fEchelize" Arg="tmpdir, a, cs, rs, m, k, r"/>
+#! <Description> This function computes the negative reduced echelon form
+#! of the matrix in file <A>a</A>, which is returned in two parts. A
+#! bitsstring in file <A>rs</A> which indicates the locations of pivot
+#! columns and a remnant in <A>r</A> which contains the entries from the
+#! non-pivot columns of the pivot rows.  In addition, the multiplier,
+#! cleaner and row select are returned in files <A>m</A>, <A>k</A> and
+#! <A>rs</A>, respectively. The rank is returned
+#! </Description></ManSection>  
+#!
+
 
