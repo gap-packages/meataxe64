@@ -779,6 +779,8 @@ static Obj FuncMTX64_ReadMatrix(Obj self, Obj fname) {
   EFIL *f = ERHdr((const char *)CHARS_STRING(fname), (uint64_t *)header);
   // We need to pass this construction out to GAP because the caching
   // of fields and families happens there
+  if (header[0] != 1)
+      ErrorMayQuit("File does not contain a matrix", 0, 0);
   Obj fld = CALL_1ARGS(MTX64_FiniteField, ObjInt_UInt(header[1]));
   UInt nor = header[2];
   UInt noc = header[3];

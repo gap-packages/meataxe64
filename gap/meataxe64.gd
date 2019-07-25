@@ -241,6 +241,13 @@ DeclareGlobalFunction( "MTX64_Submatrix" );
 #!
 #! @Section Additional Bitstring Functions
 #! <ManSection> 
+#! <Func Name="MTX64_ReadBitString" Arg="fn"/>
+#!  <Description> Reads a bitstring in from file <A>fn</A>
+#! in the Meataxe64 file format, which is defined in the C library documentation
+#! </Description> 
+#! </ManSection>
+#! 
+#! <ManSection> 
 #! <Func Name="MTX64_CompareBitStrings" Arg="b1, b2"/>
 #!  <Description> This function underlies the comparison of bitstrings used by
 #! <C>&lt;</C> and <C>=</C>. For bitstrings <A>b1</A> and <A>b2</A> it

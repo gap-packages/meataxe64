@@ -84,4 +84,9 @@ gap> MTX64_BitStringBlist([true]);
 < MTX64 bitstring 1/1>
 gap> MTX64_BitStringBlist([17]);
 < MTX64 bitstring 0/1>
+gap> m := MTX64_RandomMat(MTX64_FiniteField(11), 100, 110);;
+gap> MTX64_WriteMatrix(m, "a");;
+gap> MTX64_fProduceNREF(".", "a", "cs", "r");
+gap> bs := MTX64_ReadBitString("cs");
+< MTX64 bitstring 100/110>
 gap> STOP_TEST("bitstring.tst");

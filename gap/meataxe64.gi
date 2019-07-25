@@ -833,8 +833,7 @@ end);
 #! of the matrix in file <A>fn1</A>, which is returned in two parts. A
 #! bitsstring in file <A>fn2</A> which indicates the locations of pivot
 #! columns and a remnant in <A>fn3</A> which contains the entries from the
-#! non-pivot columns of the pivot rows. There is currently no way to read
-#! in the bitstring from the file.</Description></ManSection> 
+#! non-pivot columns of the pivot rows. </Description></ManSection> 
 #!
 #! More functions should be added here.
 

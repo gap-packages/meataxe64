@@ -1,4 +1,5 @@
 #include "bitstring.h"
+#include "mtx64/io.h"
 #include "src/bits_intern.h" // workaround
 static Obj
     TYPE_MTX64_BitString; // global variable, type of MTX64 Bitstring objects
@@ -323,6 +324,22 @@ static Obj FuncMTX64_BitStringBlist(Obj self, Obj bl) {
     return bs;
 }
 
+static Obj FuncMTX64_ReadBitString(Obj self, Obj fname) {
+  if (!IsStringConv(fname))
+    ErrorMayQuit("MTX64_ReadBitString: filename must be a string", 0, 0);
+  UInt header[5];
+  EFIL *f = ERHdr((const char *)CHARS_STRING(fname), (uint64_t *)header);
+  // We need to pass this construction out to GAP because the caching
+  // of fields and families happens there
+  if (header[0] != 2)
+    ErrorMayQuit("File does not contain a BitString", 0, 0);
+  UInt len = header[2];
+  Obj bs = MTX64_MakeBitString(len);
+  ERData(f, Size_Data_BitString(len), (void *)(DataOfBitStringObject(bs)));
+  ERClose(f);
+  RecountBS(bs);
+  return bs;
+}
 
 // Table of functions to export
 static StructGVarFunc GVarFuncs[] = {
@@ -344,6 +361,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_PositionsBitString, 1, "bs"),
     GVAR_FUNC(MTX64_ComplementBitString, 1, "bs"),
     GVAR_FUNC(MTX64_ShallowCopyBitString, 1, "bs"),
+    GVAR_FUNC(MTX64_ReadBitString, 1, "fn"),
 
 
     {0} /* Finish with an empty entry */

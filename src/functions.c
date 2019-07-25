@@ -86,9 +86,9 @@ static Obj FuncMTX64_fProduceNREF(Obj self, Obj tmp, Obj m1, Obj b2, Obj m3) {
     CHECK_INFILE(m1);
     CHECK_OUTFILE(b2);
     CHECK_OUTFILE(m3);
-    fMultiply(CSTR_STRING(tmp), CSTR_STRING(m1), 0,
-              b2 == Fail ? NULL : CSTR_STRING(b2), 0,
-              m3 == Fail ? NULL : CSTR_STRING(m3), 0);
+    fProduceNREF(CSTR_STRING(tmp), CSTR_STRING(m1), 1,
+                 b2 == Fail ? NULL : CSTR_STRING(b2), 1,
+                 m3 == Fail ? NULL : CSTR_STRING(m3), 1);
     return 0;
 }
 
