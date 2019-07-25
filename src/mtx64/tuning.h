@@ -6,16 +6,16 @@
 // THREADS should be the number you ideally want to run at once
 // programs should usually run rather more, but that is their choice.
 
-#define THREADS 3
+#define THREADS 12
 
 // MEGABYTES should be the amount of data memory you 
 // would like a program to restrict itself to.
 
-#define MEGABYTES 2600
+#define MEGABYTES 26000
 
 // MAXCHOP is the maximum number of chops that can be made when
 // doing multi-core work.
 
-#define MAXCHOP 7
+#define MAXCHOP 10
 
 /* end of tuning.h */
