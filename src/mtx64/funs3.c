@@ -33,7 +33,6 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
     uint64_t i,j,k,z;
     uint64_t i1,i2,i3,i4,j1,j2,j3,j4;
     int mode;
-    uint16_t *log16, *alog16;
     uint8_t lut[256];
 
     e1=ERHdr(m1,hdr);
@@ -48,8 +47,6 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
     v1=malloc(ds.nob);
     v2=malloc(ds.nob);
 
-    log16=NULL;        // avoid compiler warnings
-    alog16=NULL;
     vpa=NULL;
     vpx=NULL;
 
@@ -62,8 +59,6 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
 /* 3 if logs available, use them */
     if( (mode==4) && (f->fdef<=65536) )
     {
-        log16=(uint16_t *)((uint8_t *)f + f->Tlog16);
-        alog16=(uint16_t *)((uint8_t *)f + f->Talog16);
         mode=3;
     }
 /* 2 if field fits in a byte and not prime field, use lookup */
@@ -76,19 +71,19 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
             for(i1=0;i1<f->fdef;i1++)
             {
               if(i1==0) j1=0; 
-              else j1=alog16[(f->charc*log16[i1])%(f->fdef-1)];
+              else j1=f->alog16[(f->charc*f->log16[i1])%(f->fdef-1)];
               for(i2=0;i2<f->fdef;i2++)
               {
                 if(i2==0) j2=0; 
-                else j2=alog16[(f->charc*log16[i2])%(f->fdef-1)];
+                else j2=f->alog16[(f->charc*f->log16[i2])%(f->fdef-1)];
                 for(i3=0;i3<f->fdef;i3++)
                 {
                   if(i3==0) j3=0; 
-                  else j3=alog16[(f->charc*log16[i3])%(f->fdef-1)];
+                  else j3=f->alog16[(f->charc*f->log16[i3])%(f->fdef-1)];
                   for(i4=0;i4<f->fdef;i4++)
                   {
                     if(i4==0) j4=0; 
-                    else j4=alog16[(f->charc*log16[i4])%(f->fdef-1)];
+                    else j4=f->alog16[(f->charc*f->log16[i4])%(f->fdef-1)];
                     lut[64*i1+16*i2+4*i3+i4]=64*j1+16*j2+4*j3+j4;
                   }
                 }
@@ -100,11 +95,11 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
             for(i1=0;i1<f->fdef;i1++)
             {
               if(i1==0) j1=0; 
-              else j1=alog16[(f->charc*log16[i1])%(f->fdef-1)];
+              else j1=f->alog16[(f->charc*f->log16[i1])%(f->fdef-1)];
               for(i2=0;i2<f->fdef;i2++)
               {
                 if(i2==0) j2=0; 
-                else j2=alog16[(f->charc*log16[i2])%(f->fdef-1)];
+                else j2=f->alog16[(f->charc*f->log16[i2])%(f->fdef-1)];
                 lut[8*i1+i2]=8*j1+j2;
               }
             }
@@ -114,11 +109,11 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
             for(i1=0;i1<f->fdef;i1++)
             {
               if(i1==0) j1=0; 
-              else j1=alog16[(f->charc*log16[i1])%(f->fdef-1)];
+              else j1=f->alog16[(f->charc*f->log16[i1])%(f->fdef-1)];
               for(i2=0;i2<f->fdef;i2++)
               {
                 if(i2==0) j2=0; 
-                else j2=alog16[(f->charc*log16[i2])%(f->fdef-1)];
+                else j2=f->alog16[(f->charc*f->log16[i2])%(f->fdef-1)];
                 lut[9*i1+i2]=9*j1+j2;
               }
             }
@@ -128,11 +123,11 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
             for(i1=0;i1<f->fdef;i1++)
             {
               if(i1==0) j1=0; 
-              else j1=alog16[(f->charc*log16[i1])%(f->fdef-1)];
+              else j1=f->alog16[(f->charc*f->log16[i1])%(f->fdef-1)];
               for(i2=0;i2<f->fdef;i2++)
               {
                 if(i2==0) j2=0; 
-                else j2=alog16[(f->charc*log16[i2])%(f->fdef-1)];
+                else j2=f->alog16[(f->charc*f->log16[i2])%(f->fdef-1)];
                 lut[16*i1+i2]=16*j1+j2;
               }
             }
@@ -142,7 +137,7 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
             for(i1=0;i1<f->fdef;i1++)
             {
                 if(i1==0) j1=0; 
-                else j1=alog16[(f->charc*log16[i1])%(f->fdef-1)];
+                else j1=f->alog16[(f->charc*f->log16[i1])%(f->fdef-1)];
                 lut[i1]=j1;
             }
         }
@@ -218,7 +213,7 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
             switch (mode)
             {
               case 3:
-                f2=alog16[(f->charc*log16[f1])%(f->fdef-1)];
+                f2=f->alog16[(f->charc*f->log16[f1])%(f->fdef-1)];
                 break;
               default:          // mode 5 - no longer used
                 printf("Internal error in Frobenius program\n");
@@ -250,7 +245,6 @@ extern int  fFieldContract(const char *m1, int s1, uint64_t fdef2,
     uint64_t fdef1,nor,noc,i,j;
     uint64_t ratio,good,mode;
     uint64_t hdr[5];
-    uint16_t *log16, *alog16;
     FELT x1,x2;
 
     e1=ERHdr(m1,hdr);
@@ -272,8 +266,6 @@ extern int  fFieldContract(const char *m1, int s1, uint64_t fdef2,
     DSSet(f2,noc,&ds2);
     v1=malloc(ds1.nob);
     v2=malloc(ds2.nob);
-    log16=NULL;        // avoid compiler warnings
-    alog16=NULL;
     ratio=(f1->fdef-1)/(f2->fdef-1);
 
 /* decide on strategy */
@@ -290,8 +282,6 @@ extern int  fFieldContract(const char *m1, int s1, uint64_t fdef2,
 /* 3 if log16 and alog16 available, use them */
     if((mode==4) && (f1->fdef <= 65536) )
     {
-        log16=(uint16_t *)((uint8_t *)f1 + f1->Tlog16);
-        alog16=(uint16_t *)((uint8_t *)f2 + f2->Talog16);
         mode=3;
     }
 
@@ -329,8 +319,8 @@ extern int  fFieldContract(const char *m1, int s1, uint64_t fdef2,
                 if(x1==0) x2=0;
                 else
                 {
-                    x2=alog16[log16[x1]/ratio];  // using logs
-                    if( (log16[x1]%ratio)!=0 ) good=0;
+                    x2=f2->alog16[f1->log16[x1]/ratio];  // using logs
+                    if( (f1->log16[x1]%ratio)!=0 ) good=0;
                 }
             }
             if(good==0) break;

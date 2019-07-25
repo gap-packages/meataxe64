@@ -105,9 +105,29 @@ void hpmiset(FIELD * f)
         f->bwasize=16384;
         hpmitabas(f);
     }
+    if(f->ppaktyp==1233)  // ppaktup==0 new stuff excluded for now
+//  because it doesn't work!
+    {
+        f->p90=pcpmad(f->charc,0x400000000000, 0x100000000000, 0);
+        f->AfmtMagic=4;
+        f->BfmtMagic=1;
+        f->GreaseMagic=4;
+        f->bzer=0;
+        f->czer=0;
+        f->alcove=21;
+        f->alcovebytes=169;
+        f->dfmtcauld=584;
+        f->bfmtcauld=584;
+        f->cfmtcauld=1168;
+        f->bbrickbytes=12265;
+        f->bwasize=12264;
+        f->cauldron=73;
+        f->CfmtMagic=7;
+        f->BwaMagic=6;
+        f->SeedMagic=8;
+    }
     return;
 }
-
 
 void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
             uint64_t nora, uint64_t stride)
@@ -178,7 +198,6 @@ void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
             }
             pt1+=stride;
         }
-
     }
     if(f->AfmtMagic==2)  // characteristic 5-193
     {
@@ -212,7 +231,6 @@ void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
     }
     if(f->AfmtMagic==3)
     {
-
         Thpv=(uint16_t *)(f8+f->Thpv);
         bits=0;
         for(i=0;i<nora;i++)  // for each row of matrix A
@@ -249,7 +267,34 @@ void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
             }
             pt1+=stride;
         }
-
+    }
+    if(f->AfmtMagic==4)   // Just copy Dfmt in copybytes at a time
+    {
+        for(i=0;i<nora;i++)  // for each row of the matrix
+        {
+            for(j=0;j<nz1;j++)   // j indexes the alcove
+            {
+                orc=0;               // OR of the bytes
+                pt2=pt1+copybytes*j;         // point to block of bytes
+                for(k=1;k<=copybytes;k++)    // for each byte of block
+                {
+                    if( (copybytes*j+k) > ds->nob) byte=0;
+                                   else            byte=*pt2;
+                    orc|=byte;      // OR in the byte for sparsity
+                    a[ix[j]+k]=byte;  // and move it into Afmt
+                    pt2++;
+                }
+// Afmt up to 250 (251-254 spare) 255 is terminator
+                if( (orc==0) && (a[ix[j]]<250) )  // sparsity
+                    a[ix[j]]++;                   // skip one more row
+                else
+                {
+                    ix[j]+=f->alcovebytes;  // keep that block
+                    a[ix[j]]=1;             // advance pointer
+                }
+                pt1+=stride;
+            }
+        }
     }
     for(j=0;j<nz1;j++)
         a[ix[j]]=255;  // Put in the terminators
@@ -497,6 +542,11 @@ int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
             }
         }
     }
+// 7 used to be new mod 2 using 51-code - now removed
+    if(f->SeedMagic==8)    // just copy it in
+    {
+        memcpy(bwa,pt1,f->alcove*f->bfmtcauld);
+    }
     return *b;
 }
 
@@ -521,6 +571,7 @@ uint8_t pg3[] = { 163,  2   ,  1   ,170,5  ,   3   ,   1   ,   1 ,
 void BGrease(const FIELD * f, uint8_t * bwa, int sparsity)
 {
     if(sparsity==0) return;
+    if((f->GreaseMagic)==4) return;   // no grease - prime to large.
     if((f->GreaseMagic)==1)
     {
         pc5aca(f->prog,bwa,f->parms);
@@ -618,6 +669,12 @@ void BwaMad(const FIELD *f, uint8_t * bwa, int sparsity, Afmt *af, Cfmt *c)
         pc5bmdd(af,bwa,c,f->parms);        // SSE2 32-bit
         return;
     }
+// 64-bit scalar multiply
+    if(f->BwaMagic==6)
+    {
+        pc6bma(af,bwa,c,f->p90);      // scalar 64-bit
+        return;
+    }
 }
 
 void BrickMad(const FIELD *f, uint8_t *bwa,
@@ -656,7 +713,9 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor, uint64_t stride)
     uint8_t * sp;
     uint16_t * sp16;
     uint32_t * sp32;
+    uint64_t * sp64;
     Dfmt * dp;
+    uint64_t * dp64;
     Dfmt dbyte;
     uint64_t bu,bt;
     uint8_t * Thpc;
@@ -665,7 +724,7 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor, uint64_t stride)
     const FIELD * f;
 
     f=ds->f;
-    nz2=(ds->noc+f->cauldron-1)/f->cauldron;
+    nz2=(ds->noc+f->cauldron-1)/f->cauldron;    // number of cauldrons
     
     bu=0;    // stop compiler
     bits=0;
@@ -673,13 +732,13 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor, uint64_t stride)
     Thpc=(uint8_t *)f + (f->Thpc);
     for(z2=0;z2<nz2;z2++)
     {
-        zlen=((z2+1)*f->cauldron);
-        zlen-=ds->noc;
-        if(zlen<0) zlen=0;
-        if(zlen>f->cauldron) zlen=f->cauldron;  
-        zlen=zlen*f->pbytesper/f->pentbyte;
+        zlen=((z2+1)*f->cauldron);    // first entry not in this cauldron
+        zlen-=ds->noc;                // entries to ignore this cauldron
+        if(zlen<0) zlen=0;            // now correct
+        if(zlen>f->cauldron) zlen=f->cauldron;    // don't think this happns
+        zlen=zlen*f->pbytesper/f->pentbyte;   // Dfmt bytes to ignore
 
-        cpylen=f->dfmtcauld-zlen;
+        cpylen=f->dfmtcauld-zlen;    // Dfmt bytes wanted
         for(z0=0;z0<nor;z0++)
         {
             dp=d+z0*stride+z2*f->dfmtcauld;
@@ -794,6 +853,16 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor, uint64_t stride)
                     y=(z*f->bar48)>>48;
                     z-=y*f->charc;
                     *(dp++)=x+z*f->charc*f->charc;
+                }
+            }
+            if(f->CfmtMagic==7)
+            {
+                dp64=(uint64_t *)dp;
+                sp64=(uint64_t *)sp;
+                for(i=0;i<cpylen;i+=8)
+                {
+                    *(dp64++)=pcrem(f->charc,*sp64,*(sp64+1));
+                    sp64+=2;
                 }
             }
         }

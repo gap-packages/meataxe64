@@ -1,4 +1,6 @@
 cd $SRC
+cp ../src2/zmu3.c .
+gcc $1 -O3 -Wall -pthread zmu3.c -L$BIN -lmtx -o $BIN/zmu3
 cp ../src2/zec2.c .
 gcc $1 -O3 -Wall -pthread zec2.c -L$BIN -lmtx -o $BIN/zec2
 cp ../src2/als1.c .

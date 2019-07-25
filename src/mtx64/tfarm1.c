@@ -13,7 +13,7 @@
 
 #include "tfarm.h"
 #include "tuning.h"
-#define SCALE MAXCHOP*MAXCHOP*MAXCHOP
+
 
 /* Global Variables */
 
@@ -546,16 +546,28 @@ void TFClose(void)
     free(TFM);
 }
 
-void   TFInit(int threads)
+extern TFPM * TFParms(void)
 {
+    TFPM * tfpm;
+    tfpm = malloc(sizeof(TFPM));
+    tfpm->threads=THREADS;
+    tfpm->jobs=MAXCHOP*MAXCHOP*MAXCHOP*12;
+    tfpm->mojs=MAXCHOP*MAXCHOP*MAXCHOP*24;
+    tfpm->rdls=MAXCHOP*MAXCHOP*MAXCHOP*72;
+    return tfpm;
+}
+
+void   TFInit(TFPM * tfpm)
+{
+    uint64_t threads;
     int i;
-    int jobx,rdlx;
     uint64_t * FRE;
     jobstruct * tfjob;
     rdlstruct * tfrdl;
     MOJ mj;
-    jobx=SCALE*12;
-    nmojes=jobx*2;
+    threads=tfpm->threads;
+    nmojes=tfpm->mojs;
+
     closejobs=0;
     TFM=malloc(TFMSIZE*sizeof(uint64_t));
     FRE=malloc(FRESIZE*sizeof(uint64_t));
@@ -563,25 +575,24 @@ void   TFInit(int threads)
     *FRE=0;      // none yet to free
 // following is temporary fix for zpe needs.
 // redesign it better for V2
-    rdlx=3*nmojes;
-    tfjob=AlignTalloc(jobx*sizeof(jobstruct));
+    tfjob=AlignTalloc(tfpm->jobs*sizeof(jobstruct));
     TfAppend(FRE,(uint64_t)tfjob);
     *(TFM+TFMJOB)=0;     // freechain of jobs empty
-    for(i=0;i<jobx;i++) TfLinkIn(TFM+TFMJOB,(uint64_t *) (tfjob+i));
-    tfrdl=AlignTalloc(rdlx*sizeof(rdlstruct));
+    for(i=0;i<tfpm->jobs;i++) TfLinkIn(TFM+TFMJOB,(uint64_t *) (tfjob+i));
+    tfrdl=AlignTalloc(tfpm->rdls*sizeof(rdlstruct));
     TfAppend(FRE,(uint64_t)tfrdl);
     *(TFM+TFMRDL)=0;     // freechain of jobs empty
-    for(i=0;i<rdlx;i++) TfLinkIn(TFM+TFMRDL,(uint64_t *) (tfrdl+i));
-    RUNJOB=AlignTalloc(jobx*sizeof(jobstruct *));
+    for(i=0;i<tfpm->rdls;i++) TfLinkIn(TFM+TFMRDL,(uint64_t *) (tfrdl+i));
+    RUNJOB=AlignTalloc(tfpm->jobs*sizeof(jobstruct *));
     TfAppend(FRE,(uint64_t)RUNJOB);
     nfmoj=0;
     runjobs=0;
     stopfree=0;
 
 /* Initialize the moj data  */
-    tfmoj=AlignTalloc(nmojes*sizeof(mojstruct));
+    tfmoj=AlignTalloc(tfpm->mojs*sizeof(mojstruct));
     TfAppend(FRE,(uint64_t)tfmoj);
-    for(i=0;i<nmojes;i++)
+    for(i=0;i<tfpm->mojs;i++)
     {
         mj=tfmoj+i;
         mj->mem=NULL;

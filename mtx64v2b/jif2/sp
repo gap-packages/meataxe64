@@ -1,4 +1,4 @@
-zsv an 0 an1
+zsv an ${1-0} an1
 zis an1 qq a1 a2
 zut 5 qq.bs
 if [ $? -ne 0 ]

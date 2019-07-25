@@ -15,6 +15,7 @@ extern void pcxunf(Dfmt * d, const Dfmt * s, uint64_t nob,
                    const uint8_t * t1);
 extern void pcunf(Dfmt * d, uint64_t nob, const uint8_t * t1);
 extern uint64_t pcpmad(uint64_t p,uint64_t a,uint64_t b,uint64_t c);
+extern uint64_t pcrem(uint64_t p,uint64_t a,uint64_t b);
 extern void pc1xora(Dfmt * d, const Dfmt * s1, const Dfmt * s2, uint64_t nob);
 extern void pc1xorj(Dfmt * d, const Dfmt * s1, const Dfmt * s2, uint64_t nob);
 extern void pcbif(Dfmt * d, const Dfmt * s1, const Dfmt * s2,
@@ -52,6 +53,10 @@ void pc5bmdj(const uint8_t *a, uint8_t * bv, uint8_t *c,
             const uint64_t * parms);
 void pc5bmdm(const uint8_t *a, uint8_t * bv, uint8_t *c,
             const uint64_t * parms);
+
+// pc6.s scalar multiplication HPMI
+void pc6bma(const uint8_t *a, uint8_t * bwa, uint8_t * c,
+            uint64_t p90);
 
 // in hpmi.c
 extern void hpmiset(FIELD * f);

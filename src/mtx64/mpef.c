@@ -97,8 +97,11 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     Dfmt * buf;
     Dfmt * mx;
     int tick;
-
-    TFInit(THREADS); /*  Start Thread farm */
+    TFPM * tfpm;
+    uint64_t threads;
+    tfpm=TFParms();
+    threads=tfpm->threads;
+    TFInit(tfpm); /*  Start Thread farm */
     TFStopMOJFree();
 
     CM=M3Cons(m1,s1);
@@ -111,8 +114,8 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
     CM->fmoj=fmoj;
 
 // determine chsz
-    xr=nor*THREADS;
-    xc=noc*THREADS;
+    xr=nor*threads;
+    xc=noc*threads;
     chsz=1;
     while( (xr>2500) && (xc>2500))
     {
@@ -120,7 +123,7 @@ uint64_t mpef(const char *m1, int s1, const char *b2, int s2,
         xr=xr/2;
         xc=xc/2;
     }
-    while((chsz*(chsz-1))<3*THREADS) chsz++;
+    while((chsz*(chsz-1))<3*threads) chsz++;
     if(chsz>MAXCHOP) chsz=MAXCHOP;
 
     cha=chsz;

@@ -342,20 +342,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     FELT a1,a2,a3,a4,a5,a6,a7,a8,b1,b2,b3,b4,b5,an,bn,cn;
     uint8_t * ftab8;
     uint8_t * f8;
-    uint8_t * inv8;
-    uint8_t * late8;
-    uint8_t * early8;
-    uint8_t * add8;
-    uint8_t * sub8;
-    uint8_t * mul8;
-    uint16_t * log16;
-    uint16_t * alog16;
     uint16_t * ftab16;
-    uint16_t * spac16;
-    uint16_t * sqid16;
-    uint16_t * red16;
-    uint16_t * zech16;
-    uint16_t * rdlg16;
     uint16_t * sqrt;
     uint16_t * lfx;
     uint32_t * lfy;
@@ -384,9 +371,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
 
 //  strcpy(f->mact,"j00");
 
-    f->threads=THREADS;
     f->megabytes=MEGABYTES;
-    f->maxchop=MAXCHOP;
 
     f8=(uint8_t *)f;
     ftab8=f8 + sizeof(FIELD);
@@ -620,10 +605,12 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     if( f->charc==7) f->spaclev=4;
     if( f->charc==5) f->spaclev=5;
     if( f->charc==3) f->spaclev=6;
+    if( f->charc==2) f->spaclev=8;
     f->digit=1;
     for(i=0;i<f->spaclev;i++)
         f->digit=f->digit*f->charc;
     if(f->charc==2) f->digit=256;
+    f->digit2=f->digit*f->digit;
     i=f->fdef;
     f->nodigits=0;
     if(f->digit>1)
@@ -859,22 +846,14 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         break;
     }
 /* now to populate the look-up tables    */
-    log16=NULL;         // avoid compilation warnings
-    alog16=NULL;
     if( f->fdef<=65536 )
     {
-        log16=ftab16;
-        f->Tlog16=((uint8_t *)ftab16)-f8;
-        ftab16+=f->fdef;
-        alog16=ftab16;
-        f->Talog16=((uint8_t *)ftab16)-f8;
-        ftab16+=2*f->fdef;
         x=1;
         for(z=0;z<f->fdef-1;z++)
         {
-            log16[x]=z;
-            alog16[z]=x;
-            alog16[z+f->fdef-1]=x;
+            f->log16[x]=z;
+            f->alog16[z]=x;
+            f->alog16[z+f->fdef-1]=x;
             if(f->pow==1)
             {
                 x=(x*f->conp)%f->fdef;
@@ -886,27 +865,19 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
             if(f->charc!=2)    x=qadd(f,x,smul(f,y,f->conp));
                 else           if(y==1) x^=f->conp;
         }
-        log16[0]=0xffff;
-        alog16[2*fdef-2]=alog16[0];
-        alog16[2*fdef-1]=alog16[1];
+        f->log16[0]=0xffff;
+        for(x=f->fdef-1;x<3*f->fdef;x++)
+                f->alog16[x]=f->alog16[x-f->fdef+1];
         if(f->charc!=2)
         {
-            zech16=ftab16;
-            f->Tzech16=((uint8_t *)ftab16)-f8;
-            ftab16+=f->fdef;
             for(x=0;x<f->fdef-1;x++)
             {
-                z=qadd(f,one,alog16[x]);
-                if(z==0) zech16[x]=f->qminus1;
-                else zech16[x]=log16[z];
+                z=qadd(f,one,f->alog16[x]);
+                if(z==0) f->zech16[x]=f->qminus1;
+                else f->zech16[x]=f->log16[z];
             }
-        }
-        if(f->fdef<4200)
-        {
-            rdlg16=ftab16;
-            f->Trdlg16=((uint8_t *)ftab16)-f8;
-            ftab16+=2*f->fdef;
-            for(x=0;x<2*f->fdef;x++) rdlg16[x]=x%(f->fdef-1);
+            for(x=f->fdef-1;x<3*f->fdef;x++)
+                f->zech16[x]=f->zech16[x-f->fdef+1];
         }
     }
 /*    Populate the spac16 and sqid16 tables    */
@@ -917,8 +888,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         x=1;
         x=x<<41;
         f->bar41 = 1 + x/f->charc;
-        f->sqpower=f->charc; 
-        f->sqpower2=f->charc*f->charc; 
     }
     if(f->spaclev>1)
     {
@@ -931,14 +900,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
             q2=q2*(2*f->charc-1);
             f->spaczero = f->spaczero*(2*f->charc-1)+f->charc-1;
         }
-        f->sqpower=q1;
-        f->sqpower2=q1*q1;
-        f->Tspac16=((uint8_t *)ftab16)-f8;
-        spac16=ftab16;
-        ftab16+=q1;
-        sqid16=ftab16;
-        f->Tsqid16=((uint8_t *)ftab16)-f8;
-        ftab16+=q2;
         x=1;
         x=x<<41;
         f->bar41=1 + x/q1;
@@ -950,7 +911,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         q6=f->charc;
         q7=f->charc;
         bias=(f->charc-1)/2;
-        pt1=spac16;
+        pt1=&(f->spac16[0]);
         spacp=2*f->charc-1;
         for(r1=0;r1<q1;r1++) {
           if(f->spaclev<=6) s1=0; else s1=(r1+bias)%f->charc;
@@ -982,7 +943,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         if(f->spaclev<=2) q5=1;  else q5=2*f->charc-1;
         q6=2*f->charc-1;
         q7=2*f->charc-1;
-        pt2=sqid16;
+        pt2=&(f->sqid16[0]);
         for(r1=0;r1<q1;r1++) {
           if(f->spaclev<=6) s1=0; else s1=(r1+1)%f->charc;
           t1=s1;
@@ -1006,14 +967,17 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                       t7=t6*f->charc+s7;
                       *(pt2++)=t7;
         } } } } } } }
-        f->spacneg=f->spaczero+spac16[0];
+        f->spacneg=f->spaczero+f->spac16[0];
     }
     if( f->charc<65536 )
     {
-        red16=ftab16;
-        f->Tred16=((uint8_t *)ftab16)-f8;
-        ftab16+=2*f->charc;
-        for(x=0;x<2*f->charc;x++) red16[x]=x%f->charc;
+        y=0;
+        for(x=0;x<131072;x++)
+        {
+            f->red16[x]=y;
+            y++;
+            if(y==f->charc) y=0;
+        }
     }
 
 /*   end of  16-bit look-up tables.  Now for the 8-bit ones  */
@@ -1021,13 +985,15 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     ftab8=(uint8_t*)ftab16;
 
 /*    add8 depends only on the characterstic and not 2*/
-    add8=0;
-    if((f->charc!=2) && (f->charc<256) )
+    if(f->charc<256)
     {
-        add8=ftab8;
-        f->Tadd8=ftab8-f8;
         switch(f->charc)
         {
+          case 2:
+            for(a1=0;a1<256;a1++)
+              for(b1=0;b1<256;b1++)
+                f->add8[256*a1+b1]=(a1^b1);
+            break;
 /*   add8 table for characteristic 3  */
           case 3:
             for (a1=0;a1<3;a1++)
@@ -1045,9 +1011,8 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                 bn=b1*81+b2*27+b3*9+b4*3+b5;
                 cn=((a1+b1)%3)*81 +  ((a2+b2)%3)*27  +
                    ((a3+b3)%3)*9  +  ((a4+b4)%3)*3  + (a5+b5)%3;
-                add8[256*an+bn]=cn;
+                f->add8[256*an+bn]=cn;
             }
-            ftab8+=256*243;
             break;
 /*   add8 table for characteristic 5  */
           case 5:
@@ -1061,9 +1026,8 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                           an=a1*25+a2*5+a3;
                           bn=b1*25+b2*5+b3;
                           cn=((a1+b1)%5)*25+((a2+b2)%5)*5+(a3+b3)%5;
-                          add8[256*an+bn]=cn;
+                          f->add8[256*an+bn]=cn;
                       }
-            ftab8+=256*125;
             break;
           case 7:
           case 11:
@@ -1076,27 +1040,21 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                       an=a1*f->charc+a2;
                       bn=b1*f->charc+b2;
                       cn=((a1+b1)%f->charc)*f->charc + (a2+b2)%f->charc;
-                      add8[256*an+bn]=cn;
+                      f->add8[256*an+bn]=cn;
                   }
-            ftab8+=256*f->charc*f->charc;
             break;
           default:
             for (a1=0;a1<f->charc;a1++)
               for (b1=0;b1<f->charc;b1++)
-                add8[256*a1+b1]=(a1+b1)%f->charc;
-            ftab8+=256*f->charc;
+                f->add8[256*a1+b1]=(a1+b1)%f->charc;
             break;
         }
     }
 
-    mul8=0;   // just to prevent compiler warnings making sub8
     a5=f->fdef;          // number of values of a
     if(f->fdef>256) a5=f->charc;
     if(a5<=256)
     {
-        mul8=ftab8;
-        f->Tmul8=ftab8-f8;
-        ftab8+=256*a5;
 /* notice that characteristic tables may be partly overwritten */
 /* by later field tables for 9,27,81,25,125,49,121,169         */
 /* and for 4,8,16,32,64,128 and 256                            */
@@ -1104,8 +1062,8 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
 /* is anyway the same!                                         */
         if(f->charc==2)
         {
-            for(a1=0;a1<256;a1++) mul8[a1]=0;
-            for(a1=0;a1<256;a1++) mul8[a1+256]=a1;
+            for(a1=0;a1<256;a1++) f->mul8[a1]=0;
+            for(a1=0;a1<256;a1++) f->mul8[a1+256]=a1;
         }
         if(f->charc==3)
         {
@@ -1119,7 +1077,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                 bn=b1*81+b2*27+b3*9+b4*3+b5;
                 cn=((a1*b1)%3)*81 +  ((a1*b2)%3)*27  +
                    ((a1*b3)%3)*9  +  ((a1*b4)%3)*3  + (a1*b5)%3;
-                mul8[256*a1+bn]=cn;
+                f->mul8[256*a1+bn]=cn;
             }
         }
         if(f->charc==5)
@@ -1132,7 +1090,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                   {
                       bn=b1*25+b2*5+b3;
                       cn=((a1*b1)%5)*25+((a1*b2)%5)*5+(a1*b3)%5;
-                      mul8[256*a1+bn]=cn;
+                      f->mul8[256*a1+bn]=cn;
                   }
         }
         if( (f->charc>6) && (f->charc<16) )    // 7 11 13
@@ -1143,14 +1101,14 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                 {
                     bn=b1*f->charc + b2;
                     cn=((a1*b1)%f->charc)*f->charc+(a1*b2)%f->charc;
-                    mul8[256*a1+bn]=cn;
+                    f->mul8[256*a1+bn]=cn;
                 }
         }
         if( (f->charc>16) && (f->charc<256) )   // one byte primes 17-251
         {
             for (a1=0;a1<f->charc;a1++)
               for (b1=0;b1<f->charc;b1++)
-                  mul8[256*a1+b1]=(a1*b1)%f->charc;
+                  f->mul8[256*a1+b1]=(a1*b1)%f->charc;
         }
         if(f->fdef==4)
         {
@@ -1162,7 +1120,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                     {
                         bn=b1*64+b2*16+b3*4+b4;
     cn=qmul(f,a1,b1)*64+qmul(f,a1,b2)*16+qmul(f,a1,b3)*4+qmul(f,a1,b4);
-                        mul8[256*a1+bn]=cn;
+                        f->mul8[256*a1+bn]=cn;
                     }
         }
         if( (f->fdef==8) || (f->fdef==9) || (f->fdef==16) )
@@ -1173,7 +1131,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                 {
                     bn=b1*f->fdef+b2;
                     cn=qmul(f,a1,b1)*f->fdef+qmul(f,a1,b2);
-                    mul8[256*a1+bn]=cn;
+                    f->mul8[256*a1+bn]=cn;
                 }
         }
         if( (f->pow>1) && (f->fdef>16) && (f->fdef<=256) )
@@ -1181,64 +1139,52 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
             for (a1=0;a1<f->fdef;a1++)
               for (b1=0;b1<f->fdef;b1++)
               {
-                if( (a1==0) || (b1==0) ) mul8[256*a1+b1]=0;
-                else mul8[256*a1+b1]=alog16[log16[a1]+log16[b1]];
+                if( (a1==0) || (b1==0) ) f->mul8[256*a1+b1]=0;
+            else f->mul8[256*a1+b1]=f->alog16[f->log16[a1]+f->log16[b1]];
               }
         }
     }
 
 /* sub8 table  - same fields as add8 */
-    if ( add8 != 0)
+    if((f->charc!=2) && (f->charc<256) )
     {
         b5=f->charc;
         if(f->charc<16) b5=f->charc*f->charc;
         if(f->charc==3) b5=243;
         if(f->charc==5) b5=125;
-        sub8=ftab8;
-        f->Tsub8=ftab8-f8;
-        ftab8+=256*b5;
         x=(f->charc-1)*256;
         for (a1=0;a1<b5;a1++)
             for (b1=0;b1<b5;b1++)
-                sub8[256*a1+b1]=
-                    add8[256*a1+mul8[x+b1]];
+                f->sub8[256*a1+b1]=
+                    f->add8[256*a1+f->mul8[x+b1]];
     }
 
 /* inv8 table */
     if (f->fdef <= 256)
     {
-        inv8=ftab8;
-        f->Tinv8=ftab8-f8;
-        ftab8+=f->fdef;
-        inv8[0]=0;
-        for(a1=1;a1<f->fdef;a1++) inv8[a1]=qinv(f,a1);
+        f->inv8[0]=0;
+        for(a1=1;a1<f->fdef;a1++) f->inv8[a1]=qinv(f,a1);
     }
 /* early8 and late8 tables */
     if(f->fdef <=16)
     {
-        f->Tlate8=ftab8-f8;
-        late8=ftab8;
-        ftab8+=f->dbytevals*(f->entbyte-1);
         for(a1=0;a1+1<f->entbyte;a1++)
         {
             for(a2=0;a2<f->dbytevals;a2++)
             {
                 a3=a2;
                 for(i=0;i<a1+1;i++) a3= (a3*f->fdef)%f->dbytevals;
-                late8[a1*f->dbytevals+a2]=a3;
+                f->late8[a1*f->dbytevals+a2]=a3;
             }
         }
 
-        f->Tearly8=ftab8-f8;
-        early8=ftab8;
-        ftab8+=f->dbytevals*(f->entbyte-1);
         for(a1=0;a1+1<f->entbyte;a1++)
         {
             for(a2=0;a2<f->dbytevals;a2++)
             {
                 a3=a2;
                 for(i=0;i<a1+1;i++) a3= (a3/f->fdef);
-                early8[a1*f->dbytevals+a2]=a3;
+                f->early8[a1*f->dbytevals+a2]=a3;
             }
         }
     }
@@ -1375,7 +1321,6 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
                   0x100000000000000*a8+0x1000000000000*a7+
                   0x10000000000*a6+0x100000000*a5+0x1000000*a4+0x10000*a3+0x100*a2+a1;
                }
-        f->spaclev=8;
     }
     if( (f->fdef>=27) && (f->charc==3) )
     {
@@ -1606,39 +1551,25 @@ void PSSet(const FIELD * f, uint64_t noc, DSPACE * ds)
 FELT FieldAdd(const FIELD * f, FELT a, FELT b)
 {
     uint64_t x64, pb1, pb2, pb3, qb1, qb2, qb3, rb1, rb2, rb3;
-    uint8_t * f8;
-    uint8_t * add8;
-    uint16_t * spac16;
-    uint16_t * sqid16;
-    uint16_t * red16;
     switch ( f->addtyp )
     {
       case 1:
         return a^b;
       case 2:
-        f8=(uint8_t *)f;
-        add8=f8+f->Tadd8;
-        return add8[a*256 + b];
+        return f->add8[a*256 + b];
       case 3:
       case 4:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        return red16[a+b];
+        return f->red16[a+b];
       case 5:
-        f8=(uint8_t *)f;
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        return sqid16[spac16[a]+spac16[b]];
+        return f->sqid16[f->spac16[a]+f->spac16[b]];
       case 6:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=red16[pb1+qb1];
-        rb2=red16[pb2+qb2];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->red16[pb1+qb1];
+        rb2=f->red16[pb2+qb2];
+        return rb1*f->digit+rb2;
       case 7:
       case 9:
         x64=a+b;
@@ -1649,52 +1580,42 @@ FELT FieldAdd(const FIELD * f, FELT a, FELT b)
       case 10:
         return qadd(f,a,b);
       case 11:
-        f8=(uint8_t *)f;
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=sqid16[spac16[pb1]+spac16[qb1]];
-        rb2=sqid16[spac16[pb2]+spac16[qb2]];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->sqid16[f->spac16[pb1]+f->spac16[qb1]];
+        rb2=f->sqid16[f->spac16[pb2]+f->spac16[qb2]];
+        return rb1*f->digit+rb2;
       case 12:
-        f8=(uint8_t *)f;
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=sqid16[spac16[pb1]+spac16[qb1]];
-        rb2=sqid16[spac16[pb2]+spac16[qb2]];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->sqid16[f->spac16[pb1]+f->spac16[qb1]];
+        rb2=f->sqid16[f->spac16[pb2]+f->spac16[qb2]];
+        return rb1*f->digit+rb2;
       case 13:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=red16[pb1+qb1];
-        rb2=red16[pb2+qb2];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->red16[pb1+qb1];
+        rb2=f->red16[pb2+qb2];
+        return rb1*f->digit+rb2;
       case 14:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb2=(a*f->bar41)>>41;
-        pb3=a-(pb2*f->sqpower);
+        pb3=a-(pb2*f->digit);
         pb1=(pb2*f->bar41)>>41;
-        pb2=pb2-(pb1*f->sqpower);
+        pb2=pb2-(pb1*f->digit);
         qb2=(b*f->bar41)>>41;
-        qb3=b-(qb2*f->sqpower); 
+        qb3=b-(qb2*f->digit); 
         qb1=(qb2*f->bar41)>>41;
-        qb2=qb2-(qb1*f->sqpower);
-        rb1=red16[pb1+qb1];
-        rb2=red16[pb2+qb2];
-        rb3=red16[pb3+qb3];
-        return rb1*f->sqpower2+rb2*f->sqpower+rb3;
+        qb2=qb2-(qb1*f->digit);
+        rb1=f->red16[pb1+qb1];
+        rb2=f->red16[pb2+qb2];
+        rb3=f->red16[pb3+qb3];
+        return rb1*f->digit2+rb2*f->digit+rb3;
       default:
         printf("Internal error in FieldAdd - type not set\n");
         exit(42);
@@ -1704,37 +1625,23 @@ FELT FieldAdd(const FIELD * f, FELT a, FELT b)
 FELT FieldNeg(const FIELD * f, FELT a)
 {
     uint64_t pb1,pb2,pb3;
-    uint8_t * f8;
-    uint8_t * mul8;
-    uint16_t * sqid16;
-    uint16_t * spac16;
-    uint16_t * red16;
     switch ( f->addtyp )
     {
       case 1:
         return a;
       case 2:
-        f8=(uint8_t *)f;
-        mul8=f8+f->Tmul8;
-        return mul8[(f->charc-1)*256 + a];
+        return f->mul8[(f->charc-1)*256 + a];
       case 3:
       case 4:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        return red16[f->fdef-a];
+        return f->red16[f->fdef-a];
       case 5:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        return sqid16[f->spacneg - spac16[a]];
+        return f->sqid16[f->spacneg - f->spac16[a]];
       case 6:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
-        pb1=red16[f->charc-pb1];
-        pb2=red16[f->charc-pb2];
-        return pb1*f->sqpower+pb2;
+        pb2=a-(pb1*f->digit);
+        pb1=f->red16[f->charc-pb1];
+        pb2=f->red16[f->charc-pb2];
+        return pb1*f->digit+pb2;
       case 7:
       case 9:
         if(a==0) return 0;
@@ -1743,44 +1650,34 @@ FELT FieldNeg(const FIELD * f, FELT a)
       case 10:
         return qneg(f,a);
       case 11:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower); 
-        pb1=sqid16[f->spacneg-spac16[pb1]];
-        pb2=sqid16[f->spacneg-spac16[pb2]];
-        return pb1*f->sqpower+pb2;
+        pb2=a-(pb1*f->digit); 
+        pb1=f->sqid16[f->spacneg-f->spac16[pb1]];
+        pb2=f->sqid16[f->spacneg-f->spac16[pb2]];
+        return pb1*f->digit+pb2;
       case 12:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower); 
-        pb1=sqid16[f->spacneg - spac16[pb1]];
-        pb2=sqid16[f->spacneg - spac16[pb2]];
-        return pb1*f->sqpower+pb2;
+        pb2=a-(pb1*f->digit); 
+        pb1=f->sqid16[f->spacneg - f->spac16[pb1]];
+        pb2=f->sqid16[f->spacneg - f->spac16[pb2]];
+        return pb1*f->digit+pb2;
       case 13:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
-        pb1=red16[f->charc-pb1];
-        pb2=red16[f->charc-pb2];
-        return pb1*f->sqpower+pb2;
+        pb2=a-(pb1*f->digit);
+        pb1=f->red16[f->charc-pb1];
+        pb2=f->red16[f->charc-pb2];
+        return pb1*f->digit+pb2;
       case 14:
         return qneg(f,a);
 //  what is going on here???!!!
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb2=(a*f->bar41)>>41;
-        pb3=a-(pb2*f->sqpower);
+        pb3=a-(pb2*f->digit);
         pb1=(pb2*f->bar41)>>41;
-        pb2=pb2-(pb1*f->sqpower);
-        pb1=red16[f->charc-pb1];
-        pb2=red16[f->charc-pb2];
-        pb3=red16[f->charc-pb3];
-        return pb1*f->sqpower2+pb2*f->sqpower+pb3;
+        pb2=pb2-(pb1*f->digit);
+        pb1=f->red16[f->charc-pb1];
+        pb2=f->red16[f->charc-pb2];
+        pb3=f->red16[f->charc-pb3];
+        return pb1*f->digit2+pb2*f->digit+pb3;
       default:
         printf("Internal error in FieldNeg - type not set\n");
         exit(49);
@@ -1790,39 +1687,25 @@ FELT FieldNeg(const FIELD * f, FELT a)
 FELT FieldSub(const FIELD * f, FELT a, FELT b)
 {
     uint64_t pb1,pb2,pb3,qb1,qb2,qb3,rb1,rb2,rb3;
-    uint8_t * f8;
-    uint8_t * sub8;
-    uint16_t * spac16;
-    uint16_t * sqid16;
-    uint16_t * red16;
     switch ( f->addtyp )
     {
       case 1:
         return a^b;
       case 2:
-        f8=(uint8_t *)f;
-        sub8=f8+f->Tsub8;
-        return sub8[a*256 + b];
+        return f->sub8[a*256 + b];
       case 3:
       case 4:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
-        return red16[f->fdef+a-b];;
+        return f->red16[f->fdef+a-b];;
       case 5:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
-        return sqid16[f->spaczero+spac16[a]-spac16[b]];
+        return f->sqid16[f->spaczero+f->spac16[a]-f->spac16[b]];
       case 6:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=red16[f->charc+pb1-qb1];
-        rb2=red16[f->charc+pb2-qb2];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->red16[f->charc+pb1-qb1];
+        rb2=f->red16[f->charc+pb2-qb2];
+        return rb1*f->digit+rb2;
       case 7:
       case 9:
         if(a>=b) return a-b;
@@ -1831,52 +1714,42 @@ FELT FieldSub(const FIELD * f, FELT a, FELT b)
       case 10:
         return qsub(f,a,b);
       case 11:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=sqid16[f->spaczero+spac16[pb1]-spac16[qb1]];
-        rb2=sqid16[f->spaczero+spac16[pb2]-spac16[qb2]];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->sqid16[f->spaczero+f->spac16[pb1]-f->spac16[qb1]];
+        rb2=f->sqid16[f->spaczero+f->spac16[pb2]-f->spac16[qb2]];
+        return rb1*f->digit+rb2;
       case 12:
-        f8=(uint8_t *)f;
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower);
-        rb1=sqid16[f->spaczero+spac16[pb1]-spac16[qb1]]; 
-        rb2=sqid16[f->spaczero+spac16[pb2]-spac16[qb2]]; 
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit);
+        rb1=f->sqid16[f->spaczero+f->spac16[pb1]-f->spac16[qb1]]; 
+        rb2=f->sqid16[f->spaczero+f->spac16[pb2]-f->spac16[qb2]]; 
+        return rb1*f->digit+rb2;
       case 13:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb1=(a*f->bar41)>>41;
-        pb2=a-(pb1*f->sqpower);
+        pb2=a-(pb1*f->digit);
         qb1=(b*f->bar41)>>41;
-        qb2=b-(qb1*f->sqpower); 
-        rb1=red16[f->charc+pb1-qb1];
-        rb2=red16[f->charc+pb2-qb2];
-        return rb1*f->sqpower+rb2;
+        qb2=b-(qb1*f->digit); 
+        rb1=f->red16[f->charc+pb1-qb1];
+        rb2=f->red16[f->charc+pb2-qb2];
+        return rb1*f->digit+rb2;
       case 14:
-        f8=(uint8_t *)f;
-        red16=(uint16_t *)(f8+f->Tred16);
         pb2=(a*f->bar41)>>41;
-        pb3=a-(pb2*f->sqpower);
+        pb3=a-(pb2*f->digit);
         pb1=(pb2*f->bar41)>>41;
-        pb2=pb2-(pb1*f->sqpower);
+        pb2=pb2-(pb1*f->digit);
         qb2=(b*f->bar41)>>41;
-        qb3=b-(qb2*f->sqpower); 
+        qb3=b-(qb2*f->digit); 
         qb1=(qb2*f->bar41)>>41;
-        qb2=qb2-(qb1*f->sqpower);
-        rb1=red16[f->charc+pb1-qb1];
-        rb2=red16[f->charc+pb2-qb2];
-        rb3=red16[f->charc+pb3-qb3];     
-        return rb1*f->sqpower2+rb2*f->sqpower+rb3;
+        qb2=qb2-(qb1*f->digit);
+        rb1=f->red16[f->charc+pb1-qb1];
+        rb2=f->red16[f->charc+pb2-qb2];
+        rb3=f->red16[f->charc+pb3-qb3];     
+        return rb1*f->digit2+rb2*f->digit+rb3;
       default:
         printf("Internal error in FieldSub - type not set\n");
         exit(42);
@@ -1886,26 +1759,18 @@ FELT FieldSub(const FIELD * f, FELT a, FELT b)
 FELT FieldMul(const FIELD * f, FELT a, FELT b)
 {
     uint32_t a32,b32;
-    uint16_t *log16,*alog16;
-    uint8_t *f8;
-    uint8_t * mul8;
     if( (a==0) || (b==0) ) return 0;
     switch ( f->multyp )
     {
       case 1:
-        f8=(uint8_t *)f;
-        mul8=f8+f->Tmul8;
-        return mul8[a*256+b];
+        return f->mul8[a*256+b];
       case 2:
         a32=a;
         b32=b;
         return (a32*b32)%f->p32;
       case 3:
       case 4:
-        f8=(uint8_t *)f;
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
-        return alog16[log16[a]+log16[b]];
+        return f->alog16[f->log16[a]+f->log16[b]];
       case 5:
         return (a*b)%f->p32;
       case 6:
@@ -1921,15 +1786,11 @@ FELT FieldMul(const FIELD * f, FELT a, FELT b)
 
 FELT FieldInv(const FIELD * f, FELT a)
 {
-    uint8_t * inv8;
-    uint8_t * f8;
-    uint16_t *log16,*alog16;
     if(a<=1) return a;
     switch ( f->multyp )
     {
       case 1:
-        inv8 = ((uint8_t *)f) + f->Tinv8;
-        return inv8[a];
+        return f->inv8[a];
       case 2:
       case 5:
         return pinv(f,a);
@@ -1940,10 +1801,7 @@ FELT FieldInv(const FIELD * f, FELT a)
         return qinv(f,a);
       case 3:
       case 4:
-        f8=(uint8_t *)f;
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
-        return alog16[f->qminus1-log16[a]];
+        return f->alog16[f->qminus1-f->log16[a]];
       default:
         printf("Internal error in FieldInv - type not set\n");
         exit(42);
@@ -1954,34 +1812,20 @@ FELT FieldInv(const FIELD * f, FELT a)
 FELT FieldDiv(const FIELD * f, FELT a, FELT b)
 {
     uint32_t a32,b32;
-    uint8_t * inv8;
-    uint8_t * mul8;
-    uint16_t * log16;
-    uint16_t * alog16;
-    uint8_t * f8;
     if( (a==0) || (b==0) ) return 0;
-    f8=(uint8_t *)f;
     switch ( f->multyp )
     {
       case 1:
-        mul8=f8+f->Tmul8;
-        inv8 = ((uint8_t *)f)+f->Tinv8;
-        return mul8[a*256+inv8[b]];
+        return f->mul8[a*256+f->inv8[b]];
       case 2:
         a32=a;
         b32=pinv(f,b);
         return (a32*b32)%f->p32;
       case 3:
-        f8=(uint8_t *)f;
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
-        return alog16[log16[a]+f->qminus1-log16[b]];
+        return f->alog16[f->log16[a]+f->qminus1-f->log16[b]];
       case 4:
-        f8=(uint8_t *)f;
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
-        a32=log16[a]+f->qminus1-log16[b];
-        return alog16[a32];
+        a32=f->log16[a]+f->qminus1-f->log16[b];
+        return f->alog16[a32];
       case 5:
         return (a*pinv(f,b))%f->p32;
       case 6:
@@ -2234,10 +2078,7 @@ void DCut(const DSPACE *ms, uint64_t nor, uint64_t col,
     uint64_t lbcbits;             /* bits output to last byte */
     uint64_t lbmbits;
     uint8_t *cbp, *mp;
-    uint8_t *ses, *sls, *ges, *gls;
-    uint8_t * f8;
-    uint8_t * early8;
-    uint8_t * late8;
+    const uint8_t *ses, *sls, *ges, *gls;
     const FIELD *f = ms->f;
     int uptoend;       /* flag set if last col of m used */
     uptoend=1;
@@ -2248,9 +2089,6 @@ void DCut(const DSPACE *ms, uint64_t nor, uint64_t col,
         uptoend=0;
         movecols=cbs->noc;
     }
-    f8=(uint8_t *)f;
-    late8=f8+f->Tlate8;
-    early8=f8+f->Tearly8;
 
 /*  Input is col, movecols, the.rest */
 /*  Output is     movecols, 000      */
@@ -2296,8 +2134,8 @@ void DCut(const DSPACE *ms, uint64_t nor, uint64_t col,
             }
             return;
         }
-        sls = late8  + f->dbytevals * (f->entbyte-lbcbits-1);
-        ses = early8 + f->dbytevals * (f->entbyte-lbcbits-1);
+        sls = &(f->late8[0])  + f->dbytevals * (f->entbyte-lbcbits-1);
+        ses = (&f->early8[0]) + f->dbytevals * (f->entbyte-lbcbits-1);
         if(outbyt>1)
         {
 /* Cut Case 3 ---- */
@@ -2322,8 +2160,8 @@ void DCut(const DSPACE *ms, uint64_t nor, uint64_t col,
 
     lbmbits = (col+movecols)%f->entbyte;  /* bits in last input byte */
 /* otherwise generic shift needed  */
-    ges = early8 + f->dbytevals * (gshft - 1);
-    gls = late8 + f->dbytevals * (f->entbyte - gshft - 1);
+    ges = &(f->early8[0]) + f->dbytevals * (gshft - 1);
+    gls = &f->late8[0] + f->dbytevals * (f->entbyte - gshft - 1);
 
 /* Note, lbmbits and lbcbits cannot be equal - not aligned */
 /* cases lbmbits==0, lbcbits==0 lbmbits bigger, lbcbits bigger */
@@ -2380,9 +2218,9 @@ void DCut(const DSPACE *ms, uint64_t nor, uint64_t col,
         return;
     }
 /* sls puts the last input bit at the end of the byte */
-    sls=late8+f->dbytevals*(f->entbyte-lbmbits-1);
+    sls=&f->late8[0]+f->dbytevals*(f->entbyte-lbmbits-1);
 /* ses puts the last bit of a byte to the last wanted position */
-    ses=early8+f->dbytevals*(f->entbyte-lbcbits-1);
+    ses=&(f->early8[0])+f->dbytevals*(f->entbyte-lbcbits-1);
     if (lbmbits > lbcbits)
     {
         if (clearbytes==0)
@@ -2446,14 +2284,11 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
     uint64_t lbmbits;             /* bits output to last byte */
     uint64_t inbyt;               /* input bytes used */
     uint8_t *cbp, *mp;
-    uint8_t *me,*ml,*ce,*cl;      /* shifters for removing junk */
-    int wlong;                  /* 1 m longer, 2 = , 3 cb longer */
-    uint8_t *ges, *gls;           /* general early and late shifts */
-    uint8_t *fls, *fes;           /* first byte late and early shifts */
+    const uint8_t *me,*ml,*ce,*cl;  /* shifters for removing junk */
+    int wlong;                    /* 1 m longer, 2 = , 3 cb longer */
+    const uint8_t *ges, *gls;     /* general early and late shifts */
+    const uint8_t *fls, *fes;     /* first byte late and early shifts */
     uint64_t r,s;                 /* index for counting rows    */
-    uint8_t * f8;
-    uint8_t * early8;
-    uint8_t * late8;
     if(cbs->noc==0) return;     /* if no cols, nothing to do */
     gshft = col%f->entbyte;     /* late shift required  */
 
@@ -2469,9 +2304,6 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
     lbcbits = movecols%f->entbyte; /* bits in last input byte */
 /* inbyte is movecols in bytes, rounded up */
     inbyt=((movecols+f->entbyte-1)/f->entbyte)*f->bytesper;
-    f8=(uint8_t *)f;
-    late8=f8+f->Tlate8;
-    early8=f8+f->Tearly8;
 /* get pointers to first byte to deal with */
     cbp = (uint8_t *)cb;
     mp = (uint8_t *)m;
@@ -2495,8 +2327,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
         if(wlong==1)
         {
 /* Paste Case 2 ---- */
-            ml=late8  + f->dbytevals*(lbcbits-1);
-            me=early8 + f->dbytevals*(lbcbits-1);
+            ml=&f->late8[0]  + f->dbytevals*(lbcbits-1);
+            me=&(f->early8[0]) + f->dbytevals*(lbcbits-1);
             for (r=0; r<nor; r++)
             {
                 memcpy(mp, cbp, inbyt-1);
@@ -2509,8 +2341,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
         if(wlong==3)
         {
 /* Paste Case 3 ---- */
-            ce=early8 + f->dbytevals*(f->entbyte-lbcbits-1);
-            cl=late8  + f->dbytevals*(f->entbyte-lbcbits-1);
+            ce=&(f->early8[0]) + f->dbytevals*(f->entbyte-lbcbits-1);
+            cl=&f->late8[0]  + f->dbytevals*(f->entbyte-lbcbits-1);
             for (r=0; r<nor; r++)
             {
                 memcpy(mp, cbp, inbyt-1);
@@ -2523,10 +2355,10 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
     }
 
 /* otherwise generic shift needed  */
-    gls = late8  + f->dbytevals * (gshft - 1);
-    fes = early8 + f->dbytevals * (gshft - 1);
-    ges = early8 + f->dbytevals * (f->entbyte - gshft - 1);
-    fls = late8  + f->dbytevals * (f->entbyte - gshft - 1);
+    gls = &f->late8[0]  + f->dbytevals * (gshft - 1);
+    fes = &(f->early8[0]) + f->dbytevals * (gshft - 1);
+    ges = &(f->early8[0]) + f->dbytevals * (f->entbyte - gshft - 1);
+    fls = &f->late8[0]  + f->dbytevals * (f->entbyte - gshft - 1);
 
 /* Note, lbmbits and lbcbits cannot be equal - not aligned */
 /* cases lbmbits==0, lbcbits==0 lbmbits bigger, lbcbits bigger */
@@ -2577,8 +2409,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
         if(wlong==1)
         {
 /* Paste Case 7 ---- */
-            ml=late8  + f->dbytevals*(lbmbits-1);
-            me=early8 + f->dbytevals*(lbmbits-1);
+            ml=&f->late8[0]  + f->dbytevals*(lbmbits-1);
+            me=&(f->early8[0]) + f->dbytevals*(lbmbits-1);
             for (r = 0; r < nor; r++)
             {
                 mp[0]=ges[fls[mp[0]]]+gls[cbp[0]];
@@ -2605,8 +2437,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
             return;
         }
 /* Paste Case 9 ---- */
-        ce=early8 + f->dbytevals*(f->entbyte-lbmbits-1);
-        cl=late8  + f->dbytevals*(f->entbyte-lbcbits-1);
+        ce=&(f->early8[0]) + f->dbytevals*(f->entbyte-lbmbits-1);
+        cl=&f->late8[0]  + f->dbytevals*(f->entbyte-lbcbits-1);
         for (r = 0; r < nor; r++)
         {
             mp[0]=ges[fls[mp[0]]]+gls[cbp[0]];
@@ -2623,8 +2455,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
         if(inbyt==1)
         {
 /* Paste Case 10 ---- */
-            ml=late8  + f->dbytevals*(lbmbits-1);
-            me=early8 + f->dbytevals*(lbmbits-1);
+            ml=&f->late8[0]  + f->dbytevals*(lbmbits-1);
+            me=&(f->early8[0]) + f->dbytevals*(lbmbits-1);
             for (r = 0; r < nor; r++)
             {
                 mp[0] = ges[fls[mp[0]]] + gls[cbp[0]]
@@ -2635,8 +2467,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
             return;
         }
 /* Paste Case 11 ---- */
-        ml=late8  + f->dbytevals*(lbmbits-1);
-        me=early8 + f->dbytevals*(lbmbits-1);
+        ml=&f->late8[0]  + f->dbytevals*(lbmbits-1);
+        me=&(f->early8[0]) + f->dbytevals*(lbmbits-1);
         for (r = 0; r < nor; r++)
         {
             mp[0]=ges[fls[mp[0]]]+gls[cbp[0]];
@@ -2662,8 +2494,8 @@ void DPaste(const DSPACE *cbs, const Dfmt * cb, uint64_t nor, uint64_t col,
         }
         return;
     }
-    ce=early8 + f->dbytevals*(f->entbyte-lbmbits-1);
-    cl=late8  + f->dbytevals*(f->entbyte-lbcbits-1);
+    ce=&(f->early8[0]) + f->dbytevals*(f->entbyte-lbmbits-1);
+    cl=&f->late8[0]  + f->dbytevals*(f->entbyte-lbcbits-1);
     if(inbyt==1)
     {
 /* Paste Case 13  */
@@ -2714,11 +2546,8 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
     uint32_t x32;
     uint64_t xb1,xb2,xb3,yb1,yb2,yb3,zb1,zb2,zb3;
     uint64_t r,col,rw;
-    uint16_t *sqid16, *spac16, *red16;
-    uint8_t *f8, *add8;
 
     f=ds->f;
-    f8=(uint8_t *)f;
     if(ds->ground==0)
         addtyp=f->addtyp;
     else     
@@ -2755,20 +2584,18 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
 // 8-bit cases
 
       case 2:
-        add8=f8+f->Tadd8;
         a8=a;
         b8=b;
         c8=c;
         for(r=0;r<nor;r++)
         {
-            pcbif(c8,a8,b8,ds->nob,add8);
+            pcbif(c8,a8,b8,ds->nob,f->add8);
             a8+=astride;
             b8+=bstride;
             c8+=cstride;
         }
         return;
       case 3:
-        red16=(uint16_t *)(f8+f->Tred16);
         a8=a;
         b8=b;
         c8=c;
@@ -2783,13 +2610,13 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             for(rw=0;rw<x64;rw++)
             {
                 x32=*ap8;
-                *cp8    =red16[x32 + (*bp8)];
+                *cp8    =f->red16[x32 + (*bp8)];
                 x32=*(ap8+1);
-                *(cp8+1)=red16[x32 + (*(bp8+1))];
+                *(cp8+1)=f->red16[x32 + (*(bp8+1))];
                 x32=*(ap8+2);
-                *(cp8+2)=red16[x32 + (*(bp8+2))];
+                *(cp8+2)=f->red16[x32 + (*(bp8+2))];
                 x32=*(ap8+3);
-                *(cp8+3)=red16[x32 + (*(bp8+3))];
+                *(cp8+3)=f->red16[x32 + (*(bp8+3))];
                 ap8+=4;
                 bp8+=4;
                 cp8+=4;
@@ -2797,7 +2624,7 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             for(rw=0;rw<y64;rw++)
             {
                 x32=*(ap8++);
-                *(cp8++) = red16[x32+*(bp8++)];
+                *(cp8++) = f->red16[x32+*(bp8++)];
             }
             a8+=astride;
             b8+=bstride;
@@ -2808,7 +2635,6 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
 // 16-bit cases
 
       case 4:
-        red16=(uint16_t *)(f8+f->Tred16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -2825,7 +2651,7 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap16++);
                 y64=*(bp16++);
                 z64=x64+y64;
-                *(cp16++) = red16[z64];
+                *(cp16++) = f->red16[z64];
             }
             a16+=ast;
             b16+=bst;
@@ -2834,8 +2660,6 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 5:
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -2848,14 +2672,13 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             bp16=b16;
             cp16=c16;
             for(col=0;col<ds->noc;col++)
-                *(cp16++)=sqid16[spac16[*(ap16++)]+spac16[*(bp16++)]];
+      *(cp16++)=f->sqid16[f->spac16[*(ap16++)]+f->spac16[*(bp16++)]];
             a16+=ast;
             b16+=bst;
             c16+=cst;
         }
         return;
       case 6:
-        red16=(uint16_t *)(f8+f->Tred16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -2872,12 +2695,12 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap16++);
                 y64=*(bp16++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=red16[xb1+yb1];
-                zb2=red16[xb2+yb2];
-                *(cp16++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->red16[xb1+yb1];
+                zb2=f->red16[xb2+yb2];
+                *(cp16++) = zb1*f->digit+zb2;
             }
             a16+=ast;
             b16+=bst;
@@ -2885,8 +2708,6 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 12:
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -2903,12 +2724,12 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap16++);
                 y64=*(bp16++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=sqid16[spac16[xb1]+spac16[yb1]];
-                zb2=sqid16[spac16[xb2]+spac16[yb2]];
-                *(cp16++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->sqid16[f->spac16[xb1]+f->spac16[yb1]];
+                zb2=f->sqid16[f->spac16[xb2]+f->spac16[yb2]];
+                *(cp16++) = zb1*f->digit+zb2;
             }
             a16+=ast;
             b16+=bst;
@@ -2964,8 +2785,6 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 11:
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         a32 = (uint32_t *) a;
         b32 = (uint32_t *) b;
         c32 = (uint32_t *) c;
@@ -2982,12 +2801,12 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap32++);
                 y64=*(bp32++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=sqid16[spac16[xb1]+spac16[yb1]];
-                zb2=sqid16[spac16[xb2]+spac16[yb2]];
-                *(cp32++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->sqid16[f->spac16[xb1]+f->spac16[yb1]];
+                zb2=f->sqid16[f->spac16[xb2]+f->spac16[yb2]];
+                *(cp32++) = zb1*f->digit+zb2;
             }
             a32+=ast;
             b32+=bst;
@@ -2995,7 +2814,6 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 13:
-        red16=(uint16_t *)(f8+f->Tred16);
         a32 = (uint32_t *) a;
         b32 = (uint32_t *) b;
         c32 = (uint32_t *) c;
@@ -3012,12 +2830,12 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap32++);
                 y64=*(bp32++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=red16[xb1+yb1];
-                zb2=red16[xb2+yb2];
-                *(cp32++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->red16[xb1+yb1];
+                zb2=f->red16[xb2+yb2];
+                *(cp32++) = zb1*f->digit+zb2;
             }
             a32+=ast;
             b32+=bst;
@@ -3025,7 +2843,6 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 14:
-        red16=(uint16_t *)(f8+f->Tred16);
         a32 = (uint32_t *) a;
         b32 = (uint32_t *) b;
         c32 = (uint32_t *) c;
@@ -3042,17 +2859,17 @@ void TAdd(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap32++);
                 y64=*(bp32++);
                 xb2=(x64*f->bar41)>>41;
-                xb3=x64-(xb2*f->sqpower);
+                xb3=x64-(xb2*f->digit);
                 xb1=(xb2*f->bar41)>>41;
-                xb2=xb2-(xb1*f->sqpower);
+                xb2=xb2-(xb1*f->digit);
                 yb2=(y64*f->bar41)>>41;
-                yb3=y64-(yb2*f->sqpower);
+                yb3=y64-(yb2*f->digit);
                 yb1=(yb2*f->bar41)>>41;
-                yb2=yb2-(yb1*f->sqpower);
-                zb1=red16[xb1+yb1];
-                zb2=red16[xb2+yb2];
-                zb3=red16[xb3+yb3];
-                *(cp32++) = zb1*f->sqpower2+zb2*f->sqpower+zb3;
+                yb2=yb2-(yb1*f->digit);
+                zb1=f->red16[xb1+yb1];
+                zb2=f->red16[xb2+yb2];
+                zb3=f->red16[xb3+yb3];
+                *(cp32++) = zb1*f->digit2+zb2*f->digit+zb3;
             }
             a32+=ast;
             b32+=bst;
@@ -3133,11 +2950,8 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
     uint32_t x32;
     uint64_t xb1,xb2,xb3,yb1,yb2,yb3,zb1,zb2,zb3;
     uint64_t r,col,rw;
-    uint16_t *sqid16, *spac16, *red16;
-    uint8_t *f8, *sub8;
 
     f=ds->f;
-    f8=(uint8_t *)f;
     if(ds->ground==0)
         addtyp=f->addtyp;
     else     
@@ -3174,20 +2988,18 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
 // 8-bit cases
 
       case 2:
-        sub8=f8+f->Tsub8;
         a8=a;
         b8=b;
         c8=c;
         for(r=0;r<nor;r++)
         {
-            pcbif(c8,a8,b8,ds->nob,sub8);
+            pcbif(c8,a8,b8,ds->nob,f->sub8);
             a8+=astride;
             b8+=bstride;
             c8+=cstride;
         }
         return;
       case 3:
-        red16=(uint16_t *)(f8+f->Tred16);
         a8=a;
         b8=b;
         c8=c;
@@ -3202,13 +3014,13 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             for(rw=0;rw<x64;rw++)
             {
                 x32=*ap8;
-                *cp8    =red16[f->p32 + x32 - (*bp8)];
+                *cp8    =f->red16[f->p32 + x32 - (*bp8)];
                 x32=*(ap8+1);
-                *(cp8+1)=red16[f->p32 + x32 - (*(bp8+1))];
+                *(cp8+1)=f->red16[f->p32 + x32 - (*(bp8+1))];
                 x32=*(ap8+2);
-                *(cp8+2)=red16[f->p32 + x32 - (*(bp8+2))];
+                *(cp8+2)=f->red16[f->p32 + x32 - (*(bp8+2))];
                 x32=*(ap8+3);
-                *(cp8+3)=red16[f->p32 + x32 - (*(bp8+3))];
+                *(cp8+3)=f->red16[f->p32 + x32 - (*(bp8+3))];
                 ap8+=4;
                 bp8+=4;
                 cp8+=4;
@@ -3216,7 +3028,7 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             for(rw=0;rw<y64;rw++)
             {
                 x32=*(ap8++);
-                *(cp8++) = red16[f->p32 + x32 - *(bp8++)];
+                *(cp8++) = f->red16[f->p32 + x32 - *(bp8++)];
             }
             a8+=astride;
             b8+=bstride;
@@ -3227,7 +3039,6 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
 // 16-bit cases
 
       case 4:
-        red16=(uint16_t *)(f8+f->Tred16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -3244,7 +3055,7 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap16++)+f->p32;
                 y64=*(bp16++);
                 z64=x64-y64;
-                *(cp16++) = red16[z64];
+                *(cp16++) = f->red16[z64];
             }
             a16+=ast;
             b16+=bst;
@@ -3253,8 +3064,6 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 5:
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -3267,15 +3076,14 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             bp16=b16;
             cp16=c16;
             for(col=0;col<ds->noc;col++)
-                *(cp16++)=sqid16[f->spaczero+
-                spac16[*(ap16++)]-spac16[*(bp16++)]];
+                *(cp16++)=f->sqid16[f->spaczero+
+                f->spac16[*(ap16++)]-f->spac16[*(bp16++)]];
             a16+=ast;
             b16+=bst;
             c16+=cst;
         }
         return;
       case 6:
-        red16=(uint16_t *)(f8+f->Tred16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -3292,12 +3100,12 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap16++);
                 y64=*(bp16++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=red16[f->p32+xb1-yb1];
-                zb2=red16[f->p32+xb2-yb2];
-                *(cp16++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->red16[f->p32+xb1-yb1];
+                zb2=f->red16[f->p32+xb2-yb2];
+                *(cp16++) = zb1*f->digit+zb2;
             }
             a16+=ast;
             b16+=bst;
@@ -3305,8 +3113,6 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 12:
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
         a16 = (uint16_t *) a;
         b16 = (uint16_t *) b;
         c16 = (uint16_t *) c;
@@ -3323,12 +3129,12 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap16++);
                 y64=*(bp16++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=sqid16[f->spaczero+spac16[xb1]-spac16[yb1]];
-                zb2=sqid16[f->spaczero+spac16[xb2]-spac16[yb2]];
-                *(cp16++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->sqid16[f->spaczero+f->spac16[xb1]-f->spac16[yb1]];
+                zb2=f->sqid16[f->spaczero+f->spac16[xb2]-f->spac16[yb2]];
+                *(cp16++) = zb1*f->digit+zb2;
             }
             a16+=ast;
             b16+=bst;
@@ -3383,9 +3189,7 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
             c32+=cst;
         }
         return;
-      case 11:
-        sqid16=(uint16_t *)(f8+f->Tsqid16);
-        spac16=(uint16_t *)(f8+f->Tspac16);
+      case 11:;
         a32 = (uint32_t *) a;
         b32 = (uint32_t *) b;
         c32 = (uint32_t *) c;
@@ -3402,12 +3206,12 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap32++);
                 y64=*(bp32++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=sqid16[f->spaczero+spac16[xb1]-spac16[yb1]];
-                zb2=sqid16[f->spaczero+spac16[xb2]-spac16[yb2]];
-                *(cp32++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->sqid16[f->spaczero+f->spac16[xb1]-f->spac16[yb1]];
+                zb2=f->sqid16[f->spaczero+f->spac16[xb2]-f->spac16[yb2]];
+                *(cp32++) = zb1*f->digit+zb2;
             }
             a32+=ast;
             b32+=bst;
@@ -3415,7 +3219,6 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 13:
-        red16=(uint16_t *)(f8+f->Tred16);
         a32 = (uint32_t *) a;
         b32 = (uint32_t *) b;
         c32 = (uint32_t *) c;
@@ -3432,12 +3235,12 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap32++);
                 y64=*(bp32++);
                 xb1=(x64*f->bar41)>>41;
-                xb2=x64-(xb1*f->sqpower);
+                xb2=x64-(xb1*f->digit);
                 yb1=(y64*f->bar41)>>41;
-                yb2=y64-(yb1*f->sqpower); 
-                zb1=red16[f->p32+xb1-yb1];
-                zb2=red16[f->p32+xb2-yb2];
-                *(cp32++) = zb1*f->sqpower+zb2;
+                yb2=y64-(yb1*f->digit); 
+                zb1=f->red16[f->p32+xb1-yb1];
+                zb2=f->red16[f->p32+xb2-yb2];
+                *(cp32++) = zb1*f->digit+zb2;
             }
             a32+=ast;
             b32+=bst;
@@ -3445,7 +3248,6 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
         }
         return;
       case 14:
-        red16=(uint16_t *)(f8+f->Tred16);
         a32 = (uint32_t *) a;
         b32 = (uint32_t *) b;
         c32 = (uint32_t *) c;
@@ -3462,17 +3264,17 @@ void TSub(const DSPACE * ds, uint64_t nor, const Dfmt *a, uint64_t astride,
                 x64=*(ap32++);
                 y64=*(bp32++);
                 xb2=(x64*f->bar41)>>41;
-                xb3=x64-(xb2*f->sqpower);
+                xb3=x64-(xb2*f->digit);
                 xb1=(xb2*f->bar41)>>41;
-                xb2=xb2-(xb1*f->sqpower);
+                xb2=xb2-(xb1*f->digit);
                 yb2=(y64*f->bar41)>>41;
-                yb3=y64-(yb2*f->sqpower);
+                yb3=y64-(yb2*f->digit);
                 yb1=(yb2*f->bar41)>>41;
-                yb2=yb2-(yb1*f->sqpower);
-                zb1=red16[f->p32+xb1-yb1];
-                zb2=red16[f->p32+xb2-yb2];
-                zb3=red16[f->p32+xb3-yb3];
-                *(cp32++) = zb1*f->sqpower2+zb2*f->sqpower+zb3;
+                yb2=yb2-(yb1*f->digit);
+                zb1=f->red16[f->p32+xb1-yb1];
+                zb2=f->red16[f->p32+xb2-yb2];
+                zb3=f->red16[f->p32+xb3-yb3];
+                *(cp32++) = zb1*f->digit2+zb2*f->digit+zb3;
             }
             a32+=ast;
             b32+=bst;
@@ -3545,19 +3347,13 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
     const FIELD * f;
     unsigned int i;
     int madtyp;
-    uint8_t  *pmul8,*p8,*q8;
+    const uint8_t *pmul8;
+    uint8_t  *p8,*q8;
     uint16_t *p16,*q16;
     uint32_t *p32,*q32;
     uint64_t *p64,*q64;
-    uint32_t x32,y32,a32;
-    uint64_t x64,a64,b64;
-    uint8_t * f8;
-    uint8_t * mul8;
-    uint8_t * add8;
-    uint16_t * log16;
-    uint16_t * alog16;
-    uint16_t * zech16;
-    uint16_t * rdlg16;
+    uint32_t x32,y32,a32,z32;
+    uint64_t x64,a64,b64;;
     f=ds->f;
     if(ds->ground==0) madtyp=f->madtyp;
            else       madtyp=f->pmadtyp;
@@ -3570,9 +3366,7 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
             DAdd(ds,nor,d1,d2,d2);
             return;
         }
-        f8=(uint8_t *)f;
-        mul8=f8+f->Tmul8;
-        pmul8=mul8+scalar*256;
+        pmul8=&(f->mul8[scalar*256]);
         p8=(uint8_t *)d1;
         q8=(uint8_t *)d2;
         pcxunf(q8,p8,ds->nob*nor,pmul8);
@@ -3589,13 +3383,10 @@ void DSMad(const DSPACE * ds, FELT scalar, uint64_t nor, const Dfmt * d1, Dfmt *
             DSub(ds,nor,d2,d1,d2);
             return;
         }
-        f8=(uint8_t *)f;
-        mul8=f8+f->Tmul8;
-        add8=f8+f->Tadd8;
-        pmul8=mul8+scalar*256;
+        pmul8=&(f->mul8[scalar*256]);
         p8=(uint8_t *)d1;
         q8=(uint8_t *)d2;
-        pcbunf(q8,p8,ds->nob*nor,pmul8,add8);
+        pcbunf(q8,p8,ds->nob*nor,pmul8,f->add8);
         return;
       case 3:
 printf("Currently not used\n");
@@ -3617,14 +3408,10 @@ exit(1);
         return;
       case 5:
         if(scalar==0) return;
-        f8=(uint8_t *)f;
-        zech16=(uint16_t *)(f8+f->Tzech16);
-        rdlg16=(uint16_t *)(f8+f->Trdlg16);
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
         p16 = (uint16_t *) d1;
         q16 = (uint16_t *) d2;
-        a32=log16[scalar];
+        a32=f->log16[scalar];
+        z32=2*f->qminus1;
         for(i=0;i<ds->noc*nor;i++)
         {
             x32=*(p16++);
@@ -3633,31 +3420,27 @@ exit(1);
               continue;
             }
             y32=*q16;
-            x32=rdlg16[log16[x32]+a32];
+            x32=f->log16[x32]+a32;
             if(y32==0)
             {
-                *(q16++)=alog16[x32];
+                *(q16++)=f->alog16[x32];
                 continue;
             }
-            y32=log16[y32];
-            y32=zech16[rdlg16[f->qminus1+y32-x32]];
+            y32=f->log16[y32];
+            y32=f->zech16[z32+y32-x32];
             if(y32==f->qminus1)
             {
                 *(q16++)=0;
                 continue;
             }
-            *(q16++)=alog16[rdlg16[x32+y32]];
+            *(q16++)=f->alog16[x32+y32];
         }
         return;
       case 6:
-        f8=(uint8_t *)f;
-        rdlg16=(uint16_t *)(f8+f->Trdlg16);
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
         if(scalar==0) return;
         p16 = (uint16_t *) d1;
         q16 = (uint16_t *) d2;
-        a32=log16[scalar];
+        a32=f->log16[scalar];
         for(i=0;i<ds->noc*nor;i++)
         {
             x32=*(p16++);
@@ -3665,20 +3448,16 @@ exit(1);
               q16++;
               continue;
             }
-            x32=rdlg16[log16[x32]+a32];
+            x32=f->log16[x32]+a32;
             y32=*q16;
-            *(q16++)=y32^alog16[x32];
+            *(q16++)=y32^f->alog16[x32];
         }
         return;
       case 7:
         if(scalar==0) return;
-        f8=(uint8_t *)f;
-        zech16=(uint16_t *)(f8+f->Tzech16);
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
         p16 = (uint16_t *) d1;
         q16 = (uint16_t *) d2;
-        a32=log16[scalar];
+        a32=f->log16[scalar];
         for(i=0;i<ds->noc*nor;i++)
         {
             x32=*(p16++);
@@ -3687,17 +3466,17 @@ exit(1);
               q16++;
               continue;
             }
-            x32=log16[x32]+a32;
+            x32=f->log16[x32]+a32;
             if(x32>=f->qminus1) x32-=f->qminus1;
             if(y32==0)
             {
-                *(q16++)=alog16[x32];
+                *(q16++)=f->alog16[x32];
                 continue;
             }
-            y32=log16[y32];
+            y32=f->log16[y32];
             y32=f->qminus1+y32-x32;
             if(y32>=f->qminus1) y32-=f->qminus1;
-            y32=zech16[y32];
+            y32=f->zech16[y32];
             if(y32==f->qminus1)
             {
                 *(q16++)=0;
@@ -3705,17 +3484,14 @@ exit(1);
             }
             x32=x32+y32;
             if(x32>=f->qminus1)x32-=f->qminus1;
-            *(q16++)=alog16[x32];
+            *(q16++)=f->alog16[x32];
         }
         return;
       case 8:
-        if(scalar==0) return;
-        f8=(uint8_t *)f;
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
+        if(scalar==0) return;;
         p16 = (uint16_t *) d1;
         q16 = (uint16_t *) d2;
-        a32=log16[scalar];
+        a32=f->log16[scalar];
         for(i=0;i<ds->noc*nor;i++)
         {
             x32=*(p16++);
@@ -3723,10 +3499,10 @@ exit(1);
               q16++;
               continue;
             }
-            x32=log16[x32]+a32;
+            x32=f->log16[x32]+a32;
             if(x32>=f->qminus1) x32-=f->qminus1;
             y32=*q16;
-            *(q16++)=y32^alog16[x32];
+            *(q16++)=y32^f->alog16[x32];
         }
         return;
       case 9:
@@ -3814,17 +3590,13 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
     const FIELD * f;
     unsigned int i;
     int multyp;
-    uint8_t  *pmul8,*p8;
+    const uint8_t *pmul8;
+    uint8_t  *p8;
     uint16_t *p16;
     uint32_t *p32;
     uint64_t *p64;
     uint32_t a32,x32;
     uint64_t a64,x64,y64;
-    uint8_t * f8;
-    uint8_t * mul8;
-    uint16_t * log16;
-    uint16_t * alog16;
-    uint16_t * rdlg16;
     f=ds->f;
     if(ds->ground==0) multyp=f->multyp;
             else      multyp=f->pmultyp;
@@ -3837,9 +3609,7 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
             return;
         }
         if(a==1) return;
-        f8=(uint8_t *)f;
-        mul8=f8+f->Tmul8;
-        pmul8=mul8+a*256;
+        pmul8=&(f->mul8[a*256]);
         p8=(uint8_t *)d;
         pcunf(p8,ds->nob*nor,pmul8);
         return;
@@ -3861,12 +3631,8 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
             memset(d,0,ds->nob*nor);
             return;
         }
-        f8=(uint8_t *)f;
-        rdlg16=(uint16_t *)(f8+f->Trdlg16);
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
         p16 = (uint16_t *) d;
-        a32=log16[a];
+        a32=f->log16[a];
         for(i=0;i<ds->noc*nor;i++)
         {
             x32=*p16;
@@ -3874,8 +3640,8 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
               p16++;
               continue;
             }
-            x32=rdlg16[log16[x32]+a32];
-            *(p16++)=alog16[x32];
+            x32=f->log16[x32]+a32;
+            *(p16++)=f->alog16[x32];
         }
         return;
       case 4:
@@ -3884,11 +3650,8 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
             memset(d,0,ds->nob*nor);
             return;
         }
-        f8=(uint8_t *)f;
-        log16=(uint16_t *)(f8+f->Tlog16);
-        alog16=(uint16_t *)(f8+f->Talog16);
         p16 = (uint16_t *) d;
-        a32=log16[a];
+        a32=f->log16[a];
         for(i=0;i<ds->noc*nor;i++)
         {
             x32=*p16;
@@ -3896,9 +3659,9 @@ void DSMul(const DSPACE * ds, FELT a, uint64_t nor, Dfmt * d)
               p16++;
               continue;
             }
-            x32=log16[x32]+a32;
+            x32=f->log16[x32]+a32;
             if(x32>=f->qminus1) x32-=f->qminus1;
-            *(p16++)=alog16[x32];
+            *(p16++)=f->alog16[x32];
         }
         return;
       case 5:

@@ -24,8 +24,11 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
     DSPACE da,db,dw;
     int strat,buffering,concur;
     uint64_t D1,D2,siza,sizb,sizc,sizw;
-
-    TFInit(THREADS);
+    uint64_t threads;
+    TFPM * tfpm;
+    tfpm=TFParms();
+    threads=tfpm->threads;
+    TFInit(tfpm); /*  Start Thread farm */
     TFStopMOJFree();
 
     A=M3Cons(m1,s1);    // Construct and set filename
@@ -71,10 +74,10 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
     strat=0;
 // default concurrency and buffering
     concur=20;
-    if(concur<2*(THREADS+3)) concur=2*(THREADS+3);
+    if(concur<2*(threads+3)) concur=2*(threads+3);
     buffering=2;
-    if(THREADS>10) buffering=3;
-    if(THREADS>25) buffering=4;
+    if(threads>10) buffering=3;
+    if(threads>25) buffering=4;
 
 /* First consider Strategy 3 - just blast them all off  */
     if( ((siza+sizb+sizc)/1000000)<f->megabytes)
@@ -90,7 +93,7 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
         }
         DSSet(f,D2,&dw);
         sizw=dw.nob*D2;
-        if(((A->c*sizc+THREADS*5*sizw)/1000000)<f->megabytes) strat=3;
+        if(((A->c*sizc+threads*5*sizw)/1000000)<f->megabytes) strat=3;
     }
 /* strategy 2 may be correct if A+C smaller than B  */
     if( (strat==0) && ((siza+sizc)<sizb) &&

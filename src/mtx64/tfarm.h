@@ -16,6 +16,14 @@ void TfPause(long wait);
 
 #define MAXPARAMS 10
 
+typedef struct
+{
+    uint64_t threads;
+    uint64_t jobs;
+    uint64_t mojs;
+    uint64_t rdls;
+} TFPM;
+
 typedef struct rdlinc
 {
     struct rdlinc *NEXRDL;
@@ -56,7 +64,8 @@ extern void   TFGetReadRef(MOJ moj);
 extern void   TFSubmit(int priority, int proggyno, ...);
 extern MOJ    TFNewMOJ(void);
 extern void   TFQuickReady(MOJ moj);
-extern void   TFInit(int threads);
+extern TFPM * TFParms(void);
+extern void   TFInit(TFPM * tfpm);
 extern void   TFWaitEnd(void);
 extern void   TFClose(void);
 extern void   TFUpJobs(void);

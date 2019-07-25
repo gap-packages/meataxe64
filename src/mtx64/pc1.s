@@ -372,6 +372,16 @@ pcpmad:
         movq    %rdx,%rax
         ret      
 
+// uint64_t pcrem(uint64_t p,uint64_t xl,uint64_t xh);
+//  %rax             %rdi         %rsi       %rdx 
+	.text
+	.globl	pcrem
+pcrem:
+        movq    %rsi,%rax
+        divq    %rdi      /* %rax quot,  %rdx rem  */
+        movq    %rdx,%rax
+        ret  
+
 //  pc1xora(d.s1,s2,nob)  d = s1^s2 (all nob bytes long)
 //                      rdi rsi rdx     rcx
 
