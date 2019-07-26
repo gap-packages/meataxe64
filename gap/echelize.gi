@@ -318,10 +318,14 @@ MTX64_EchelizeInner := function(mat, optrec)
         rs := MTX64_EmptyBitString(n);
         MTX64_BSShiftOr(res.rowSelect, zeroRows, rs);
         res.rowSelect := rs;        
-        if IsBound(res.cleaner) then
+        if optrec.cleanerNeeded then
             k := MTX64_NewMatrix(f,n-res.rank, res.rank);
             MTX64_DPaste(res.cleaner, zeroRows, n-zeroRows-res.rank, 0, k);
             res.cleaner := k;
+        else
+            if IsBound(res.cleaner) then
+                Unbind(res.cleaner);
+            fi;            
         fi;
         Info(InfoMTX64_NG,2,"Returning rank ",res.rank);        
         return res;
