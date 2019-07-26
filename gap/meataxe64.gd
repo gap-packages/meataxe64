@@ -268,14 +268,16 @@ DeclareGlobalFunction( "MTX64_Submatrix" );
 
 #! 
 #! @Arguments bs, m 
-#! @Returns a new Meataxe64 matrix containing only those rows of <A>m</A> whose
-#! corresponding entry in <A>bs</A> is set. The length of <A>bs</A> must match
+#! @Returns a new, immutable, plain, length 2 list. The first entry is a 
+#! new Meataxe64 matrix containing only those rows of <A>m</A> whose
+#! corresponding entry in <A>bs</A> is set. The second entry is a new Meataxe64
+#! matrix containing the remaining rows.The length of <A>bs</A> must match
 #! the number of rows of <A>m</A>
 DeclareGlobalFunction( "MTX64_RowSelect");
 #! 
 #! <ManSection> 
 #! <Func Name="MTX64_ColSelect" Arg="bitstring, matrix"/>
-#!  <Description> <C>MTX64_ColSelect</C> returns a new plain list containing two
+#!  <Description> <C>MTX64_ColSelect</C> returns a new immutable plain list containing two
 #! matrices. The first is composed of the
 #!  columns of <A>matrix</A> corresponding to the set bits in <A>bitstring</A>
 #! whose length should match the number columns of <A>matrix</A>. The second is
