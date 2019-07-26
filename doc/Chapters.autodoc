@@ -1,7 +1,7 @@
 @Chapter datatypes
 @Chapter Gaussian Elimination Functions
 @Chapter Parallel Computations
-@Section File-based Parallel Algorithms
+@Section File-based Parallel Functions
 The C Meataxe64 includes a number of parallel implementations of
 challenging computations. These take their inputs and return their
 results in disk files, which can be read and written using <Ref
@@ -36,12 +36,14 @@ non-pivot columns of the pivot rows. The rank is returned </Description></ManSec
 
 <ManSection> <Func Name="MTX64_fEchelize" Arg="tmpdir, a, cs, rs, m, k, r"/>
 <Description> This function computes the negative reduced echelon form
-of the matrix in file <A>a</A>, which is returned in two parts. A
-bitsstring in file <A>rs</A> which indicates the locations of pivot
+of the matrix in file <A>a</A>, and writes
+both the result and the transforming matrix, in a total of five parts. The result is given as a
+bitsstring in file <A>cs</A> which indicates the locations of pivot
 columns and a remnant in <A>r</A> which contains the entries from the
 non-pivot columns of the pivot rows.  In addition, the multiplier,
 cleaner and row select are returned in files <A>m</A>, <A>k</A> and
-<A>rs</A>, respectively. The rank is returned
+<A>rs</A>, respectively. See <Ref Chapter="Gaussian Elimination Functions"> for more details.
+The rank is returned
 </Description></ManSection>  
 
 

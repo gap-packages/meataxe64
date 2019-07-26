@@ -275,10 +275,10 @@ DeclareGlobalFunction( "MTX64_RowSelect");
 #! 
 #! <ManSection> 
 #! <Func Name="MTX64_ColSelect" Arg="bitstring, matrix"/>
-#!  <Description> <C>MTX64_ColSelect</C> returns a matrix composed of the
+#!  <Description> <C>MTX64_ColSelect</C> returns a new plain list containing two
+#! matrices. The first is composed of the
 #!  columns of <A>matrix</A> corresponding to the set bits in <A>bitstring</A>
-#! whose length should match the number columns of <A>matrix</A>. The return
-#! value this has as many columns as the weight of <A>bitstring</A> and as many
-#! rows as <A>matrix</A>
+#! whose length should match the number columns of <A>matrix</A>. The second is
+#! composed of the remaining columns.
 #!  </Description> 
 #! </ManSection>
