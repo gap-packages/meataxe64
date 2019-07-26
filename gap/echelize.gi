@@ -413,7 +413,7 @@ end);
 #! These include <Ref BookName="ref" Oper="RankMat"/>, <Ref BookName="ref" Oper="InverseMutable"/>,
 #! <Ref BookName="ref" Oper="NullspaceMat"/>, <Ref BookName="ref" Oper="SemiEchelonMat"/> (including
 #! its destructive variants and variants computing transforming
-#! matrice), <Ref BookName="ref" Oper="SolutionMat"/>, <Ref BookName="ref" Oper="TriangulizedMat"/>,
+#! matrices), <Ref BookName="ref" Oper="SolutionMat"/>, <Ref BookName="ref" Oper="TriangulizedMat"/>,
 #! <Ref BookName="ref" Oper="BaseMat"/> (and destructive variant) and
 #! <Ref BookName="ref" 
 #! Oper="SumIntersectionMat"/>. 

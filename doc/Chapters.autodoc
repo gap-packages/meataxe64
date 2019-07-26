@@ -1,3 +1,48 @@
 @Chapter datatypes
 @Chapter Gaussian Elimination Functions
 @Chapter Parallel Computations
+@Section File-based Parallel Algorithms
+The C Meataxe64 includes a number of parallel implementations of
+challenging computations. These take their inputs and return their
+results in disk files, which can be read and written using <Ref
+Func="MTX64_WriteMatrix"/> and <Ref Func="MTX64_ReadMatrix"/>. They use
+a number of threads specified in the file <C>src/mtx64/tuning.h</C>.
+Each requires a <A>tmpdir</A> parameter which should be the pathname of
+a directory suitable for temporary files. 
+
+<ManSection> <Func Name="MTX64_fMultiply" Arg="tmpdir, fn1, fn2, fn3"/>
+<Description> This function multiplies the matrices in files <A>fn1</A>
+and <A>fn2</A> (in that order) and writes the result into file
+<A>fn3</A>.</Description></ManSection> 
+
+<ManSection> <Func Name="MTX64_fMultiplyAdd" Arg="tmpdir, fn1, fn2, fn3,
+fn4"/>
+<Description> This function multiplies the matrices in files <A>fn1</A>
+and <A>fn2</A> (in that order) adds the result to teh matrix in
+<A>fn3</A> and writes the result into file
+<A>fn4</A>.</Description></ManSection> 
+
+<ManSection> <Func Name="MTX64_fTranspose" Arg="tmpdir, fn1, fn2"/>
+<Description> This function computes the transpose of the matrix in
+filex <A>fn1</A>  and writes the result into file
+<A>fn2</A>.</Description></ManSection> 
+
+<ManSection> <Func Name="MTX64_fProduceNREF" Arg="tmpdir, fn1, fn2, fn3"/>
+<Description> This function computes the negative reduced echelon form
+of the matrix in file <A>fn1</A>, which is returned in two parts. A
+bitsstring in file <A>fn2</A> which indicates the locations of pivot
+columns and a remnant in <A>fn3</A> which contains the entries from the
+non-pivot columns of the pivot rows. The rank is returned </Description></ManSection> 
+
+<ManSection> <Func Name="MTX64_fEchelize" Arg="tmpdir, a, cs, rs, m, k, r"/>
+<Description> This function computes the negative reduced echelon form
+of the matrix in file <A>a</A>, which is returned in two parts. A
+bitsstring in file <A>rs</A> which indicates the locations of pivot
+columns and a remnant in <A>r</A> which contains the entries from the
+non-pivot columns of the pivot rows.  In addition, the multiplier,
+cleaner and row select are returned in files <A>m</A>, <A>k</A> and
+<A>rs</A>, respectively. The rank is returned
+</Description></ManSection>  
+
+
+

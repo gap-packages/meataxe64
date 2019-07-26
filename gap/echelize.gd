@@ -4,18 +4,18 @@
 #! <Display> <![CDATA[\left(\begin{array}{cc} M & 0\\ K & 1\end{array}\right)
 #! \rho A \gamma = \left(\begin{array}{cc} -1 & R \\ 0 &
 #! 0\end{array}\right)]]></Display> where <M>A</M> is the input matrix,
-#! and <M>M</M>,<M>K</M>, <M>\rho</M>, <M>\gamma</M> and <M>R</M>
+#! and <M>M</M>, <M>K</M>, <M>\rho</M>, <M>\gamma</M> and <M>R</M>
 #! correspond to various components of the output. Specifically <List>
-#! <Mark><M>M</M></Mark> <Item> Is an invertible matrix called the multiplier</Item>
-#! <Mark><M>K</M></Mark> <Item> Is a matrix called the cleaner</Item>
+#! <Mark><M>M</M></Mark> <Item> is an invertible matrix called the multiplier</Item>
+#! <Mark><M>K</M></Mark> <Item> is a matrix called the cleaner</Item>
 #! <Mark><M>\rho</M></Mark> <Item>is the matrix corresponding to the row
-#! select bitstring (left multiplicatiob by this matrix shuffles the
+#! select bitstring (left multiplication by this matrix shuffles the
 #! pivot rows to the top, preserving the order within the sets of
-#! pivot and non-pivot rows</Item>
+#! pivot and non-pivot rows)</Item>
 #! <Mark><M>\gamma</M></Mark> <Item>is the matrix corresponding to the column
-#! select bitstring (right multiplicatiob by this matrix shuffles the
+#! select bitstring (right multiplication by this matrix shuffles the
 #! pivot columns to the left, preserving the order within the sets of
-#! pivot and non-pivot columns</Item>
+#! pivot and non-pivot columns)</Item>
 #! <Mark><M>R</M></Mark> <Item> Is a matrix called the remnant</Item></List>
 #! Not all of these are necessarily always computed. 
 #! 

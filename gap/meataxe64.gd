@@ -47,8 +47,9 @@ DeclareCategory( "IsMTX64Matrix",
 DeclareCategory( "IsMTX64BitString",
         IsObject );
 
-#! @Section Basic Construction and Access Operations
+#! @Section Constructing and Accessing Meataxe64 Fields and their Elements
 #! @BeginGroup MTX64_FiniteField
+#! @GroupTitle MTX64_FiniteField
 #! @Description
 #!   retrieves a MeatAxe64 finite field of given order, which must be
 #!   be a prime power less than or equal to <M>2^{64}</M>, creating it if needed.
@@ -73,6 +74,7 @@ DeclareOperation( "MTX64_FiniteField", [IsPosInt, IsPosInt]);
  
 
 #! @BeginGroup MTX64_FiniteFieldElement
+#! @GroupTitle MTX64_FiniteFieldElement
 #! @Description creates a MeatAxe64 finite field element in a given field
 #! <A>f</A>. The element may be specified by number: the numbering of elements runs from 0 to <M>q-1</M> and is defined
 #! in the MeatAxe64 C library. It is guaranteed that element 0 is the zero of
@@ -98,7 +100,9 @@ DeclareGlobalFunction( "MTX64_FieldOfElement" );
 #! Returns a new mutable zero matrix over the field <A>f</A> with <A>nor</A> rows
 #! and <A>noc</A> columns.</Description></ManSection>
 
+#! @Section Constructing and Accessing Meataxe64 Matrices
 #! @BeginGroup MTX64_Matrix
+#! @GroupTitle MTX64_Matrix
 #! @Description constructs a Meataxe64 matrix from a &GAP;
 #!  matrix, plus optional specification of the field and dimensions
 #!  of the matrix. Specification of the dimensions is useful 
@@ -125,6 +129,7 @@ DeclareGlobalFunction( "MTX64_RandomMat" );
 #! 
 #! 
 #! <ManSection>
+#!  <Heading>Accessing Matrix Dimensions</Heading>
 #!  <Func Name="MTX64_NumCols" Arg="m"/>
 #!  <Func Name="MTX64_NumRows" Arg="m"/> <Description>
 #! These function return the dimensions of the matrix. Unlike in the C API
@@ -132,6 +137,7 @@ DeclareGlobalFunction( "MTX64_RandomMat" );
 #! even a matrix with no rows knows how many columns it has.</Description></ManSection>
 #! 
 #! <ManSection>
+#!  <Heading>Accessing Matrix Entries Individually</Heading>
 #!  <Func Name="MTX64_GetEntry" Arg="m, i, j"/>
 #!  <Func Name="MTX64_SetEntry" Arg="m, i, j, x"/> <Description>
 #! <C>MTX64_GetEntry</C> and <C>MTX64_SetEntry</C> provide
@@ -168,7 +174,8 @@ DeclareOperation( "MTX64_ExtractMatrix", [IsMTX64Matrix]);
 #! @Description returns a copy of the submatrix of <A>m</A> specified by the indices.
 #! <A>startrow</A> and <A>startcol</A> are one based.
 DeclareGlobalFunction( "MTX64_Submatrix" );
- 
+
+#! @Section Constructing and Accessing Meataxe64 BitStrings
 #!
 #! <ManSection> 
 #! <Func Name="MTX64_EmptyBitString" Arg="len"/>
@@ -192,16 +199,18 @@ DeclareGlobalFunction( "MTX64_Submatrix" );
 #! </ManSection>
 #! 
 #! <ManSection> 
+#! <Heading>Converting Meataxe64 BitStrings to and from &GAP; Boolean Lists</Heading>
 #! <Func Name="MTX64_BitStringBlist" Arg="blist"/>
 #! <Func Name="MTX64_BlistBitstring" Arg="bitstring"/>
 #!  <Description>Convert between the MeatAxe64 bitstrings and GAP's Boolean lists</Description> 
 #! </ManSection>
 #! 
 #! <ManSection> 
+#! <Heading>Basic Properties of Meataxe64 BitStrings</Heading>
 #! <Func Name="MTX64_LengthOfBitString" Arg="bitstring"/>
 #! <Func Name="MTX64_WeightOfBitstring" Arg="bitstring"/>
 #!  <Description>The length of a bitstring is the number of bits in it, the
-#! weight is the number of one bits.</Description> 
+#! weight is the number of one bits. The weight is stored in the BitString.</Description> 
 #! </ManSection>
 #! 
 #! <ManSection> 
@@ -224,6 +233,7 @@ DeclareGlobalFunction( "MTX64_Submatrix" );
 #! </ManSection>
 #! 
 #! <ManSection> 
+#! <Heading>File I/O for Meataxe64 Matrices</Heading>
 #! <Func Name="MTX64_ReadMatrix" Arg="fn"/>
 #! <Func Name="MTX64_WriteMatrix" Arg="m, fn"/>
 #!  <Description> These functions allow reading and writing of matrices to disk
