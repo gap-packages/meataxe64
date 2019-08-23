@@ -9,8 +9,6 @@ fi;
 
 AutoDoc( rec( scaffold := true, autodoc := rec(files := ["doc/Chapters.autodoc"] )) );
 
-PrintTo("VERSION", PackageInfo("meataxe64")[1].Version);
-
 QUIT_GAP();
 
 

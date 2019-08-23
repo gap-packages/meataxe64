@@ -41,7 +41,7 @@
 #! between fields, and matrix dimensions must match correctly (unbound entries
 #! are not treated as zero). This includes transposition.</Item>
 #!
-#! <Item><Ref Oper="MatElm" BookName="ref"/> and <Ref Oper="SetMatElm" BookName="ref"/> methods are installed for 
+#! <Item><C>MatElm</C> and <C>SetMatElm</C> methods are installed for 
 #! matrices which do the same as <Ref Func="MTX64_GetEntry"/> and
 #! <Ref Func="MTX64_SetEntry"/> but using one-based indexing. This supports access
 #! like <C>m[i,j]</C> for reading and writing.</Item>
