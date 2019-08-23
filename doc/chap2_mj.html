@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<title>GAP (meataxe64) - Chapter 2: Gaussian Elimination Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="GAPDoc2HTML" />
+<link rel="stylesheet" type="text/css" href="manual.css" />
+<script src="manual.js" type="text/javascript"></script>
+<script type="text/javascript">overwriteStyle();</script>
+</head>
+<body class="chap2"  onload="jscontent()">
+
+
+<div class="chlinktop"><span class="chlink1">Goto Chapter: </span><a href="chap0_mj.html">Top</a>  <a href="chap1_mj.html">1</a>  <a href="chap2_mj.html">2</a>  <a href="chap3_mj.html">3</a>  <a href="chapInd_mj.html">Ind</a>  </div>
+
+<div class="chlinkprevnexttop">&nbsp;<a href="chap0_mj.html">[Top of Book]</a>&nbsp;  <a href="chap0_mj.html#contents">[Contents]</a>&nbsp;  &nbsp;<a href="chap1_mj.html">[Previous Chapter]</a>&nbsp;  &nbsp;<a href="chap3_mj.html">[Next Chapter]</a>&nbsp;  </div>
+
+<p id="mathjaxlink" class="pcenter"><a href="chap2.html">[MathJax off]</a></p>
+<p><a id="X86264A3B85DD59EA" name="X86264A3B85DD59EA"></a></p>
+<div class="ChapSects"><a href="chap2_mj.html#X86264A3B85DD59EA">2 <span class="Heading">Gaussian Elimination Functions</span></a>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap2_mj.html#X7E0D1AD881FE57F0">2.1 <span class="Heading">Basic Concepts and Main Functions</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap2_mj.html#X7B7323767FF182F5">2.1-1 MTX64_Echelize</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap2_mj.html#X85F3E5247D99324E">2.1-2 MTX64_GAPEchelize</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap2_mj.html#X834067E983CB7A96">2.2 <span class="Heading">Methods installed for Standard <strong class="pkg">GAP</strong> operations</span></a>
+</span>
+</div>
+</div>
+
+<h3>2 <span class="Heading">Gaussian Elimination Functions</span></h3>
+
+<p><a id="X7E0D1AD881FE57F0" name="X7E0D1AD881FE57F0"></a></p>
+
+<h4>2.1 <span class="Heading">Basic Concepts and Main Functions</span></h4>
+
+<p>All Gaussian elimination operations in Meataxe64 are based on the following definitions.</p>
+
+<p class="center">\[ \left(\begin{array}{cc} M &amp; 0\\ K &amp; 1\end{array}\right)
+\rho A \gamma = \left(\begin{array}{cc} -1 &amp; R \\ 0 &amp;
+0\end{array}\right)\]</p>
+
+<p>where <span class="SimpleMath">\(A\)</span> is the input matrix, and <span class="SimpleMath">\(M\)</span>, <span class="SimpleMath">\(K\)</span>, <span class="SimpleMath">\(\rho\)</span>, <span class="SimpleMath">\(\gamma\)</span> and <span class="SimpleMath">\(R\)</span> correspond to various components of the output. Specifically</p>
+
+
+<dl>
+<dt><strong class="Mark"><span class="SimpleMath">\(M\)</span></strong></dt>
+<dd><p>is an invertible matrix called the multiplier</p>
+
+</dd>
+<dt><strong class="Mark"><span class="SimpleMath">\(K\)</span></strong></dt>
+<dd><p>is a matrix called the cleaner</p>
+
+</dd>
+<dt><strong class="Mark"><span class="SimpleMath">\(\rho\)</span></strong></dt>
+<dd><p>is the matrix corresponding to the row select bitstring (left multiplication by this matrix shuffles the pivot rows to the top, preserving the order within the sets of pivot and non-pivot rows)</p>
+
+</dd>
+<dt><strong class="Mark"><span class="SimpleMath">\(\gamma\)</span></strong></dt>
+<dd><p>is the matrix corresponding to the column select bitstring (right multiplication by this matrix shuffles the pivot columns to the left, preserving the order within the sets of pivot and non-pivot columns)</p>
+
+</dd>
+<dt><strong class="Mark"><span class="SimpleMath">\(R\)</span></strong></dt>
+<dd><p>Is a matrix called the remnant</p>
+
+</dd>
+</dl>
+<p>Not all of these are necessarily always computed.</p>
+
+<p><a id="X7B7323767FF182F5" name="X7B7323767FF182F5"></a></p>
+
+<h5>2.1-1 MTX64_Echelize</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_Echelize</code>( <var class="Arg">mat</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns: a record with components <code class="code">cleaner</code>, <code class="code">colSelect</code>, <code class="code">multiplier</code>, <code class="code">rank</code>, <code class="code">remnant</code> and <code class="code">rowSelect</code> containing appropriate parts of the results. This uses the recursive single-threaded "slab" implementation in the C code of MeatAxe64</p>
+
+<p><a id="X85F3E5247D99324E" name="X85F3E5247D99324E"></a></p>
+
+<h5>2.1-2 MTX64_GAPEchelize</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_GAPEchelize</code>( <var class="Arg">mat</var>, <var class="Arg">optrec</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns: a record with some or all of the components <code class="code">cleaner</code>, <code class="code">colSelect</code>, <code class="code">multiplier</code>, <code class="code">rank</code>, <code class="code">remnant</code> and <code class="code">rowSelect</code> <var class="Arg">optrec</var> may have components <code class="code">multNeeded</code>, <code class="code">cleanerNeeded</code>, <code class="code">remnantNeeded</code> (all default to <code class="code">true</code>. Setting any of these to false means the corresponding part of the output may not be computed, which can save time. An additional optional component <code class="code">failIfSingular</code> will cause the algorithm to return <code class="code">fail</code> as soon as it detects that <var class="Arg">mat</var> is singular.</p>
+
+<p>This uses a <strong class="pkg">GAP</strong> implementation of the recursive echelonisation, but still falls back to the C code for multiplication and in the base case.</p>
+
+<p><a id="X834067E983CB7A96" name="X834067E983CB7A96"></a></p>
+
+<h4>2.2 <span class="Heading">Methods installed for Standard <strong class="pkg">GAP</strong> operations</span></h4>
+
+<p>Based on <code class="func">MTX64_Echelize</code> (<a href="chap2_mj.html#X7B7323767FF182F5"><span class="RefLink">2.1-1</span></a>) and <code class="func">MTX64_GAPEchelize</code> (<a href="chap2_mj.html#X85F3E5247D99324E"><span class="RefLink">2.1-2</span></a>) methods are installed for a number of standard <strong class="pkg">GAP</strong> operations for Meataxe64 matrices. These include <code class="func">RankMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X7B21AE7987D4FB31"><span class="RefLink">Reference: RankMat</span></a>), <code class="func">InverseMutable</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap31_mj.html#X78EE524E83624057"><span class="RefLink">Reference: InverseMutable</span></a>), <code class="func">NullspaceMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X7DA0D5887DB12DC4"><span class="RefLink">Reference: NullspaceMat</span></a>), <code class="func">SemiEchelonMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X7D5D6BD07B7E981B"><span class="RefLink">Reference: SemiEchelonMat</span></a>) (including its destructive variants and variants computing transforming matrices), <code class="func">SolutionMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X838A519C7CD2969E"><span class="RefLink">Reference: SolutionMat</span></a>), <code class="func">TriangulizedMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X7BA26C3387AB434E"><span class="RefLink">Reference: TriangulizedMat</span></a>), <code class="func">BaseMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X7AD6B5F5794D9E46"><span class="RefLink">Reference: BaseMat</span></a>) (and destructive variant) and <code class="func">SumIntersectionMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24_mj.html#X7AFF8BCF80C88B45"><span class="RefLink">Reference: SumIntersectionMat</span></a>).</p>
+
+
+<div class="chlinkprevnextbot">&nbsp;<a href="chap0_mj.html">[Top of Book]</a>&nbsp;  <a href="chap0_mj.html#contents">[Contents]</a>&nbsp;  &nbsp;<a href="chap1_mj.html">[Previous Chapter]</a>&nbsp;  &nbsp;<a href="chap3_mj.html">[Next Chapter]</a>&nbsp;  </div>
+
+
+<div class="chlinkbot"><span class="chlink1">Goto Chapter: </span><a href="chap0_mj.html">Top</a>  <a href="chap1_mj.html">1</a>  <a href="chap2_mj.html">2</a>  <a href="chap3_mj.html">3</a>  <a href="chapInd_mj.html">Ind</a>  </div>
+
+<hr />
+<p class="foot">generated by <a href="http://www.math.rwth-aachen.de/~Frank.Luebeck/GAPDoc">GAPDoc2HTML</a></p>
+</body>
+</html>

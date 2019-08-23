@@ -1,25 +1,35 @@
 name: meataxe64
 version: 0.1
-date: 2017-04-05
+date: 2019-08-23
 description: |
     meataxe64
 
 authors:
+    - name: Steve Linton
+      url: https://www.cs.st-andrews.ac.uk/directory/person?id=sal
+    - name: Richard Parker
+      url: http://meataxe64.wordpress.com
     - name: Markus Pfeiffer
       url: http://www.morphism.de/~markusp/
-    - name: Richard Parker
-      url: meataxe64.wordpress.com
 
 maintainers:
+    - name: Steve Linton
+      url: https://www.cs.st-andrews.ac.uk/directory/person?id=sal
     - name: Markus Pfeiffer
       url: http://www.morphism.de/~markusp/
 
-GAP: ">= 4.8"
+GAP: ">= 4.10"
 
 needed-pkgs:
     - name: "GAPDoc"
       version: ">= 1.5"
       url: "http://www.math.rwth-aachen.de/~Frank.Luebeck/GAPDoc"
+    - name: "AutoDoc"
+      version: ">= 0.0.0"
+      url: "https://gap-packages.github.io/AutoDoc"
+    - name: "datastructures"
+      version: ">= 0.0.0"
+      url: "https://gap-packages.github.io/datastructures"
 
 www: https://gap-packages.github.io/meataxe64/
 readme: README.md

@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>GAP (meataxe64) - Chapter 1: Basic Meataxe64 DataTypes</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="GAPDoc2HTML" />
+<link rel="stylesheet" type="text/css" href="manual.css" />
+<script src="manual.js" type="text/javascript"></script>
+<script type="text/javascript">overwriteStyle();</script>
+</head>
+<body class="chap1"  onload="jscontent()">
+
+
+<div class="chlinktop"><span class="chlink1">Goto Chapter: </span><a href="chap0.html">Top</a>  <a href="chap1.html">1</a>  <a href="chap2.html">2</a>  <a href="chap3.html">3</a>  <a href="chapInd.html">Ind</a>  </div>
+
+<div class="chlinkprevnexttop">&nbsp;<a href="chap0.html">[Top of Book]</a>&nbsp;  <a href="chap0.html#contents">[Contents]</a>&nbsp;  &nbsp;<a href="chap0.html">[Previous Chapter]</a>&nbsp;  &nbsp;<a href="chap2.html">[Next Chapter]</a>&nbsp;  </div>
+
+<p id="mathjaxlink" class="pcenter"><a href="chap1_mj.html">[MathJax on]</a></p>
+<p><a id="X7AA7E7B779CA1F0D" name="X7AA7E7B779CA1F0D"></a></p>
+<div class="ChapSects"><a href="chap1.html#X7AA7E7B779CA1F0D">1 <span class="Heading">Basic Meataxe64 DataTypes</span></a>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X80B823997E04E481">1.1 <span class="Heading">Defining Categories</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7B2F99707AF6C8D4">1.1-1 IsMTX64FiniteField</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7EA7F471823DBBAE">1.1-2 IsMTX64FiniteFieldElement</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7FF7A05A84886B50">1.1-3 IsMTX64Matrix</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X84E6D070829D1790">1.1-4 IsMTX64BitString</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X7F22AF12821F5E31">1.2 <span class="Heading">Constructing and Accessing Meataxe64 Fields and their Elements</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7B2D6068785D1AA5">1.2-1 <span class="Heading">MTX64_FiniteField</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X80095EDE81E3C0F3">1.2-2 MTX64_FieldOrder</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7A4329568792C261">1.2-3 <span class="Heading">MTX64_FiniteFieldElement</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X81BA3F087CA0D3D6">1.2-4 MTX64_FieldOfElement</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7DBD74A181BCD1D7">1.2-5 MTX64_NewMatrix</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X86B5FD7481B48097">1.3 <span class="Heading">Constructing and Accessing Meataxe64 Matrices</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X78C3BBCC7AFE426F">1.3-1 <span class="Heading">MTX64_Matrix</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X78414F947E593028">1.3-2 MTX64_RandomMat</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7CD90D6184387506">1.3-3 <span class="Heading">Accessing Matrix Dimensions</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X79BAE97C7AA2E9EE">1.3-4 <span class="Heading">Accessing Matrix Entries Individually</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X81128921865617D5">1.3-5 MTX64_FieldOfMatrix</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7C78E521833511EB">1.3-6 MTX64_InsertVector</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X863642167AA37F7B">1.3-7 MTX64_ExtractVector</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7C029FDD81D3A9B1">1.3-8 MTX64_ExtractMatrix</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7CF056D778728D66">1.3-9 MTX64_Submatrix</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X7DCA270C7B0017DC">1.4 <span class="Heading">Constructing and Accessing Meataxe64 BitStrings</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X836BD99785061A9B">1.4-1 MTX64_EmptyBitString</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X84BF48CF792E2FA6">1.4-2 MTX64_GetEntryOfBitstring</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7B1DEBA18017342B">1.4-3 MTX64_SetEntryOfBitstring</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7EE93E7D8750EE7A">1.4-4 <span class="Heading">Converting Meataxe64 BitStrings to and from <strong class="pkg">GAP</strong> Boolean Lists</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X81A28D8E8719B129">1.4-5 <span class="Heading">Basic Properties of Meataxe64 BitStrings</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X8709C714784DFF96">1.4-6 MTX64_PositionsBitString</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X86F3CEBD7A5A4D59">1.5 <span class="Heading">Additional Matrix Functions</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7D8A988D7AC05E55">1.5-1 MTX64_CompareMatrices</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7E9FC1D18618A8FA">1.5-2 <span class="Heading">File I/O for Meataxe64 Matrices</span></a>
+</span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X80280AA585678A20">1.5-3 MTX64_HashMatrix</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X79B2A62282C2BF74">1.6 <span class="Heading">Additional Bitstring Functions</span></a>
+</span>
+<div class="ContSSBlock">
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7E02B2E27A6C2B60">1.6-1 MTX64_ReadBitString</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7C8B428C7942F65D">1.6-2 MTX64_CompareBitStrings</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X7B3224CB7F76F7D2">1.6-3 MTX64_RowSelect</a></span>
+<span class="ContSS"><br /><span class="nocss">&nbsp;&nbsp;</span><a href="chap1.html#X86D40D2B8185336F">1.6-4 MTX64_ColSelect</a></span>
+</div></div>
+<div class="ContSect"><span class="tocline"><span class="nocss">&nbsp;</span><a href="chap1.html#X82037C4385E53E6E">1.7 <span class="Heading">Standard Operations applicable to Meataxe64 objects</span></a>
+</span>
+</div>
+</div>
+
+<h3>1 <span class="Heading">Basic Meataxe64 DataTypes</span></h3>
+
+<p>The Meataxe64 system has its own representations of finite fields, their elements, and matrices over them, as well as a bitstring used to indicate a selection of rows or columns from a matrix. Note that there is no vector type, a vector is simply a matrix with one row. Note further that working with such vectors is relatively inefficient, and should be avoided where possible.</p>
+
+<p>The Meataxe64 <strong class="pkg">GAP</strong> package provides <strong class="pkg">GAP</strong> objects which "wrap" these Meataxe64 objects, which are defined in this chapter.</p>
+
+<p><a id="X80B823997E04E481" name="X80B823997E04E481"></a></p>
+
+<h4>1.1 <span class="Heading">Defining Categories</span></h4>
+
+<p><a id="X7B2F99707AF6C8D4" name="X7B2F99707AF6C8D4"></a></p>
+
+<h5>1.1-1 IsMTX64FiniteField</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; IsMTX64FiniteField</code>( <var class="Arg">arg</var> )</td><td class="tdright">(&nbsp;filter&nbsp;)</td></tr></table></div>
+<p>Returns: <code class="code">true</code> or <code class="code">false</code></p>
+
+<p>The category of MeatAxe64 finite fields. There is one such field for every prime power up to <span class="SimpleMath">2^64</span> inclusive. There should be only one <strong class="pkg">GAP</strong> object, up to identity, which represents a field of any given order. They are unrelated to other finite field objects in <strong class="pkg">GAP</strong> and are not fields (or even collections) in the <strong class="pkg">GAP</strong> sense</p>
+
+<p><a id="X7EA7F471823DBBAE" name="X7EA7F471823DBBAE"></a></p>
+
+<h5>1.1-2 IsMTX64FiniteFieldElement</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; IsMTX64FiniteFieldElement</code>( <var class="Arg">arg</var> )</td><td class="tdright">(&nbsp;filter&nbsp;)</td></tr></table></div>
+<p>Returns: <code class="code">true</code> or <code class="code">false</code></p>
+
+<p>The category of MeatAxe64 finite field elements. They are not equal to other finite field elements in <strong class="pkg">GAP</strong> and there is no automatic inclusion of subfields.</p>
+
+<p><a id="X7FF7A05A84886B50" name="X7FF7A05A84886B50"></a></p>
+
+<h5>1.1-3 IsMTX64Matrix</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; IsMTX64Matrix</code>( <var class="Arg">arg</var> )</td><td class="tdright">(&nbsp;filter&nbsp;)</td></tr></table></div>
+<p>Returns: <code class="code">true</code> or <code class="code">false</code></p>
+
+<p>The category of MeatAxe64 matrices. They are not matrices in the <strong class="pkg">GAP</strong> sense (not even matrix objects) and are not lists of lists. MeatAxe64 matrices know their dimensions and defining field.</p>
+
+<p><a id="X84E6D070829D1790" name="X84E6D070829D1790"></a></p>
+
+<h5>1.1-4 IsMTX64BitString</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; IsMTX64BitString</code>( <var class="Arg">arg</var> )</td><td class="tdright">(&nbsp;filter&nbsp;)</td></tr></table></div>
+<p>Returns: <code class="code">true</code> or <code class="code">false</code></p>
+
+<p>The category of MeatAxe64 bitstrings. Used heavily in Gaussian elimination to indicate locations of pivot rows and columns.</p>
+
+<p><a id="X7F22AF12821F5E31" name="X7F22AF12821F5E31"></a></p>
+
+<h4>1.2 <span class="Heading">Constructing and Accessing Meataxe64 Fields and their Elements</span></h4>
+
+<p><a id="X7B2D6068785D1AA5" name="X7B2D6068785D1AA5"></a></p>
+
+<h5>1.2-1 <span class="Heading">MTX64_FiniteField</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FiniteField</code>( <var class="Arg">q</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FiniteField</code>( <var class="Arg">p</var>, <var class="Arg">d</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<p>Returns: a MeatAxe64 finite field of order <var class="Arg">q</var></p>
+
+<p>retrieves a MeatAxe64 finite field of given order, which must be be a prime power less than or equal to <span class="SimpleMath">2^64</span>, creating it if needed. If the order is not a prime power an error is generated.</p>
+
+<p><a id="X80095EDE81E3C0F3" name="X80095EDE81E3C0F3"></a></p>
+
+<h5>1.2-2 MTX64_FieldOrder</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FieldOrder</code>( <var class="Arg">f</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FieldCharacteristic</code>( <var class="Arg">f</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FieldDegree</code>( <var class="Arg">f</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>These functions provide access to basic information about a MeatAxe64 field.</p>
+
+<p><a id="X7A4329568792C261" name="X7A4329568792C261"></a></p>
+
+<h5>1.2-3 <span class="Heading">MTX64_FiniteFieldElement</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FiniteFieldElement</code>( <var class="Arg">f</var>, <var class="Arg">x</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FiniteFieldElement</code>( <var class="Arg">fld</var>, <var class="Arg">ffe</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<p>creates a MeatAxe64 finite field element in a given field <var class="Arg">f</var>. The element may be specified by number: the numbering of elements runs from 0 to <span class="SimpleMath">q-1</span> and is defined in the MeatAxe64 C library. It is guaranteed that element 0 is the zero of the field and element 1 is the one of the field. Alternatively the element may be specified by giving the corresponding <strong class="pkg">GAP</strong> finite field element.</p>
+
+<p><a id="X81BA3F087CA0D3D6" name="X81BA3F087CA0D3D6"></a></p>
+
+<h5>1.2-4 MTX64_FieldOfElement</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FieldOfElement</code>( <var class="Arg">felt</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns: the MeatAxe64 finite field in which <var class="Arg">felt</var> is defined</p>
+
+<p><a id="X7DBD74A181BCD1D7" name="X7DBD74A181BCD1D7"></a></p>
+
+<h5>1.2-5 MTX64_NewMatrix</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_NewMatrix</code>( <var class="Arg">f</var>, <var class="Arg">nor</var>, <var class="Arg">noc</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns a new mutable zero matrix over the field <var class="Arg">f</var> with <var class="Arg">nor</var> rows and <var class="Arg">noc</var> columns.</p>
+
+<p><a id="X86B5FD7481B48097" name="X86B5FD7481B48097"></a></p>
+
+<h4>1.3 <span class="Heading">Constructing and Accessing Meataxe64 Matrices</span></h4>
+
+<p><a id="X78C3BBCC7AFE426F" name="X78C3BBCC7AFE426F"></a></p>
+
+<h5>1.3-1 <span class="Heading">MTX64_Matrix</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_Matrix</code>( <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_Matrix</code>( <var class="Arg">m</var>, <var class="Arg">fld</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_Matrix</code>( <var class="Arg">m</var>, <var class="Arg">q</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_Matrix</code>( <var class="Arg">m</var>, <var class="Arg">q</var>, <var class="Arg">nor</var>, <var class="Arg">noc</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<p>constructs a Meataxe64 matrix from a <strong class="pkg">GAP</strong> matrix, plus optional specification of the field and dimensions of the matrix. Specification of the dimensions is useful in the case where the number of rows is zero.</p>
+
+<p><a id="X78414F947E593028" name="X78414F947E593028"></a></p>
+
+<h5>1.3-2 MTX64_RandomMat</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_RandomMat</code>( <var class="Arg">f</var>, <var class="Arg">n</var>, <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Constructs a new Meataxe64 matrix with <var class="Arg">n</var> rows and <var class="Arg">m</var> columns over the field <var class="Arg">f</var>.The entries are uniformly pseudo-randomly chosen from <var class="Arg">f</var> using the <code class="func">GlobalMersenneTwister</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap14.html#X7F772E2686B35865"><span class="RefLink">Reference: GlobalMersenneTwister</span></a>) random source. This function is significantly more efficient that filling in random entries individually, or using <code class="func">RandomMat</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap24.html#X7F957F0280A87961"><span class="RefLink">Reference: RandomMat</span></a>) and then converting the result.</p>
+
+<p><a id="X7CD90D6184387506" name="X7CD90D6184387506"></a></p>
+
+<h5>1.3-3 <span class="Heading">Accessing Matrix Dimensions</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_NumCols</code>( <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_NumRows</code>( <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>These function return the dimensions of the matrix. Unlike in the C API every matrix knows how many rows it has. Unlike in <strong class="pkg">GAP</strong> even a matrix with no rows knows how many columns it has.</p>
+
+<p><a id="X79BAE97C7AA2E9EE" name="X79BAE97C7AA2E9EE"></a></p>
+
+<h5>1.3-4 <span class="Heading">Accessing Matrix Entries Individually</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_GetEntry</code>( <var class="Arg">m</var>, <var class="Arg">i</var>, <var class="Arg">j</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_SetEntry</code>( <var class="Arg">m</var>, <var class="Arg">i</var>, <var class="Arg">j</var>, <var class="Arg">x</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p><code class="code">MTX64_GetEntry</code> and <code class="code">MTX64_SetEntry</code> provide access to individual entries of matrices. <var class="Arg">i</var> and <var class="Arg">j</var> are zero based row and column indices respectively and <var class="Arg">x</var> is Meataxe64 finite field element defined over the same field as <var class="Arg">m</var>.</p>
+
+<p><a id="X81128921865617D5" name="X81128921865617D5"></a></p>
+
+<h5>1.3-5 MTX64_FieldOfMatrix</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_FieldOfMatrix</code>( <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns: the MeatAxe64 finite field over which <var class="Arg">m</var> is defined</p>
+
+<p><a id="X7C78E521833511EB" name="X7C78E521833511EB"></a></p>
+
+<h5>1.3-6 MTX64_InsertVector</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_InsertVector</code>( <var class="Arg">m</var>, <var class="Arg">v</var>, <var class="Arg">row</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Copies the <strong class="pkg">GAP</strong> vector <var class="Arg">v</var> as row <var class="Arg">row</var> of the mutable Meataxe64 matrix <var class="Arg">m</var>. Row numbering is zero-based. An error will be given if the vector and matrix are not compatible. For <strong class="pkg">GAP</strong>'s built-in comrpessed vectors over small fields this will be much more efficient than inserting the entries one by one.</p>
+
+<p><a id="X863642167AA37F7B" name="X863642167AA37F7B"></a></p>
+
+<h5>1.3-7 MTX64_ExtractVector</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_ExtractVector</code>( <var class="Arg">m</var>, <var class="Arg">row</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns a <strong class="pkg">GAP</strong> vector equal to row <var class="Arg">row</var> (zero-based) of the Meataxe64 matrix <var class="Arg">m</var>. When the field of <var class="Arg">m</var> is small enough, the vector will be compressed.</p>
+
+<p><a id="X7C029FDD81D3A9B1" name="X7C029FDD81D3A9B1"></a></p>
+
+<h5>1.3-8 MTX64_ExtractMatrix</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_ExtractMatrix</code>( <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;operation&nbsp;)</td></tr></table></div>
+<p>Returns: a <strong class="pkg">GAP</strong> matrix (compressed where appropriate) equal to the MeatAxe64 matrix <var class="Arg">m</var></p>
+
+<p><a id="X7CF056D778728D66" name="X7CF056D778728D66"></a></p>
+
+<h5>1.3-9 MTX64_Submatrix</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_Submatrix</code>( <var class="Arg">m</var>, <var class="Arg">startrow</var>, <var class="Arg">numrows</var>, <var class="Arg">startcol</var>, <var class="Arg">numcols</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>returns a copy of the submatrix of <var class="Arg">m</var> specified by the indices. <var class="Arg">startrow</var> and <var class="Arg">startcol</var> are one based.</p>
+
+<p><a id="X7DCA270C7B0017DC" name="X7DCA270C7B0017DC"></a></p>
+
+<h4>1.4 <span class="Heading">Constructing and Accessing Meataxe64 BitStrings</span></h4>
+
+<p><a id="X836BD99785061A9B" name="X836BD99785061A9B"></a></p>
+
+<h5>1.4-1 MTX64_EmptyBitString</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_EmptyBitString</code>( <var class="Arg">len</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Creates a new bitstring of length <var class="Arg">len</var> with no set bits</p>
+
+<p><a id="X84BF48CF792E2FA6" name="X84BF48CF792E2FA6"></a></p>
+
+<h5>1.4-2 MTX64_GetEntryOfBitstring</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_GetEntryOfBitstring</code>( <var class="Arg">bitstring</var>, <var class="Arg">position</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p><code class="code">MTX64_GetEntryOfBitstring</code> returns 0 or 1 according to whether the <var class="Arg">position</var> entry of bitstring <var class="Arg">bitstring</var> is unset or set.</p>
+
+<p><a id="X7B1DEBA18017342B" name="X7B1DEBA18017342B"></a></p>
+
+<h5>1.4-3 MTX64_SetEntryOfBitstring</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_SetEntryOfBitstring</code>( <var class="Arg">bitstring</var>, <var class="Arg">position</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p><code class="code">MTX64_SetEntryOfBitstring</code> sets the <var class="Arg">position</var> entry of bitstring <var class="Arg">bitstring</var> (to 1). There is no way to set an entry to zero in the underlying Meataxe64 C library.</p>
+
+<p><a id="X7EE93E7D8750EE7A" name="X7EE93E7D8750EE7A"></a></p>
+
+<h5>1.4-4 <span class="Heading">Converting Meataxe64 BitStrings to and from <strong class="pkg">GAP</strong> Boolean Lists</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_BitStringBlist</code>( <var class="Arg">blist</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_BlistBitstring</code>( <var class="Arg">bitstring</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Convert between the MeatAxe64 bitstrings and GAP's Boolean lists</p>
+
+<p><a id="X81A28D8E8719B129" name="X81A28D8E8719B129"></a></p>
+
+<h5>1.4-5 <span class="Heading">Basic Properties of Meataxe64 BitStrings</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_LengthOfBitString</code>( <var class="Arg">bitstring</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_WeightOfBitstring</code>( <var class="Arg">bitstring</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>The length of a bitstring is the number of bits in it, the weight is the number of one bits. The weight is stored in the BitString.</p>
+
+<p><a id="X8709C714784DFF96" name="X8709C714784DFF96"></a></p>
+
+<h5>1.4-6 MTX64_PositionsBitString</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_PositionsBitString</code>( <var class="Arg">bitstring</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns a <strong class="pkg">GAP</strong> list containing the indices of the set bits of <var class="Arg">bitstring</var></p>
+
+<p><a id="X86F3CEBD7A5A4D59" name="X86F3CEBD7A5A4D59"></a></p>
+
+<h4>1.5 <span class="Heading">Additional Matrix Functions</span></h4>
+
+<p><a id="X7D8A988D7AC05E55" name="X7D8A988D7AC05E55"></a></p>
+
+<h5>1.5-1 MTX64_CompareMatrices</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_CompareMatrices</code>( <var class="Arg">m1</var>, <var class="Arg">m2</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>This function underlies the comparison of matrices used by <code class="code">&lt;</code> and <code class="code">=</code>. For compatible matrices <var class="Arg">m1</var> and <var class="Arg">m2</var> it returns a negative, zero or positive integer according to whether <var class="Arg">m1</var> is less than, equal to, or greater than <var class="Arg">m2</var>.</p>
+
+<p><a id="X7E9FC1D18618A8FA" name="X7E9FC1D18618A8FA"></a></p>
+
+<h5>1.5-2 <span class="Heading">File I/O for Meataxe64 Matrices</span></h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_ReadMatrix</code>( <var class="Arg">fn</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_WriteMatrix</code>( <var class="Arg">m</var>, <var class="Arg">fn</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>These functions allow reading and writing of matrices to disk in the Meataxe64 file format, which is defined in the C library documentation</p>
+
+<p><a id="X80280AA585678A20" name="X80280AA585678A20"></a></p>
+
+<h5>1.5-3 MTX64_HashMatrix</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_HashMatrix</code>( <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>This function implements an efficient hash function for a MeatAxe64 matrix. All entries of the matrix contribute to the hash.</p>
+
+<p><a id="X79B2A62282C2BF74" name="X79B2A62282C2BF74"></a></p>
+
+<h4>1.6 <span class="Heading">Additional Bitstring Functions</span></h4>
+
+<p><a id="X7E02B2E27A6C2B60" name="X7E02B2E27A6C2B60"></a></p>
+
+<h5>1.6-1 MTX64_ReadBitString</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_ReadBitString</code>( <var class="Arg">fn</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Reads a bitstring in from file <var class="Arg">fn</var> in the Meataxe64 file format, which is defined in the C library documentation</p>
+
+<p><a id="X7C8B428C7942F65D" name="X7C8B428C7942F65D"></a></p>
+
+<h5>1.6-2 MTX64_CompareBitStrings</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_CompareBitStrings</code>( <var class="Arg">b1</var>, <var class="Arg">b2</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>This function underlies the comparison of bitstrings used by <code class="code">&lt;</code> and <code class="code">=</code>. For bitstrings <var class="Arg">b1</var> and <var class="Arg">b2</var> it returns a negative, zero or positive integer according to whether <var class="Arg">b1</var> is less than, equal to, or greater than <var class="Arg">b2</var>.</p>
+
+<p><a id="X7B3224CB7F76F7D2" name="X7B3224CB7F76F7D2"></a></p>
+
+<h5>1.6-3 MTX64_RowSelect</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_RowSelect</code>( <var class="Arg">bs</var>, <var class="Arg">m</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p>Returns: a new, immutable, plain, length 2 list. The first entry is a new Meataxe64 matrix containing only those rows of <var class="Arg">m</var> whose corresponding entry in <var class="Arg">bs</var> is set. The second entry is a new Meataxe64 matrix containing the remaining rows.The length of <var class="Arg">bs</var> must match the number of rows of <var class="Arg">m</var></p>
+
+<p><a id="X86D40D2B8185336F" name="X86D40D2B8185336F"></a></p>
+
+<h5>1.6-4 MTX64_ColSelect</h5>
+
+<div class="func"><table class="func" width="100%"><tr><td class="tdleft"><code class="func">&#8227; MTX64_ColSelect</code>( <var class="Arg">bitstring</var>, <var class="Arg">matrix</var> )</td><td class="tdright">(&nbsp;function&nbsp;)</td></tr></table></div>
+<p><code class="code">MTX64_ColSelect</code> returns a new immutable plain list containing two matrices. The first is composed of the columns of <var class="Arg">matrix</var> corresponding to the set bits in <var class="Arg">bitstring</var> whose length should match the number columns of <var class="Arg">matrix</var>. The second is composed of the remaining columns.</p>
+
+<p><a id="X82037C4385E53E6E" name="X82037C4385E53E6E"></a></p>
+
+<h4>1.7 <span class="Heading">Standard Operations applicable to Meataxe64 objects</span></h4>
+
+<p>Methods are installed for many standard operations applied to Meataxe64 objects. In this section we briefly list the more important ones with some notes where the behaviour may not be as expected.</p>
+
+
+<ul>
+<li><p><code class="func">&lt;</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap31.html#X7EF67D047F03CA6F"><span class="RefLink">Reference: \<</span></a>) for Meataxe64 fields orders fields by their size. For Meataxe64 finite field elements, it orders them according to the internal numbering used by the C meataxe.</p>
+
+</li>
+<li><p>Standard arithmetic operations such as <code class="func">Zero</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap31.html#X8040AC7A79FFC442"><span class="RefLink">Reference: Zero</span></a>) and <code class="func">*</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap4.html#X7B66C8707B5DE10A"><span class="RefLink">Reference: *</span></a>) are installed for Meataxe64 finite field elements, and where relevant for the fields.</p>
+
+</li>
+<li><p>A limited set of collection operations such as <code class="func">Size</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap30.html#X858ADA3B7A684421"><span class="RefLink">Reference: Size</span></a>), <code class="func">AsList</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap30.html#X8289FCCC8274C89D"><span class="RefLink">Reference: AsList</span></a>), <code class="func">AsSSortedList</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap30.html#X856D927378C33548"><span class="RefLink">Reference: AsSSortedList</span></a>) and <code class="func">Random</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap30.html#X7FF906E57D6936F8"><span class="RefLink">Reference: Random</span></a>) are provided for Meataxe64 finite fields, for convenience, although such fields are not properly collections.</p>
+
+</li>
+<li><p>The list access operation <code class="code">\[\]</code> can be used to do the same thing as <code class="func">MTX64_ExtractVector</code> (<a href="chap1.html#X863642167AA37F7B"><span class="RefLink">1.3-7</span></a>), except that in this case the row indexing is one based.</p>
+
+</li>
+<li><p>The list assignment operation <code class="code">\[\]\:\=</code> can be used to do the same thing as <code class="func">MTX64_InsertVector</code> (<a href="chap1.html#X7C78E521833511EB"><span class="RefLink">1.3-6</span></a>), except that in this case the row indexing is one based.</p>
+
+</li>
+<li><p><code class="func">ShallowCopy</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap12.html#X846BC7107C352031"><span class="RefLink">Reference: ShallowCopy</span></a>) applied to a Meataxe64 matrix produces a new matrix which does not share its rows with the original, unlike standard <strong class="pkg">GAP</strong> matrices.</p>
+
+</li>
+<li><p>Arithmetic operations are installed for operations among Meataxe64 matrices and between matrices and finite field elements. There is no automatic coercion between fields, and matrix dimensions must match correctly (unbound entries are not treated as zero). This includes transposition.</p>
+
+</li>
+<li><p><code class="code">MatElm</code> and <code class="code">SetMatElm</code> methods are installed for matrices which do the same as <code class="func">MTX64_GetEntry</code> (<a href="chap1.html#X79BAE97C7AA2E9EE"><span class="RefLink">1.3-4</span></a>) and <code class="func">MTX64_SetEntry</code> (<a href="chap1.html#X79BAE97C7AA2E9EE"><span class="RefLink">1.3-4</span></a>) but using one-based indexing. This supports access like <code class="code">m[i,j]</code> for reading and writing.</p>
+
+</li>
+<li><p>Meataxe64 matrices are only equal or comparable with <code class="func">&lt;</code> (<a href="https://www.gap-system.org/Manuals/doc/ref/chap31.html#X7EF67D047F03CA6F"><span class="RefLink">Reference: \<</span></a>) if they are defined over the same field and of the same shape. The ordering is a linear ordering, but is not otherwise defined.</p>
+
+</li>
+<li><p>List access via <code class="code">\[\]</code> and <code class="code">\[\]\:\=</code> is supported for bit strings, with the bits returned as the integers 0 and 1. Note however that bits can only be set to 1, not to 0. Indices in this case are one-based.</p>
+
+</li>
+</ul>
+
+<div class="chlinkprevnextbot">&nbsp;<a href="chap0.html">[Top of Book]</a>&nbsp;  <a href="chap0.html#contents">[Contents]</a>&nbsp;  &nbsp;<a href="chap0.html">[Previous Chapter]</a>&nbsp;  &nbsp;<a href="chap2.html">[Next Chapter]</a>&nbsp;  </div>
+
+
+<div class="chlinkbot"><span class="chlink1">Goto Chapter: </span><a href="chap0.html">Top</a>  <a href="chap1.html">1</a>  <a href="chap2.html">2</a>  <a href="chap3.html">3</a>  <a href="chapInd.html">Ind</a>  </div>
+
+<hr />
+<p class="foot">generated by <a href="http://www.math.rwth-aachen.de/~Frank.Luebeck/GAPDoc">GAPDoc2HTML</a></p>
+</body>
+</html>

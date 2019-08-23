@@ -1,0 +1,56 @@
+  
+  [1X3 [33X[0;0YParallel Computations[133X[101X
+  
+  
+  [1X3.1 [33X[0;0YFile-based Parallel Functions[133X[101X
+  
+  [33X[0;0YThe C Meataxe64 includes a number of parallel implementations of challenging
+  computations.  These  take  their  inputs  and  return their results in disk
+  files,  which  can  be  read and written using [2XMTX64_WriteMatrix[102X ([14X1.5-2[114X) and
+  [2XMTX64_ReadMatrix[102X ([14X1.5-2[114X). They use a number of threads specified in the file
+  [10Xsrc/mtx64/tuning.h[110X.  Each  requires  a  [3Xtmpdir[103X parameter which should be the
+  pathname of a directory suitable for temporary files.[133X
+  
+  [1X3.1-1 MTX64_fMultiply[101X
+  
+  [33X[1;0Y[29X[2XMTX64_fMultiply[102X( [3Xtmpdir[103X, [3Xfn1[103X, [3Xfn2[103X, [3Xfn3[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  multiplies the matrices in files [3Xfn1[103X and [3Xfn2[103X (in that order)
+  and writes the result into file [3Xfn3[103X.[133X
+  
+  [1X3.1-2 MTX64_fMultiplyAdd[101X
+  
+  [33X[1;0Y[29X[2XMTX64_fMultiplyAdd[102X( [3Xtmpdir[103X, [3Xfn1[103X, [3Xfn2[103X, [3Xfn3[103X, [3Xfn4[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  multiplies the matrices in files [3Xfn1[103X and [3Xfn2[103X (in that order)
+  adds the result to teh matrix in [3Xfn3[103X and writes the result into file [3Xfn4[103X.[133X
+  
+  [1X3.1-3 MTX64_fTranspose[101X
+  
+  [33X[1;0Y[29X[2XMTX64_fTranspose[102X( [3Xtmpdir[103X, [3Xfn1[103X, [3Xfn2[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  computes the transpose of the matrix in filex [3Xfn1[103X and writes
+  the result into file [3Xfn2[103X.[133X
+  
+  [1X3.1-4 MTX64_fProduceNREF[101X
+  
+  [33X[1;0Y[29X[2XMTX64_fProduceNREF[102X( [3Xtmpdir[103X, [3Xfn1[103X, [3Xfn2[103X, [3Xfn3[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  computes  the negative reduced echelon form of the matrix in
+  file  [3Xfn1[103X,  which  is  returned in two parts. A bitsstring in file [3Xfn2[103X which
+  indicates the locations of pivot columns and a remnant in [3Xfn3[103X which contains
+  the  entries  from  the  non-pivot  columns  of  the pivot rows. The rank is
+  returned[133X
+  
+  [1X3.1-5 MTX64_fEchelize[101X
+  
+  [33X[1;0Y[29X[2XMTX64_fEchelize[102X( [3Xtmpdir[103X, [3Xa[103X, [3Xcs[103X, [3Xrs[103X, [3Xm[103X, [3Xk[103X, [3Xr[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  computes  the negative reduced echelon form of the matrix in
+  file  [3Xa[103X,  and writes both the result and the transforming matrix, in a total
+  of  five  parts.  The  result  is  given  as  a  bitsstring in file [3Xcs[103X which
+  indicates  the  locations of pivot columns and a remnant in [3Xr[103X which contains
+  the  entries  from the non-pivot columns of the pivot rows. In addition, the
+  multiplier,  cleaner  and  row  select  are  returned  in files [3Xm[103X, [3Xk[103X and [3Xrs[103X,
+  respectively. See [14X2[114X for more details. The rank is returned[133X
+  

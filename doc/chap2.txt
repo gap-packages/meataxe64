@@ -1,0 +1,75 @@
+  
+  [1X2 [33X[0;0YGaussian Elimination Functions[133X[101X
+  
+  
+  [1X2.1 [33X[0;0YBasic Concepts and Main Functions[133X[101X
+  
+  [33X[0;0YAll  Gaussian elimination operations in Meataxe64 are based on the following
+  definitions.[133X
+  
+  
+  [24X[33X[0;6Y\left(\begin{array}{cc}  M  &  0\\  K  & 1\end{array}\right) \rho A \gamma =
+  \left(\begin{array}{cc} -1 & R \\ 0 & 0\end{array}\right)[133X
+  
+  [124X
+  
+  [33X[0;0Ywhere  [22XA[122X  is  the  input  matrix, and [22XM[122X, [22XK[122X, [22Xρ[122X, [22Xγ[122X and [22XR[122X correspond to various
+  components of the output. Specifically[133X
+  
+  [8X[22XM[122X[108X
+        [33X[0;6Yis an invertible matrix called the multiplier[133X
+  
+  [8X[22XK[122X[108X
+        [33X[0;6Yis a matrix called the cleaner[133X
+  
+  [8X[22Xρ[122X[108X
+        [33X[0;6Yis  the  matrix  corresponding  to  the  row  select  bitstring  (left
+        multiplication  by  this  matrix  shuffles  the pivot rows to the top,
+        preserving the order within the sets of pivot and non-pivot rows)[133X
+  
+  [8X[22Xγ[122X[108X
+        [33X[0;6Yis  the  matrix  corresponding  to  the column select bitstring (right
+        multiplication  by this matrix shuffles the pivot columns to the left,
+        preserving the order within the sets of pivot and non-pivot columns)[133X
+  
+  [8X[22XR[122X[108X
+        [33X[0;6YIs a matrix called the remnant[133X
+  
+  [33X[0;0YNot all of these are necessarily always computed.[133X
+  
+  [1X2.1-1 MTX64_Echelize[101X
+  
+  [33X[1;0Y[29X[2XMTX64_Echelize[102X( [3Xmat[103X ) [32X function[133X
+  [6XReturns:[106X  [33X[0;10Ya  record  with  components  [10Xcleaner[110X, [10XcolSelect[110X, [10Xmultiplier[110X, [10Xrank[110X,
+            [10Xremnant[110X and [10XrowSelect[110X containing appropriate parts of the results.
+            This  uses  the recursive single-threaded "slab" implementation in
+            the C code of MeatAxe64[133X
+  
+  [1X2.1-2 MTX64_GAPEchelize[101X
+  
+  [33X[1;0Y[29X[2XMTX64_GAPEchelize[102X( [3Xmat[103X, [3Xoptrec[103X ) [32X function[133X
+  [6XReturns:[106X  [33X[0;10Ya  record  with  some or all of the components [10Xcleaner[110X, [10XcolSelect[110X,
+            [10Xmultiplier[110X, [10Xrank[110X, [10Xremnant[110X and [10XrowSelect[110X [3Xoptrec[103X may have components
+            [10XmultNeeded[110X,  [10XcleanerNeeded[110X,  [10XremnantNeeded[110X  (all  default to [10Xtrue[110X.
+            Setting  any of these to false means the corresponding part of the
+            output  may  not  be  computed, which can save time. An additional
+            optional  component  [10XfailIfSingular[110X  will  cause  the algorithm to
+            return [10Xfail[110X as soon as it detects that [3Xmat[103X is singular.[133X
+  
+            [33X[0;10YThis  uses  a  [5XGAP[105X implementation of the recursive echelonisation,
+            but  still  falls back to the C code for multiplication and in the
+            base case.[133X
+  
+  
+  [1X2.2 [33X[0;0YMethods installed for Standard [5XGAP[105X[101X[1X operations[133X[101X
+  
+  [33X[0;0YBased  on  [2XMTX64_Echelize[102X  ([14X2.1-1[114X) and [2XMTX64_GAPEchelize[102X ([14X2.1-2[114X) methods are
+  installed  for  a  number of standard [5XGAP[105X operations for Meataxe64 matrices.
+  These  include  [2XRankMat[102X  ([14XReference:  RankMat[114X),  [2XInverseMutable[102X  ([14XReference:
+  InverseMutable[114X),   [2XNullspaceMat[102X  ([14XReference:  NullspaceMat[114X),  [2XSemiEchelonMat[102X
+  ([14XReference: SemiEchelonMat[114X) (including its destructive variants and variants
+  computing  transforming  matrices),  [2XSolutionMat[102X  ([14XReference:  SolutionMat[114X),
+  [2XTriangulizedMat[102X  ([14XReference:  TriangulizedMat[114X), [2XBaseMat[102X ([14XReference: BaseMat[114X)
+  (and     destructive    variant)    and    [2XSumIntersectionMat[102X    ([14XReference:
+  SumIntersectionMat[114X).[133X
+  

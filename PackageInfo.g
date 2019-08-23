@@ -11,17 +11,18 @@ SetPackageInfo( rec(
 PackageName := "meataxe64",
 Subtitle := "meataxe64",
 Version := "0.1",
-Date := "05/04/2017", # dd/mm/yyyy format
+Date := "23/08/2019", # dd/mm/yyyy format
+License := "GPL-2.0-or-later",
 
 Persons := [
   rec(
     IsAuthor := true,
     IsMaintainer := true,
-    FirstNames := "Markus",
-    LastName := "Pfeiffer",
-    WWWHome := "http://www.morphism.de/~markusp/",
-    Email := "markus.pfeiffer@st-andrews.ac.uk",
-    PostalAddress := "School of Computer ScienceJack Cole BuildingNorth HaughSt AndrewsFifeKY16 9SSScotland",
+    FirstNames := "Steve",
+    LastName := "Linton",
+    WWWHome := "https://www.cs.st-andrews.ac.uk/directory/person?id=sal",
+    Email := "steve.linton@st-andrews.ac.uk",
+    PostalAddress := "School of Computer Science\nJack Cole Building\nNorth Haugh\nSt Andrews\nFife\nKY16 9SS\nScotland",
     Place := "St Andrews",
     Institution := "University of St Andrews",
   ),
@@ -30,11 +31,22 @@ Persons := [
     IsMaintainer := false,
     FirstNames := "Richard",
     LastName := "Parker",
-    WWWHome := "meataxe64.wordpress.com",
+    WWWHome := "http://meataxe64.wordpress.com",
     Email := "richpark54@hotmail.co.uk",
     PostalAddress := "TODO",
     Place := "Cambridge",
     Institution := "TODO",
+  ),
+  rec(
+    IsAuthor := true,
+    IsMaintainer := true,
+    FirstNames := "Markus",
+    LastName := "Pfeiffer",
+    WWWHome := "http://www.morphism.de/~markusp/",
+    Email := "markus.pfeiffer@st-andrews.ac.uk",
+    PostalAddress := "School of Computer Science\nJack Cole Building\nNorth Haugh\nSt Andrews\nFife\nKY16 9SS\nScotland",
+    Place := "St Andrews",
+    Institution := "University of St Andrews",
   ),
 ],
 
@@ -75,8 +87,10 @@ PackageDoc := rec(
 ),
 
 Dependencies := rec(
-  GAP := ">= 4.8",
-  NeededOtherPackages := [ [ "GAPDoc", ">= 1.5" ] ],
+  GAP := ">= 4.10",
+                   NeededOtherPackages := [ [ "GAPDoc", ">= 1.5" ], 
+                           [ "AutoDoc", ">= 0.0.0"],
+                          [ "datastructures", ">= 0.0.0"] ],
   SuggestedOtherPackages := [ ],
   ExternalConditions := [ ],
 ),
@@ -85,7 +99,7 @@ AvailabilityTest := function()
         return true;
     end,
 
-TestFile := "tst/testall.g",
+TestFile := "tst/testinstall.g",
 
 #Keywords := [ "TODO" ],
 

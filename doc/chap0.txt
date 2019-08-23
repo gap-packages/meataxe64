@@ -1,1 +1,112 @@
-Placeholder
+  
+  
+                                  [1X meataxe64 [101X
+  
+  
+                                  [1X meataxe64 [101X
+  
+  
+                                      0.1
+  
+  
+                                 23 August 2019
+  
+  
+                                  Steve Linton
+  
+                                 Richard Parker
+  
+                                Markus Pfeiffer
+  
+  
+  
+  Steve Linton
+      Email:    [7Xmailto:steve.linton@st-andrews.ac.uk[107X
+      Homepage: [7Xhttps://www.cs.st-andrews.ac.uk/directory/person?id=sal[107X
+      Address:  [33X[0;14YSchool of Computer Science[133X
+                [33X[0;14YJack Cole Building[133X
+                [33X[0;14YNorth Haugh[133X
+                [33X[0;14YSt Andrews[133X
+                [33X[0;14YFife[133X
+                [33X[0;14YKY16 9SS[133X
+                [33X[0;14YScotland[133X
+  
+  
+  Richard Parker
+      Email:    [7Xmailto:richpark54@hotmail.co.uk[107X
+      Homepage: [7Xhttp://meataxe64.wordpress.com[107X
+      Address:  [33X[0;14YTODO[133X
+  
+  
+  Markus Pfeiffer
+      Email:    [7Xmailto:markus.pfeiffer@st-andrews.ac.uk[107X
+      Homepage: [7Xhttp://www.morphism.de/~markusp/[107X
+      Address:  [33X[0;14YSchool of Computer Science[133X
+                [33X[0;14YJack Cole Building[133X
+                [33X[0;14YNorth Haugh[133X
+                [33X[0;14YSt Andrews[133X
+                [33X[0;14YFife[133X
+                [33X[0;14YKY16 9SS[133X
+                [33X[0;14YScotland[133X
+  
+  
+  
+  -------------------------------------------------------
+  
+  
+  [1XContents (meataxe64)[101X
+  
+  1 [33X[0;0YBasic Meataxe64 DataTypes[133X
+    1.1 [33X[0;0YDefining Categories[133X
+      1.1-1 IsMTX64FiniteField
+      1.1-2 IsMTX64FiniteFieldElement
+      1.1-3 IsMTX64Matrix
+      1.1-4 IsMTX64BitString
+    1.2 [33X[0;0YConstructing and Accessing Meataxe64 Fields and their Elements[133X
+      1.2-1 [33X[0;0YMTX64_FiniteField[133X
+      1.2-2 MTX64_FieldOrder
+      1.2-3 [33X[0;0YMTX64_FiniteFieldElement[133X
+      1.2-4 MTX64_FieldOfElement
+      1.2-5 MTX64_NewMatrix
+    1.3 [33X[0;0YConstructing and Accessing Meataxe64 Matrices[133X
+      1.3-1 [33X[0;0YMTX64_Matrix[133X
+      1.3-2 MTX64_RandomMat
+      1.3-3 [33X[0;0YAccessing Matrix Dimensions[133X
+      1.3-4 [33X[0;0YAccessing Matrix Entries Individually[133X
+      1.3-5 MTX64_FieldOfMatrix
+      1.3-6 MTX64_InsertVector
+      1.3-7 MTX64_ExtractVector
+      1.3-8 MTX64_ExtractMatrix
+      1.3-9 MTX64_Submatrix
+    1.4 [33X[0;0YConstructing and Accessing Meataxe64 BitStrings[133X
+      1.4-1 MTX64_EmptyBitString
+      1.4-2 MTX64_GetEntryOfBitstring
+      1.4-3 MTX64_SetEntryOfBitstring
+      1.4-4 [33X[0;0YConverting Meataxe64 BitStrings to and from [5XGAP[105X Boolean Lists[133X
+      1.4-5 [33X[0;0YBasic Properties of Meataxe64 BitStrings[133X
+      1.4-6 MTX64_PositionsBitString
+    1.5 [33X[0;0YAdditional Matrix Functions[133X
+      1.5-1 MTX64_CompareMatrices
+      1.5-2 [33X[0;0YFile I/O for Meataxe64 Matrices[133X
+      1.5-3 MTX64_HashMatrix
+    1.6 [33X[0;0YAdditional Bitstring Functions[133X
+      1.6-1 MTX64_ReadBitString
+      1.6-2 MTX64_CompareBitStrings
+      1.6-3 MTX64_RowSelect
+      1.6-4 MTX64_ColSelect
+    1.7 [33X[0;0YStandard Operations applicable to Meataxe64 objects[133X
+  2 [33X[0;0YGaussian Elimination Functions[133X
+    2.1 [33X[0;0YBasic Concepts and Main Functions[133X
+      2.1-1 MTX64_Echelize
+      2.1-2 MTX64_GAPEchelize
+    2.2 [33X[0;0YMethods installed for Standard [5XGAP[105X operations[133X
+  3 [33X[0;0YParallel Computations[133X
+    3.1 [33X[0;0YFile-based Parallel Functions[133X
+      3.1-1 MTX64_fMultiply
+      3.1-2 MTX64_fMultiplyAdd
+      3.1-3 MTX64_fTranspose
+      3.1-4 MTX64_fProduceNREF
+      3.1-5 MTX64_fEchelize
+  
+  
+  [32X

@@ -1,0 +1,342 @@
+  
+  [1X1 [33X[0;0YBasic Meataxe64 DataTypes[133X[101X
+  
+  [33X[0;0YThe  Meataxe64  system  has  its own representations of finite fields, their
+  elements,  and matrices over them, as well as a bitstring used to indicate a
+  selection  of  rows  or  columns from a matrix. Note that there is no vector
+  type,  a  vector  is simply a matrix with one row. Note further that working
+  with  such  vectors  is  relatively inefficient, and should be avoided where
+  possible.[133X
+  
+  [33X[0;0YThe  Meataxe64 [5XGAP[105X package provides [5XGAP[105X objects which "wrap" these Meataxe64
+  objects, which are defined in this chapter.[133X
+  
+  
+  [1X1.1 [33X[0;0YDefining Categories[133X[101X
+  
+  [1X1.1-1 IsMTX64FiniteField[101X
+  
+  [33X[1;0Y[29X[2XIsMTX64FiniteField[102X( [3Xarg[103X ) [32X filter[133X
+  [6XReturns:[106X  [33X[0;10Y[10Xtrue[110X or [10Xfalse[110X[133X
+  
+  [33X[0;0YThe  category  of MeatAxe64 finite fields. There is one such field for every
+  prime power up to [22X2^64[122X inclusive. There should be only one [5XGAP[105X object, up to
+  identity, which represents a field of any given order. They are unrelated to
+  other  finite  field objects in [5XGAP[105X and are not fields (or even collections)
+  in the [5XGAP[105X sense[133X
+  
+  [1X1.1-2 IsMTX64FiniteFieldElement[101X
+  
+  [33X[1;0Y[29X[2XIsMTX64FiniteFieldElement[102X( [3Xarg[103X ) [32X filter[133X
+  [6XReturns:[106X  [33X[0;10Y[10Xtrue[110X or [10Xfalse[110X[133X
+  
+  [33X[0;0YThe category of MeatAxe64 finite field elements. They are not equal to other
+  finite  field  elements  in  [5XGAP[105X  and  there  is  no  automatic inclusion of
+  subfields.[133X
+  
+  [1X1.1-3 IsMTX64Matrix[101X
+  
+  [33X[1;0Y[29X[2XIsMTX64Matrix[102X( [3Xarg[103X ) [32X filter[133X
+  [6XReturns:[106X  [33X[0;10Y[10Xtrue[110X or [10Xfalse[110X[133X
+  
+  [33X[0;0YThe  category  of MeatAxe64 matrices. They are not matrices in the [5XGAP[105X sense
+  (not  even  matrix  objects)  and are not lists of lists. MeatAxe64 matrices
+  know their dimensions and defining field.[133X
+  
+  [1X1.1-4 IsMTX64BitString[101X
+  
+  [33X[1;0Y[29X[2XIsMTX64BitString[102X( [3Xarg[103X ) [32X filter[133X
+  [6XReturns:[106X  [33X[0;10Y[10Xtrue[110X or [10Xfalse[110X[133X
+  
+  [33X[0;0YThe  category  of MeatAxe64 bitstrings. Used heavily in Gaussian elimination
+  to indicate locations of pivot rows and columns.[133X
+  
+  
+  [1X1.2 [33X[0;0YConstructing and Accessing Meataxe64 Fields and their Elements[133X[101X
+  
+  
+  [1X1.2-1 [33X[0;0YMTX64_FiniteField[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_FiniteField[102X( [3Xq[103X ) [32X operation[133X
+  [33X[1;0Y[29X[2XMTX64_FiniteField[102X( [3Xp[103X, [3Xd[103X ) [32X operation[133X
+  [6XReturns:[106X  [33X[0;10Ya MeatAxe64 finite field of order [3Xq[103X[133X
+  
+  [33X[0;0Yretrieves  a MeatAxe64 finite field of given order, which must be be a prime
+  power less than or equal to [22X2^64[122X, creating it if needed. If the order is not
+  a prime power an error is generated.[133X
+  
+  [1X1.2-2 MTX64_FieldOrder[101X
+  
+  [33X[1;0Y[29X[2XMTX64_FieldOrder[102X( [3Xf[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_FieldCharacteristic[102X( [3Xf[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_FieldDegree[102X( [3Xf[103X ) [32X function[133X
+  
+  [33X[0;0YThese functions provide access to basic information about a MeatAxe64 field.[133X
+  
+  
+  [1X1.2-3 [33X[0;0YMTX64_FiniteFieldElement[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_FiniteFieldElement[102X( [3Xf[103X, [3Xx[103X ) [32X operation[133X
+  [33X[1;0Y[29X[2XMTX64_FiniteFieldElement[102X( [3Xfld[103X, [3Xffe[103X ) [32X operation[133X
+  
+  [33X[0;0Ycreates a MeatAxe64 finite field element in a given field [3Xf[103X. The element may
+  be  specified by number: the numbering of elements runs from 0 to [22Xq-1[122X and is
+  defined  in  the MeatAxe64 C library. It is guaranteed that element 0 is the
+  zero  of  the field and element 1 is the one of the field. Alternatively the
+  element  may  be  specified  by  giving  the  corresponding [5XGAP[105X finite field
+  element.[133X
+  
+  [1X1.2-4 MTX64_FieldOfElement[101X
+  
+  [33X[1;0Y[29X[2XMTX64_FieldOfElement[102X( [3Xfelt[103X ) [32X function[133X
+  [6XReturns:[106X  [33X[0;10Ythe MeatAxe64 finite field in which [3Xfelt[103X is defined[133X
+  
+  [1X1.2-5 MTX64_NewMatrix[101X
+  
+  [33X[1;0Y[29X[2XMTX64_NewMatrix[102X( [3Xf[103X, [3Xnor[103X, [3Xnoc[103X ) [32X function[133X
+  
+  [33X[0;0YReturns  a  new  mutable  zero matrix over the field [3Xf[103X with [3Xnor[103X rows and [3Xnoc[103X
+  columns.[133X
+  
+  
+  [1X1.3 [33X[0;0YConstructing and Accessing Meataxe64 Matrices[133X[101X
+  
+  
+  [1X1.3-1 [33X[0;0YMTX64_Matrix[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_Matrix[102X( [3Xm[103X ) [32X operation[133X
+  [33X[1;0Y[29X[2XMTX64_Matrix[102X( [3Xm[103X, [3Xfld[103X ) [32X operation[133X
+  [33X[1;0Y[29X[2XMTX64_Matrix[102X( [3Xm[103X, [3Xq[103X ) [32X operation[133X
+  [33X[1;0Y[29X[2XMTX64_Matrix[102X( [3Xm[103X, [3Xq[103X, [3Xnor[103X, [3Xnoc[103X ) [32X operation[133X
+  
+  [33X[0;0Yconstructs a Meataxe64 matrix from a [5XGAP[105X matrix, plus optional specification
+  of  the  field and dimensions of the matrix. Specification of the dimensions
+  is useful in the case where the number of rows is zero.[133X
+  
+  [1X1.3-2 MTX64_RandomMat[101X
+  
+  [33X[1;0Y[29X[2XMTX64_RandomMat[102X( [3Xf[103X, [3Xn[103X, [3Xm[103X ) [32X function[133X
+  
+  [33X[0;0YConstructs  a  new Meataxe64 matrix with [3Xn[103X rows and [3Xm[103X columns over the field
+  [3Xf[103X.The  entries  are  uniformly  pseudo-randomly  chosen  from  [3Xf[103X  using  the
+  [2XGlobalMersenneTwister[102X ([14XReference: GlobalMersenneTwister[114X) random source. This
+  function  is  significantly  more  efficient  that filling in random entries
+  individually,  or using [2XRandomMat[102X ([14XReference: RandomMat[114X) and then converting
+  the result.[133X
+  
+  
+  [1X1.3-3 [33X[0;0YAccessing Matrix Dimensions[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_NumCols[102X( [3Xm[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_NumRows[102X( [3Xm[103X ) [32X function[133X
+  
+  [33X[0;0YThese  function  return  the  dimensions  of the matrix. Unlike in the C API
+  every matrix knows how many rows it has. Unlike in [5XGAP[105X even a matrix with no
+  rows knows how many columns it has.[133X
+  
+  
+  [1X1.3-4 [33X[0;0YAccessing Matrix Entries Individually[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_GetEntry[102X( [3Xm[103X, [3Xi[103X, [3Xj[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_SetEntry[102X( [3Xm[103X, [3Xi[103X, [3Xj[103X, [3Xx[103X ) [32X function[133X
+  
+  [33X[0;0Y[10XMTX64_GetEntry[110X  and  [10XMTX64_SetEntry[110X  provide access to individual entries of
+  matrices.  [3Xi[103X  and [3Xj[103X are zero based row and column indices respectively and [3Xx[103X
+  is Meataxe64 finite field element defined over the same field as [3Xm[103X.[133X
+  
+  [1X1.3-5 MTX64_FieldOfMatrix[101X
+  
+  [33X[1;0Y[29X[2XMTX64_FieldOfMatrix[102X( [3Xm[103X ) [32X function[133X
+  [6XReturns:[106X  [33X[0;10Ythe MeatAxe64 finite field over which [3Xm[103X is defined[133X
+  
+  [1X1.3-6 MTX64_InsertVector[101X
+  
+  [33X[1;0Y[29X[2XMTX64_InsertVector[102X( [3Xm[103X, [3Xv[103X, [3Xrow[103X ) [32X function[133X
+  
+  [33X[0;0YCopies  the  [5XGAP[105X  vector [3Xv[103X as row [3Xrow[103X of the mutable Meataxe64 matrix [3Xm[103X. Row
+  numbering is zero-based. An error will be given if the vector and matrix are
+  not compatible. For [5XGAP[105X's built-in comrpessed vectors over small fields this
+  will be much more efficient than inserting the entries one by one.[133X
+  
+  [1X1.3-7 MTX64_ExtractVector[101X
+  
+  [33X[1;0Y[29X[2XMTX64_ExtractVector[102X( [3Xm[103X, [3Xrow[103X ) [32X function[133X
+  
+  [33X[0;0YReturns  a  [5XGAP[105X vector equal to row [3Xrow[103X (zero-based) of the Meataxe64 matrix
+  [3Xm[103X. When the field of [3Xm[103X is small enough, the vector will be compressed.[133X
+  
+  [1X1.3-8 MTX64_ExtractMatrix[101X
+  
+  [33X[1;0Y[29X[2XMTX64_ExtractMatrix[102X( [3Xm[103X ) [32X operation[133X
+  [6XReturns:[106X  [33X[0;10Ya [5XGAP[105X matrix (compressed where appropriate) equal to the MeatAxe64
+            matrix [3Xm[103X[133X
+  
+  [1X1.3-9 MTX64_Submatrix[101X
+  
+  [33X[1;0Y[29X[2XMTX64_Submatrix[102X( [3Xm[103X, [3Xstartrow[103X, [3Xnumrows[103X, [3Xstartcol[103X, [3Xnumcols[103X ) [32X function[133X
+  
+  [33X[0;0Yreturns  a copy of the submatrix of [3Xm[103X specified by the indices. [3Xstartrow[103X and
+  [3Xstartcol[103X are one based.[133X
+  
+  
+  [1X1.4 [33X[0;0YConstructing and Accessing Meataxe64 BitStrings[133X[101X
+  
+  [1X1.4-1 MTX64_EmptyBitString[101X
+  
+  [33X[1;0Y[29X[2XMTX64_EmptyBitString[102X( [3Xlen[103X ) [32X function[133X
+  
+  [33X[0;0YCreates a new bitstring of length [3Xlen[103X with no set bits[133X
+  
+  [1X1.4-2 MTX64_GetEntryOfBitstring[101X
+  
+  [33X[1;0Y[29X[2XMTX64_GetEntryOfBitstring[102X( [3Xbitstring[103X, [3Xposition[103X ) [32X function[133X
+  
+  [33X[0;0Y[10XMTX64_GetEntryOfBitstring[110X  returns  0 or 1 according to whether the [3Xposition[103X
+  entry of bitstring [3Xbitstring[103X is unset or set.[133X
+  
+  [1X1.4-3 MTX64_SetEntryOfBitstring[101X
+  
+  [33X[1;0Y[29X[2XMTX64_SetEntryOfBitstring[102X( [3Xbitstring[103X, [3Xposition[103X ) [32X function[133X
+  
+  [33X[0;0Y[10XMTX64_SetEntryOfBitstring[110X sets the [3Xposition[103X entry of bitstring [3Xbitstring[103X (to
+  1).  There  is  no way to set an entry to zero in the underlying Meataxe64 C
+  library.[133X
+  
+  
+  [1X1.4-4 [33X[0;0YConverting Meataxe64 BitStrings to and from [5XGAP[105X[101X[1X Boolean Lists[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_BitStringBlist[102X( [3Xblist[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_BlistBitstring[102X( [3Xbitstring[103X ) [32X function[133X
+  
+  [33X[0;0YConvert between the MeatAxe64 bitstrings and GAP's Boolean lists[133X
+  
+  
+  [1X1.4-5 [33X[0;0YBasic Properties of Meataxe64 BitStrings[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_LengthOfBitString[102X( [3Xbitstring[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_WeightOfBitstring[102X( [3Xbitstring[103X ) [32X function[133X
+  
+  [33X[0;0YThe  length  of  a  bitstring is the number of bits in it, the weight is the
+  number of one bits. The weight is stored in the BitString.[133X
+  
+  [1X1.4-6 MTX64_PositionsBitString[101X
+  
+  [33X[1;0Y[29X[2XMTX64_PositionsBitString[102X( [3Xbitstring[103X ) [32X function[133X
+  
+  [33X[0;0YReturns a [5XGAP[105X list containing the indices of the set bits of [3Xbitstring[103X[133X
+  
+  
+  [1X1.5 [33X[0;0YAdditional Matrix Functions[133X[101X
+  
+  [1X1.5-1 MTX64_CompareMatrices[101X
+  
+  [33X[1;0Y[29X[2XMTX64_CompareMatrices[102X( [3Xm1[103X, [3Xm2[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  underlies  the  comparison  of matrices used by [10X<[110X and [10X=[110X. For
+  compatible  matrices  [3Xm1[103X  and  [3Xm2[103X  it  returns  a negative, zero or positive
+  integer according to whether [3Xm1[103X is less than, equal to, or greater than [3Xm2[103X.[133X
+  
+  
+  [1X1.5-2 [33X[0;0YFile I/O for Meataxe64 Matrices[133X[101X
+  
+  [33X[1;0Y[29X[2XMTX64_ReadMatrix[102X( [3Xfn[103X ) [32X function[133X
+  [33X[1;0Y[29X[2XMTX64_WriteMatrix[102X( [3Xm[103X, [3Xfn[103X ) [32X function[133X
+  
+  [33X[0;0YThese  functions  allow  reading  and  writing  of  matrices  to disk in the
+  Meataxe64 file format, which is defined in the C library documentation[133X
+  
+  [1X1.5-3 MTX64_HashMatrix[101X
+  
+  [33X[1;0Y[29X[2XMTX64_HashMatrix[102X( [3Xm[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function implements an efficient hash function for a MeatAxe64 matrix.
+  All entries of the matrix contribute to the hash.[133X
+  
+  
+  [1X1.6 [33X[0;0YAdditional Bitstring Functions[133X[101X
+  
+  [1X1.6-1 MTX64_ReadBitString[101X
+  
+  [33X[1;0Y[29X[2XMTX64_ReadBitString[102X( [3Xfn[103X ) [32X function[133X
+  
+  [33X[0;0YReads  a  bitstring  in  from file [3Xfn[103X in the Meataxe64 file format, which is
+  defined in the C library documentation[133X
+  
+  [1X1.6-2 MTX64_CompareBitStrings[101X
+  
+  [33X[1;0Y[29X[2XMTX64_CompareBitStrings[102X( [3Xb1[103X, [3Xb2[103X ) [32X function[133X
+  
+  [33X[0;0YThis  function  underlies  the comparison of bitstrings used by [10X<[110X and [10X=[110X. For
+  bitstrings  [3Xb1[103X  and  [3Xb2[103X  it  returns  a  negative,  zero or positive integer
+  according to whether [3Xb1[103X is less than, equal to, or greater than [3Xb2[103X.[133X
+  
+  [1X1.6-3 MTX64_RowSelect[101X
+  
+  [33X[1;0Y[29X[2XMTX64_RowSelect[102X( [3Xbs[103X, [3Xm[103X ) [32X function[133X
+  [6XReturns:[106X  [33X[0;10Ya  new,  immutable, plain, length 2 list. The first entry is a new
+            Meataxe64   matrix   containing   only   those  rows  of  [3Xm[103X  whose
+            corresponding  entry  in  [3Xbs[103X  is  set.  The  second entry is a new
+            Meataxe64  matrix  containing  the remaining rows.The length of [3Xbs[103X
+            must match the number of rows of [3Xm[103X[133X
+  
+  [1X1.6-4 MTX64_ColSelect[101X
+  
+  [33X[1;0Y[29X[2XMTX64_ColSelect[102X( [3Xbitstring[103X, [3Xmatrix[103X ) [32X function[133X
+  
+  [33X[0;0Y[10XMTX64_ColSelect[110X  returns a new immutable plain list containing two matrices.
+  The first is composed of the columns of [3Xmatrix[103X corresponding to the set bits
+  in  [3Xbitstring[103X  whose  length  should match the number columns of [3Xmatrix[103X. The
+  second is composed of the remaining columns.[133X
+  
+  
+  [1X1.7 [33X[0;0YStandard Operations applicable to Meataxe64 objects[133X[101X
+  
+  [33X[0;0YMethods  are  installed  for  many  standard operations applied to Meataxe64
+  objects.  In  this section we briefly list the more important ones with some
+  notes where the behaviour may not be as expected.[133X
+  
+  [30X    [33X[0;6Y[2X<[102X  ([14XReference:  \<[114X)  for Meataxe64 fields orders fields by their size.
+        For  Meataxe64  finite field elements, it orders them according to the
+        internal numbering used by the C meataxe.[133X
+  
+  [30X    [33X[0;6YStandard  arithmetic  operations  such as [2XZero[102X ([14XReference: Zero[114X) and [2X*[102X
+        ([14XReference:  *[114X) are installed for Meataxe64 finite field elements, and
+        where relevant for the fields.[133X
+  
+  [30X    [33X[0;6YA limited set of collection operations such as [2XSize[102X ([14XReference: Size[114X),
+        [2XAsList[102X  ([14XReference:  AsList[114X), [2XAsSSortedList[102X ([14XReference: AsSSortedList[114X)
+        and  [2XRandom[102X  ([14XReference:  Random[114X)  are  provided  for Meataxe64 finite
+        fields,  for  convenience,  although  such  fields  are  not  properly
+        collections.[133X
+  
+  [30X    [33X[0;6YThe  list  access  operation  [10X\[\][110X can be used to do the same thing as
+        [2XMTX64_ExtractVector[102X ([14X1.3-7[114X), except that in this case the row indexing
+        is one based.[133X
+  
+  [30X    [33X[0;6YThe  list  assignment  operation  [10X\[\]\:\=[110X  can be used to do the same
+        thing  as [2XMTX64_InsertVector[102X ([14X1.3-6[114X), except that in this case the row
+        indexing is one based.[133X
+  
+  [30X    [33X[0;6Y[2XShallowCopy[102X  ([14XReference:  ShallowCopy[114X)  applied  to a Meataxe64 matrix
+        produces a new matrix which does not share its rows with the original,
+        unlike standard [5XGAP[105X matrices.[133X
+  
+  [30X    [33X[0;6YArithmetic  operations  are  installed  for operations among Meataxe64
+        matrices  and  between matrices and finite field elements. There is no
+        automatic  coercion  between  fields, and matrix dimensions must match
+        correctly  (unbound  entries  are  not treated as zero). This includes
+        transposition.[133X
+  
+  [30X    [33X[0;6Y[10XMatElm[110X  and  [10XSetMatElm[110X methods are installed for matrices which do the
+        same  as  [2XMTX64_GetEntry[102X  ([14X1.3-4[114X) and [2XMTX64_SetEntry[102X ([14X1.3-4[114X) but using
+        one-based  indexing.  This supports access like [10Xm[i,j][110X for reading and
+        writing.[133X
+  
+  [30X    [33X[0;6YMeataxe64 matrices are only equal or comparable with [2X<[102X ([14XReference: \<[114X)
+        if  they  are  defined  over the same field and of the same shape. The
+        ordering is a linear ordering, but is not otherwise defined.[133X
+  
+  [30X    [33X[0;6YList  access  via [10X\[\][110X and [10X\[\]\:\=[110X is supported for bit strings, with
+        the  bits returned as the integers 0 and 1. Note however that bits can
+        only be set to 1, not to 0. Indices in this case are one-based.[133X
+  
