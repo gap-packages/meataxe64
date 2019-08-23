@@ -42,7 +42,7 @@ bitsstring in file <A>cs</A> which indicates the locations of pivot
 columns and a remnant in <A>r</A> which contains the entries from the
 non-pivot columns of the pivot rows.  In addition, the multiplier,
 cleaner and row select are returned in files <A>m</A>, <A>k</A> and
-<A>rs</A>, respectively. See <Ref Chapter="Gaussian Elimination Functions"> for more details.
+<A>rs</A>, respectively. See <Ref Chap="Chapter_Gaussian_Elimination_Functions"/> for more details.
 The rank is returned
 </Description></ManSection>  
 
