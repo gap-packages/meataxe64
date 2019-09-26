@@ -1,11 +1,8 @@
 dist: xenial
 
-sudo: required
 language: c
 env:
   global:
-    - GAPROOT=gaproot
-    - COVDIR=coverage
     - GAP_PKGS_TO_CLONE="datastructures"
     - GAP_PKGS_TO_BUILD="io profiling datastructures"
     - GAP_TESTFILE="tst/testinstall.g"
@@ -29,12 +26,10 @@ branches:
     - master
 
 before_script:
-  - export GAPROOT="$HOME/gap"
   - git clone https://github.com/gap-system/pkg-ci-scripts.git scripts
   - scripts/build_gap.sh
 script:
-  - scripts/build_pkg.sh
-  - scripts/run_tests.sh
+  - scripts/build_pkg.sh && scripts/run_tests.sh
 after_script:
-  - bash scripts/gather-coverage.sh
+  - scripts/gather-coverage.sh
   - bash <(curl -s https://codecov.io/bash)
