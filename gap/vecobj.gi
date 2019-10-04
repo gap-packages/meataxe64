@@ -273,22 +273,24 @@ InstallMethod(ScalarProduct, IsIdenticalObj, [IsMeataxe64VectorObj, IsMeataxe64V
     return FFEfromFELT(x[1,1]);
 end);
 
-InstallMethod(Randomize, [IsMeataxe64VectorObj and IsMutable, IsRandomSource],
-        function(v, rs)
+InstallMethod(Randomize, [IsMeataxe64VectorObj and IsMutable],
+    v -> Randomize(GlobalMersenneTwister, v) );
+
+InstallOtherMethod(Randomize, [IsRandomSource, IsMeataxe64VectorObj and IsMutable],
+        function(rs, v)
     local  u, f, q, m, i;
     u := UnderlyingMeataxe64Matrix(v);
     f := MTX64_FieldOfMatrix(u);
     q := MTX64_FieldOrder(f);
     m := MTX64_NumCols(u);
     for i in [0..m-1] do
-        MTX64_SetEntry(u, 0, i, MTX64_FiniteFieldElement(f, Random(rs, [0..q-1])));
+        MTX64_SetEntry(u, 0, i, MTX64_FiniteFieldElement(f, Random(rs, 0, q-1)));
     od;
 end);
 
-InstallMethod(Randomize, [IsMeataxe64VectorObj and IsMutable],
-        function(v)
-    Randomize(v, GlobalMersenneTwister);
-end);
+# for compatibility with GAP < 4.11
+InstallOtherMethod(Randomize, [IsMeataxe64VectorObj and IsMutable, IsRandomSource],
+    { v, rs } -> Randomize( rs, v ) );
 
 InstallMethod(CopySubVector, [IsMeataxe64VectorObj, IsMeataxe64VectorObj and IsMutable, IsList, IsList],
         function(src, dst, scols, dcols)
