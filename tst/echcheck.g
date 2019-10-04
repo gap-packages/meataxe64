@@ -6,8 +6,8 @@ MTX64_CheckEchelize := function(a,r,o)
            z, one, i, j, x, gr, gm2;
     q := MTX64_FieldOrder(FieldOfMTX64Matrix(a));    
     ga := MTX64_ExtractMatrix(a);
-    n := MTX64_Matrix_NumRows(a);
-    m := MTX64_Matrix_NumCols(a);
+    n := MTX64_NumRows(a);
+    m := MTX64_NumCols(a);
     if n <> Length(ga) then
         Error("input matrix number of rows wrong");
     fi;
@@ -128,7 +128,7 @@ testSolutionMat := function(n, q)
     mat := MTX64_RandomMat(fld, n, n);
     v   := MTX64_RandomMat(fld, 1, n); 
     sol := MTX64_SolutionsMat(mat, v)[2];
-    if (MTX64_Matrix_NumRows(sol) = 1) and
+    if (MTX64_NumRows(sol) = 1) and
        (sol * mat <> v) then
         Error("Not a solution");
     fi;
