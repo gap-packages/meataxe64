@@ -79,10 +79,9 @@ UInt IS_MTX64_Matrix(Obj m) {
 }
 
 Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
-  Obj m;
-  m = NewBag(T_DATOBJ, Size_Bag_Matrix(f, noc, nor));
-  SET_TYPE_DATOBJ(
-                  m, CALL_1ARGS(TYPE_MTX64_Matrix, ObjInt_UInt(DataOfFieldObject(f)->fdef)));
+  Obj t = CALL_1ARGS(TYPE_MTX64_Matrix, ObjInt_UInt(DataOfFieldObject(f)->fdef));
+  Obj m = NewBag(T_DATOBJ, Size_Bag_Matrix(f, noc, nor));
+  SET_TYPE_OBJ(m, t);
   HeaderOfMatrix(m)->noc = noc;
   HeaderOfMatrix(m)->nor = nor;
   return m;
@@ -93,17 +92,17 @@ Obj NEW_MTX64_Matrix(Obj f, UInt nor, UInt noc) {
 // if it is not
 Obj MakeMtx64Field(UInt field_order) {
   Obj field = NewBag(T_DATOBJ, FIELDLEN + sizeof(Obj));
-  SET_TYPE_DATOBJ(field, TYPE_MTX64_Field);
+  SET_TYPE_OBJ(field, TYPE_MTX64_Field);
   FieldSet(field_order, DataOfFieldObject(field));
   return field;
 }
 
 
 Obj MakeMtx64Felt(Obj field, FELT x) {
-  Obj f = NewBag(T_DATOBJ, sizeof(FELT) + sizeof(Obj));
   UInt q = DataOfFieldObject(field)->fdef;
   Obj type = CALL_1ARGS(TYPE_MTX64_Felt, ObjInt_UInt(q));
-  SET_TYPE_DATOBJ(f, type);
+  Obj f = NewBag(T_DATOBJ, sizeof(FELT) + sizeof(Obj));
+  SET_TYPE_OBJ(f, type);
   SetFELTOfFELTObject(f, x);
   return f;
 }
