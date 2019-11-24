@@ -1,0 +1,4 @@
+zfr a1 a3
+cp a3 a1
+zfr a2 a3
+cp a3 a2

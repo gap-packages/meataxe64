@@ -50,6 +50,7 @@ meataxe64_la_SOURCES = \
    src/mtx64/funs3.c \
    src/mtx64/funs4.c \
    src/mtx64/funs5.c \
+   src/mtx64/ffn5.c \
    src/mtx64/mmul.c \
    src/mtx64/mpef.c \
    src/mtx64/mech.c \

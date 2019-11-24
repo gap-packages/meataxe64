@@ -1,0 +1,4 @@
+zor $1
+zmu $1 $1 iden
+zad $1 iden iden1
+zrn iden1
