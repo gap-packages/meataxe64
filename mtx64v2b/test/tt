@@ -1,2 +1,5 @@
-zrd a1 3 88 88
-zec2 a1 rs1 cs2 mul1 cln1 rem1
+zrd a1 $1 500 500
+ztest
+time ztest
+time ztest
+time ztest

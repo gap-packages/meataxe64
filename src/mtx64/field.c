@@ -326,9 +326,42 @@ static uint64_t qdiv(const FIELD * f, uint64_t a , uint64_t b)
     return qmul(f,a,qinv(f,b));
 }
 
+static uint64_t mrbases[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+
+uint64_t primtest(FIELD * f)
+{
+    uint64_t n = f->charc;
+    uint64_t n1 = n-1;
+    uint64_t d  = n1;
+    uint64_t r  = 0;
+    while ((d & 1) == 0) {
+        r++;
+        d >>= 1;
+    }
+    for (int i = 0; i < sizeof(mrbases)/sizeof(mrbases[0]); i++) {
+        uint64_t a = mrbases[i];
+        if (a == n)
+            return 1;
+        uint64_t x = ppow(f, a, d);
+        if (x != 1 && x != n1) {
+            uint64_t comp = 1;
+            for (int j = 1; j < r; j++) {
+                x = pcpmad(n, x, x, 0);
+                if (x == n1) {
+                    comp = 0;
+                    break;
+                }
+            }
+            if (comp)
+                return 0;
+        }
+    }
+    return 1;
+}
+
 /* flags are bit-significant  */
 /*   8 => return error code if fdef is not a prime power  */
-/*   4 => really check that field is prime power, even if slow */
+/*   4 is now spare  */
 /*   last two bits 0 can use 0 for primitive root p > 2^32  */
 /*                 1 get it right */
 /*         (future 2 guess primitive root )  */
@@ -386,10 +419,10 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
     if(fdef<two)
     {
         if((flags&8)==8) return -1;  /* invalid field order 0 or 1 */
-        printf("Invalid field order %ld\n",(long)fdef);
+        printf("Invalid field order %lu\n",fdef);
         exit(12);
     }
-    if( (flags&4)==4 )  f->charc=smlpr(fdef);
+//    if( (flags&4)==4 )  f->charc=smlpr(fdef);  no need to do this now
     else
     {
 /* if fdef is a prime power, and not divisible by a prime < 2^16 */
@@ -401,6 +434,16 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
             y=extroot(fdef,2);
             if(y==1) y=extroot(fdef,3);
             if(y!=1) f->charc=y;
+        }
+        if( (f->charc==fdef) && (fdef>4294967296UL) )
+        {
+            y=primtest(f);
+            if(y==0)
+            {
+                if((flags&8)==8) return -1;
+                printf("Invalid field order %lu\n",fdef);
+                exit(17);
+            }
         }
     }
 /*    now f->charc is the characteristic */
@@ -416,7 +459,7 @@ int  FieldASet1(uint64_t fdef, FIELD * f, int flags)
         if(x%f->charc != zero)
         {
             if((flags&8)==8) return -1;  /* invalid field order 0 or 1 */
-            printf("Invalid field order %ld\n",(long)fdef);
+            printf("Invalid field order %lu\n",fdef);
             exit(12);
         }
         f->pow++;
@@ -3961,60 +4004,63 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
         return;
       case 9:
         lfz=(uint64_t *) ((uint8_t *)f + f->Tlfx);
-        eltsleft=nor*ds->noc;
         ptq=mq;     // Dfmt* so 8 bits
         ptp=mp;
-        while(eltsleft!=0)
+        for(i=0;i<nor;i++)
         {
-            colstodo=eltsleft;
-            if(colstodo>f->atatime) colstodo=f->atatime;
-//  {{ 1 {{   aim now is to do colstodo inputs
-            pcbarrett(&(f->barpar[0]), ptq, (Dfmt *)&(iv[0]),
-                      colstodo, 2*colstodo);
-//  -- 2 --   so now we want to convert colstodo inputs from iv to ptp
-            ivp=(uint16_t *) &(iv[0]);
-
-            leftiniv=colstodo;
-            while(leftiniv>0)
+            eltsleft=ds->noc;
+            while(eltsleft!=0)
             {
-                dofromiv=leftiniv;
-                if(dofromiv>f->pentbyte) dofromiv=f->pentbyte;
+                colstodo=eltsleft;
+                if(colstodo>f->atatime) colstodo=f->atatime;
+//  {{ 1 {{   aim now is to do colstodo inputs
+                pcbarrett(&(f->barpar[0]), ptq, (Dfmt *)&(iv[0]),
+                          colstodo, 2*colstodo);
+//  -- 2 --   so now we want to convert colstodo inputs from iv to ptp
+                ivp=(uint16_t *) &(iv[0]);
+
+                leftiniv=colstodo;
+                while(leftiniv>0)
+                {
+                    dofromiv=leftiniv;
+                    if(dofromiv>f->pentbyte) dofromiv=f->pentbyte;
 //  {{ 3 {{  aim now is to do dofromiv inputs from ivp to ptp1
 //           but now dofrominv is at most f->pentbyte
-                ptodo=f->pow;
-                ivp1=ivp;
-                ptp1=ptp;
-                while(ptodo>0)
-                {
-                    pthistime=ptodo;
-                    if(pthistime>f->spaclev) pthistime=f->spaclev;
+                    ptodo=f->pow;
+                    ivp1=ivp;
+                    ptp1=ptp;
+                    while(ptodo>0)
+                    {
+                        pthistime=ptodo;
+                        if(pthistime>f->spaclev) pthistime=f->spaclev;
 //  {{ 4 {{  aim now do pthistime outputs from ivp1 to ptp1
-                    dfmt=0;
-                    mply=1;
-                    for(j=0;j<dofromiv;j++)
-                    {
-                        dfmt+=mply*lfz[*ivp1];
-                        mply=mply*f->charc;
-                        ivp1++;
-                    }
-                    for(j=0;j<pthistime;j++)
-                    {
-                        *ptp1 = dfmt&255;
-                        dfmt>>=8;
-                        ptp1+=psiz;
-                    }
+                        dfmt=0;
+                        mply=1;
+                        for(j=0;j<dofromiv;j++)
+                        {
+                            dfmt+=mply*lfz[*ivp1];
+                            mply=mply*f->charc;
+                            ivp1++;
+                        }
+                        for(j=0;j<pthistime;j++)
+                        {
+                            *ptp1 = dfmt&255;
+                            dfmt>>=8;
+                            ptp1+=psiz;
+                        }
 //  }} 4 }}
-                    ptodo-=pthistime;
-                    ivp1+=colstodo-dofromiv;
-                }
+                        ptodo-=pthistime;
+                        ivp1+=colstodo-dofromiv;
+                    }
 //  }} 3 }}  done them
-                leftiniv-=dofromiv;
-                ivp+=dofromiv;
-                ptp++;
-            }
+                    leftiniv-=dofromiv;
+                    ivp+=dofromiv;
+                    ptp++;
+                }
 //  }} 1 }}   done them.
-            ptq+=colstodo*f->bytesper;
-            eltsleft-=colstodo;
+                ptq+=colstodo*f->bytesper;
+                eltsleft-=colstodo;
+            }
         }
         return;
       case 10:    // two byte fields needing no Barrett
@@ -4052,66 +4098,6 @@ void PExtract(const DSPACE * ds, const Dfmt *mq, Dfmt *mp,
         exit(82); 
     }
 }
-#ifdef NEVER
-            ptp1=ptp;
-            fullblocks=colstodo/f->pentbyte;
-            for(i=0;i<fullblocks;i++)
-            {
-                dfmt=0;
-                mply=1;
-                for(j=0;j<f->pentbyte;j++)
-                {
-                    dfmt+=mply*lfz[*(iv[i*f->pentbyte+j*colstodo])];
-                    mply=mply*f->charc;
-                }
-                for(j=0;j<f->spaclev;j++)
-                {
-                    *ptp1 = dfmt&255;
-                    dfmt=dfmt>>8;
-                    ptp1+=psiz;
-                }
-            }
-            lastblock=colstodo-f->pentbyte*fullblocks;
-            if(lastblock!=0)
-            {
-                dfmt=0;
-                mply=1;
-                for(j=0;j<lastblock;j++)
-                {
-                    dfmt+=mply*lfz[*(iv[i*f->pentbyte+j*colstodo])];
-                    mply=mply*f->charc;
-                }
-                for(j=0;j<f->pow;j++)
-                {
-                    *ptp1 = dfmt&255;
-                    dfmt=dfmt>>8;
-                    ptp1+=psiz;
-                }
-            }
-
-        }
-        return;
-////
-    dfmt=0;
-    mply=1;
-    intsin=colsleft;
-    if(intsin>f->pentbyte) intsin=f->pentbyte;
-    for(j=0;j<intsin;j++)
-    {
-        dfmt+=mply*lfz[*(pti++)];
-        mply=mply*f->charc;
-    }
-////
-    bytesout=f->pow;
-    if(bytesout>f->spaclev) bytesout=f->spaclev;
-    for(j=0;j<bytesout;j++)
-    {
-        *ptp1 = dfmt&255;
-        dfmt>>=8;
-        ptp1+=psiz;
-    }
-////
-#endif
 
 void PAssemble(const DSPACE * ds, const Dfmt *mp, Dfmt *mq,
               uint64_t nor, uint64_t psiz)
