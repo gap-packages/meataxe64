@@ -246,7 +246,7 @@ static Obj FuncMTX64_SLMultiplyStrassenSquare(Obj self, Obj a, Obj b,
 
 // static Obj DisplayOp = 0;
 
-static inline void Dis( Obj m, Char *str) {
+static inline void Dis( Obj m, const char *str) {
     //    printf("\n%s\n",str);
     //    CALL_1ARGS(DisplayOp, m);
 }
