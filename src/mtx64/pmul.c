@@ -50,7 +50,7 @@ void PLMul(DSPACE *dsa, DSPACE *dsbc, uint64_t nora,
         cauls=(dsbc->noc+f->cauldron-1)/f->cauldron;
 
 /* Zeroize C */
-        cc=AlignMalloc(f->cfmtcauld*cauls*nora);
+        cc=AlignMalloc(f->cfmtcauld*cauls*((nora + f->boxlet -1)/f->boxlet)*f->boxlet);
         CZer(dsbc,cc,nora);
 
 /* Convert B to Bfmt */
@@ -79,7 +79,7 @@ void PLMul(DSPACE *dsa, DSPACE *dsbc, uint64_t nora,
 
         boxes=(nora+f->recbox-1)/f->recbox;
         ix=malloc(alca*sizeof(uint64_t));
-        aa=malloc(8+alca*(f->abase+f->recbox*f->alcovebytes));
+        aa=malloc(8+alca*(f->abase+(f->recbox/f->boxlet)*f->alcovebytes));
         bwa=AlignMalloc(f->bwasize);
         BwaInit(f,bwa);
         for(box=0;box<boxes;box++)
@@ -102,7 +102,7 @@ void PLMul(DSPACE *dsa, DSPACE *dsbc, uint64_t nora,
                 {
                     BrickMad(f,
                              bwa,
-                             aa+j*(f->abase+rowstodo*f->alcovebytes),
+                             aa+j*(f->abase+((rowstodo+ f->boxlet -1)/f->boxlet)*f->alcovebytes),
                              bb+(k*alca+j)*f->bbrickbytes,
                              cc+(box*f->recbox+k*nora)*f->cfmtcauld
                             );

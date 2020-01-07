@@ -97,7 +97,8 @@ typedef struct
 /*   HPMI public variables   */
 
     uint64_t abase;       // bytes of Afmt besides alcovebytes
-    uint64_t alcovebytes; // bytes in an alcove in Afmt inc. skip/term
+    uint64_t boxlet;      // number of rows of A converted to A format together
+    uint64_t alcovebytes; // bytes in a boxlet x alcove in Afmt inc. skip/term
     uint64_t cauldron;    // in columns
     uint64_t cfmtcauld;   // bytes in a cauldron in Cfmt
     uint64_t dfmtcauld;   // bytes in a cauldron in Dfmt
