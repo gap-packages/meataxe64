@@ -32,6 +32,7 @@ dnl ##
 dnl ## Set the language
 dnl ##
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_CC_STDC
 AC_LANG([C])
 AM_PROG_AS

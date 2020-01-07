@@ -9,6 +9,8 @@
 #include "hpmi.h"
 #include "pcrit.h"
 #include "tabmake.h"
+#include "string.h"
+#include "fphpmi.h"
 
 void hpmiset(FIELD * f)
 {
@@ -16,6 +18,7 @@ void hpmiset(FIELD * f)
     f->cauldron=0;
     f->recbox=1024;
     f->abase=1;       // usually right
+    f->boxlet=1;      
     if(f->mact[1]=='1') f->recbox=3072;
     if(f->mact[1]=='2') f->recbox=5000;
     if(f->charc==2)
@@ -105,6 +108,88 @@ void hpmiset(FIELD * f)
         f->bwasize=16384;
         hpmitabas(f);
     }
+    if( (f->charc>=197)&&(f->charc<=27397079)  && f->mact[0] >= 'g')
+    {
+        f->AfmtMagic=10;
+        f->BfmtMagic = f->charc <= 1669 ? 10 : 11 ; 
+        f->CfmtMagic = f->BfmtMagic;
+        f->BwaMagic= f->BfmtMagic;
+        f->GreaseMagic=4;  // no grease
+        
+        f->SeedMagic= f->BwaMagic;     // expand signed to floats or double
+        f->cauldron=(f->charc > 1669) ? 80 :160;
+        f->bfmtcauld=f->cauldron*f->pbytesper;
+        f->cfmtcauld=f->cauldron*(f->charc > 1669 ? sizeof(double) : sizeof(float));
+        f->dfmtcauld=f->bfmtcauld;
+        f->alcove=24;
+        if (f->mact[0] >= 'm')
+            f->boxlet = 5;
+        else
+            f->boxlet = 3;
+        f->abase = 1;
+        f->alcovebytes=f->pbytesper*f->alcove*f->boxlet+1;
+        f->czer = 0;
+        f->bzer=0;
+        f->bbrickbytes=1+f->alcove*f->bfmtcauld;
+        f->bwasize=f->alcove*f->cfmtcauld + //real BWA
+            f->alcove*f->boxlet * (f->CfmtMagic == 11 ? 8 :4); //AWA
+        f->recbox = 195;
+        if(f->mact[1]=='1') f->recbox *= 2;
+        if(f->mact[1]=='2') f->recbox *= 4;        
+#if 0
+        if (f->charc <= 503) // single precision cases
+            f->redfreq = 11;
+        else if (f->charc <= 523)
+            f->redfreq = 10;
+        else if (f->charc <= 557)
+            f->redfreq = 9;
+        else if (f->charc <= 587)
+            f->redfreq = 8;
+        else if (f->charc <= 631)
+            f->redfreq = 7;
+        else if (f->charc <= 683)
+            f->redfreq = 6;
+        else if (f->charc <= 743)
+            f->redfreq = 5;
+        else if (f->charc <= 829)
+            f->redfreq = 4;
+        else if (f->charc <= 953)
+            f->redfreq = 3;
+        else if (f->charc <= 1181)
+            f->redfreq = 2;
+        else if (f->charc <= 1669)
+            f->redfreq = 1;
+        else if (f->charc <= 2739707) // Double precision
+            f->redfeq =100;
+        else if (f->charc <= 3874531)
+            f->redfeq =50;
+        else if (f->charc <= 6126161)
+            f->redfeq =20;
+        else if (f->charc <= 7908853)
+            f->redfeq =12;
+        else if (f->charc <= 8663701)
+            f->redfeq =10;
+        else if (f->charc <= 9132353)
+            f->redfeq =9;
+        else if (f->charc <= 9686329)
+            f->redfeq =8;
+        else if (f->charc <= 10355119)
+            f->redfeq =7;
+        else if (f->charc <= 11184799)
+            f->redfeq =6;
+        else if (f->charc <= 12252323)
+            f->redfreq =5;
+        else if (f->charc <= 13698533)
+            f->redfreq =4;
+        else if (f->charc <= 15817687)
+            f->redfreq =3;
+        else if (f->charc <= 19372651)
+            f->redfreq =2;
+        else 
+            f->redfreq =1;
+#endif
+
+    }
     if(f->ppaktyp==1233)  // ppaktup==0 new stuff excluded for now
 //  because it doesn't work!
     {
@@ -144,12 +229,14 @@ void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
     uint8_t  * Thpa;
     uint16_t * Thpv;
     uint64_t alen;
+    uint64_t boxlets;
     const FIELD * f;
     uint8_t * f8;
     f=ds->f;
     f8=(uint8_t *)f;
     nz1=(ds->noc+f->alcove-1)/f->alcove;
-    alen=f->abase+nora*f->alcovebytes;
+    boxlets = (nora + f->boxlet -1)/f->boxlet;
+    alen=f->abase+boxlets*f->alcovebytes;
     for(j=0;j<nz1;j++)
     {
         ix[j]=j*alen;
@@ -296,6 +383,9 @@ void DtoA(DSPACE * ds, uint64_t * ix, const Dfmt * d, Afmt * a,
             }
         }
     }
+    if (f->AfmtMagic == 10) {
+        DtoA_fp(ds, ix, d, a, nora, stride);
+    }
     for(j=0;j<nz1;j++)
         a[ix[j]]=255;  // Put in the terminators
 }
@@ -411,6 +501,9 @@ uint64_t DtoB(DSPACE * ds, const Dfmt * d, Bfmt * b,
             *b=1;
             return 12*f->bfmtcauld+1;
         }
+    }
+    if (f->BfmtMagic==10 || f->BfmtMagic == 11) {
+        return DtoB_fp(ds, d, b, nor, stride);
     }
     return 0;    // should never happen - compiler warning
 }
@@ -547,6 +640,24 @@ int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
     {
         memcpy(bwa,pt1,f->alcove*f->bfmtcauld);
     }
+    if(f->SeedMagic==10)    // expand signed to floats
+    {
+        if (f->pbytesper == 1)
+            for (i = 0; i < f->alcove * f->cauldron; i++) 
+                *(float *)(bwa + 4*i) = *(int8_t *)(pt1 + i);
+        else 
+            for (i = 0; i < f->alcove * f->cauldron; i++) 
+                *(float *)(bwa + 4*i) = *(int16_t *)(pt1 + 2*i);        
+    }
+    if(f->SeedMagic==11)    // expand signed to doubles
+    {
+        if (f->pbytesper == 2)
+            for (i = 0; i < f->alcove * f->cauldron; i++) 
+                *(double *)(bwa + 8*i) = *(int16_t *)(pt1 + 2*i);
+        else 
+            for (i = 0; i < f->alcove * f->cauldron; i++) 
+                *(double *)(bwa + 8*i) = *(int32_t *)(pt1 + 4*i);        
+    }
     return *b;
 }
 
@@ -675,6 +786,8 @@ void BwaMad(const FIELD *f, uint8_t * bwa, int sparsity, Afmt *af, Cfmt *c)
         pc6bma(af,bwa,c,f->p90);      // scalar 64-bit
         return;
     }
+    if (f->BwaMagic==10 || f->BwaMagic == 11)
+        BwaMad_fp(f, af, bwa, c);
 }
 
 void BrickMad(const FIELD *f, uint8_t *bwa,
@@ -724,6 +837,12 @@ void CtoD(DSPACE * ds, Cfmt * c, Dfmt * d, uint64_t nor, uint64_t stride)
     const FIELD * f;
 
     f=ds->f;
+
+    if (f->CfmtMagic == 10 || f->CfmtMagic == 11) {
+        CtoD_fp(ds, c, d, nor, stride);
+        return;
+    }
+        
     nz2=(ds->noc+f->cauldron-1)/f->cauldron;    // number of cauldrons
     
     bu=0;    // stop compiler
