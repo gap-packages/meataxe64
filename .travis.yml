@@ -15,11 +15,16 @@ addonse:
 
 matrix:
   include:
-    - env: CFLAGS="-O2" CC=clang CXX=clang++
+    - env: GAPBRANCH=master CFLAGS="-O2" CC=clang CXX=clang++
       compiler: clang
-    - env: CFLAGS="-O2" CC=gcc CXX=g++
+    - env: GAPBRANCH=master CFLAGS="-O2" CC=gcc CXX=g++
       compiler: gcc
-    - env: CFLAGS=""  # test build w/o optimization
+    - env: GAPBRANCH=master CFLAGS=""  # test build w/o optimization
+    - env: GAPBRANCH=stable-4.11 CFLAGS="-O2" CC=clang CXX=clang++
+      compiler: clang
+    - env: GAPBRANCH=stable-4.11 CFLAGS="-O2" CC=gcc CXX=g++
+      compiler: gcc
+    - env: GAPBRANCH=stable-4.11 CFLAGS=""  # test build w/o optimization
 
 branches:
   only:
