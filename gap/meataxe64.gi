@@ -112,6 +112,9 @@ end);
 InstallOtherMethod(Size, [IsMTX64FiniteField],
         MTX64_FieldOrder);
 
+InstallOtherMethod(Characteristic, [IsMTX64FiniteField],
+        MTX64_FieldCharacteristic);
+
 
 InstallMethod( ViewString, "for a meataxe64 field",
                [ IsMTX64FiniteField ],
@@ -301,6 +304,8 @@ InstallMethod(InverseOp,  "meataxe64 field element",
         [IsMTX64FiniteFieldElement],
     x ->  MTX64_FieldInv(MTX64_FieldOfElement(x), x));
 
+InstallOtherMethod(Characteristic, [IsMTX64FiniteFieldElement],
+        x->MTX64_FieldCharacteristic (MTX64_FieldOfElement(x)));
 
 
 FFEfromFELT := function(felt)
@@ -718,6 +723,9 @@ InstallMethod(\<,  "for meataxe64 matrices", IsIdenticalObj,
     fi;
     return 0 > MTX64_CompareMatrices(m1,m2);
 end);
+
+InstallOtherMethod(Characteristic, "for meataxe64 matrices", [IsMTX64Matrix],
+        m->MTX64_FieldCharacteristic(MTX64_FieldOfMatrix(m)));
 
 
 InstallGlobalFunction("MTX64_Submatrix",

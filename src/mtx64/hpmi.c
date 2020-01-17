@@ -60,7 +60,7 @@ void hpmiset(FIELD * f)
         f->bwasize=15744;
         hpmitab3(f);
     }
-    if( (f->charc>=5)&&(f->charc<=193) )
+    if( (f->charc>=5)&&(f->charc<=61 || (f->charc <= 1933 && f->mact[0] < 'g')) )
     {
         f->AfmtMagic=2;   // Always Table lookup on byte
 
@@ -108,7 +108,7 @@ void hpmiset(FIELD * f)
         f->bwasize=16384;
         hpmitabas(f);
     }
-    if( (f->charc>=197)&&(f->charc<=27397079)  && f->mact[0] >= 'g')
+    if( (f->charc>=67)&&(f->charc<=27397079)  && f->mact[0] >= 'g')
     {
         f->AfmtMagic=10;
         f->BfmtMagic = f->charc <= 1669 ? 10 : 11 ; 
