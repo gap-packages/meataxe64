@@ -9,7 +9,10 @@ dnl ##
 dnl ## Setup autoconf
 dnl ##
 AC_PREREQ([2.68])
-AC_INIT([meataxe64], m4_esyscmd([tr -d '\n' < VERSION]))
+AC_INIT([meataxe64], [package],
+        [https://github.com/gap-packages/meataxe64/issues],
+        [meataxe64],
+        [https://gap-packages.github.io/meataxe64/])
 AC_CONFIG_SRCDIR([src/meataxe64.c])
 AC_CONFIG_HEADER([src/pkgconfig.h:cnf/pkgconfig.h.in])
 AC_CONFIG_MACRO_DIR([m4])
@@ -71,12 +74,6 @@ case $host_os in
 esac
 
 AM_CONDITIONAL([SYS_IS_OSX], [test "$OSX" = "yes"])
-
-
-dnl ##
-dnl ## Rebuild configure if VERSION file changes
-dnl ##
-AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
 dnl ##
 dnl ## Output everything
