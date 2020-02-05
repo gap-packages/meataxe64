@@ -9,9 +9,9 @@ env:
 
 addonse:
   apt_packages:
-      - libgmp3-dev
-      - autotools-dev
-      - automake
+    - libgmp-dev
+    - libreadline-dev
+    - zlib1g-dev
 
 matrix:
   include:
@@ -25,6 +25,8 @@ matrix:
     - env: GAPBRANCH=stable-4.11 CFLAGS="-O2" CC=gcc CXX=g++
       compiler: gcc
     - env: GAPBRANCH=stable-4.11 CFLAGS=""  # test build w/o optimization
+    - env: GAPBRANCH=master # also test on macOS (uses clang)
+      os: osx
 
 branches:
   only:
