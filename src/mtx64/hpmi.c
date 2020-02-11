@@ -60,7 +60,7 @@ void hpmiset(FIELD * f)
         f->bwasize=15744;
         hpmitab3(f);
     }
-    if( (f->charc>=5)&&(f->charc<=61 || (f->charc <= 1933 && f->mact[0] < 'g')) )
+    if( (f->charc>=5)&&(f->charc<=193) )
     {
         f->AfmtMagic=2;   // Always Table lookup on byte
 
@@ -108,7 +108,7 @@ void hpmiset(FIELD * f)
         f->bwasize=16384;
         hpmitabas(f);
     }
-    if( (f->charc>=67)&&(f->charc<=27397079)  && f->mact[0] >= 'g')
+    if( (f->charc>=197)&&(f->charc<=27397079)  && f->mact[0] >= 'g')
     {
         f->AfmtMagic=10;
         f->BfmtMagic = f->charc <= 1669 ? 10 : 11 ; 
@@ -118,16 +118,16 @@ void hpmiset(FIELD * f)
         
         f->SeedMagic= f->BwaMagic;     // expand signed to floats or double
         f->cauldron=(f->charc > 1669) ? 80 :160;
-        f->bfmtcauld=f->cauldron*f->pbytesper;
+        f->bfmtcauld=f->cauldron*(f->pbytesper == 1 ? 2 : f->pbytesper);
         f->cfmtcauld=f->cauldron*(f->charc > 1669 ? sizeof(double) : sizeof(float));
-        f->dfmtcauld=f->bfmtcauld;
+        f->dfmtcauld=f->cauldron*f->pbytesper;
         f->alcove=24;
         if (f->mact[0] >= 'm')
             f->boxlet = 5;
         else
             f->boxlet = 3;
         f->abase = 1;
-        f->alcovebytes=f->pbytesper*f->alcove*f->boxlet+1;
+        f->alcovebytes=(f->pbytesper == 1 ? 2 : f->pbytesper)*f->alcove*f->boxlet+1;
         f->czer = 0;
         f->bzer=0;
         f->bbrickbytes=1+f->alcove*f->bfmtcauld;
@@ -642,12 +642,8 @@ int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
     }
     if(f->SeedMagic==10)    // expand signed to floats
     {
-        if (f->pbytesper == 1)
-            for (i = 0; i < f->alcove * f->cauldron; i++) 
-                *(float *)(bwa + 4*i) = *(int8_t *)(pt1 + i);
-        else 
-            for (i = 0; i < f->alcove * f->cauldron; i++) 
-                *(float *)(bwa + 4*i) = *(int16_t *)(pt1 + 2*i);        
+        for (i = 0; i < f->alcove * f->cauldron; i++) 
+            *(float *)(bwa + 4*i) = *(int16_t *)(pt1 + 2*i);        
     }
     if(f->SeedMagic==11)    // expand signed to doubles
     {

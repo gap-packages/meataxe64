@@ -60,6 +60,7 @@ meataxe64_la_SOURCES = \
    src/mtx64/tfarm2.c \
    src/mtx64/util.c \
    src/mtx64/fphpmi.cc \
+   src/mtx64/fphpmi1.cc \
    $(ASM_SOURCES)
 
 meataxe64_la_CPPFLAGS = $(GAP_CPPFLAGS)

@@ -22,19 +22,39 @@ extern "C" {
  ***********************************************************************************/
 
 // convert unsigned integers of type IT to signed integers of type OT in range -p/2..p/2
-// these may merit some assembler for some of the cases.
 //  with sparseness tracking
+// these may merit some assembler for some of the cases.
+
+// rather ugly workaround for a bug in gcc up to about version 7.4
+// if we allow this code to be inlined gcc generates an invalid aligned move instruction
+// which causes a GPF.
+
+// It is expected that, on the fast-paths all of the conditionals in this function will be
+// resolved at compile-time, so there will just be one call to function from fphpmi1.cc
+
 template<typename OT, typename IT>
-static inline IT normalize(const IT *in, OT *restrict out, uint64_t num_entries, OT p, IT p2) {
-    IT nonsparse = 0;
-    for (uint64_t i = 0; i < num_entries; i++) {
-        IT x = in[i];
-        nonsparse |= x;
-        // next line needs to do unsigned comparison
-        // then signed subtraction -- care is needed
-        out[i] = (x > p2) ? ((OT)x - p) : (OT)x;
+static inline uint64_t normalize(const IT *in, OT *restrict out, uint64_t num_entries, OT p, IT p2) {
+    if (sizeof(IT) == 1) {
+        if (num_entries == 24)
+            return normalize_8_24((const uint8_t *)in, (int16_t *)out, p, p2);
+        if (num_entries == 160)
+            return normalize_8_160((const uint8_t *)in, (int16_t *)out, p, p2);
+        return normalize_8((const uint8_t *)in, (int16_t *)out, num_entries, p, p2);
     }
-    return nonsparse;
+    if (sizeof(IT) == 2) {
+        if (num_entries == 24)
+            return normalize_16_24((const uint16_t *)in, (int16_t *)out, p, p2);
+        if (num_entries == 80)
+            return normalize_16_80((const uint16_t *)in, (int16_t *)out, p, p2);
+        if (num_entries == 160)
+            return normalize_16_160((const uint16_t *)in, (int16_t *)out, p, p2);
+        return normalize_16((const uint16_t *)in, (int16_t *)out, num_entries, p, p2);
+    }
+    if (num_entries == 24)
+        return normalize_32_24((const uint32_t *)in, (int32_t *)out, p, p2);
+    if (num_entries == 80)
+        return normalize_32_80((const uint32_t *)in, (int32_t *)out, p, p2);
+    return normalize_32((const uint32_t *)in, (int32_t *)out, num_entries, p, p2);      
 }
 
 /************************************************************************************
@@ -127,9 +147,9 @@ void DtoA_fp(const DSPACE *ds, uint64_t *ix, const Dfmt *d, Afmt *restrict a,
   switch (f->pbytesper) {
   case 1:
     if (f->mact[0] >= 'm')
-      DtoA_fp_template<uint8_t, int8_t, 5>(ds, ix, d, a, nora, stride);
+      DtoA_fp_template<uint8_t, int16_t, 5>(ds, ix, d, a, nora, stride);
     else
-      DtoA_fp_template<uint8_t, int8_t, 3>(ds, ix, d, a, nora, stride);
+      DtoA_fp_template<uint8_t, int16_t, 3>(ds, ix, d, a, nora, stride);
     break;
   case 2:
     if (f->mact[0] >= 'm')
@@ -189,7 +209,7 @@ uint64_t DtoB_fp(const DSPACE *ds, const Dfmt *d, Bfmt *restrict b,
                  uint64_t nor, uint64_t stride) {
   const FIELD *f = ds->f;
   if (f->pbytesper == 1)
-    return DtoB_fp_template<uint8_t, int8_t, CAULDRON_sp>(ds, d, b, nor,
+    return DtoB_fp_template<uint8_t, int16_t, CAULDRON_sp>(ds, d, b, nor,
                                                           stride);
   if (f->pbytesper == 2) {
     if (f->BfmtMagic == 10)
@@ -662,15 +682,7 @@ void BwaMad_fp(const FIELD *f, const Afmt *a, uint8_t *restrict bwa,
                Cfmt *restrict c) {
   const char mactype = f->mact[0];
   // const char mactype = 'g'; // for testing
-  if (f->pbytesper == 1)
-    if (mactype >= 'm')
-      BwaMad_fp_template<int8_t, float, 5, inner_sp_512>(a, bwa, c, f->charc);
-    else if (mactype >= 'k')
-      BwaMad_fp_template<int8_t, float, 3, inner_sp_256>(a, bwa, c, f->charc);
-    else
-      BwaMad_fp_template<int8_t, float, 3, inner_sp_256_nofma>(a, bwa, c,
-                                                               f->charc);
-  else if (f->pbytesper == 2)
+  if (f->pbytesper <= 2)
     if (f->BwaMagic == 10)
       if (mactype >= 'm')
         BwaMad_fp_template<int16_t, float, 5, inner_sp_512>(a, bwa, c,
