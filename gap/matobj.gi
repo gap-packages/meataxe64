@@ -30,99 +30,177 @@ BindGlobal("MakeMeataxe64Matrix",
     return r;    
 end);
 
-InstallMethod(NumberRows,[IsMeataxe64MatrixObj],MTX64_NumRows);
-InstallMethod(NumberColumns,[IsMeataxe64MatrixObj],MTX64_NumCols);
-InstallMethod(Length,[IsMeataxe64MatrixObj],MTX64_NumRows);
-InstallMethod(DimensionsMat, [IsMeataxe64MatrixObj], 
-        m -> [MTX64_NumRows, MTX64_NumCols]);
-InstallMethod(RankMat, [IsMeataxe64MatrixObj], m->RankMat(UnderlyingMeataxe64Matrix(m)));
-InstallMethod(RankMatDestructive, [IsMeataxe64MatrixObj], RankMat);
+InstallMethod(NumberRows,[IsMeataxe64MatrixObj],m->MTX64_NumRows(UnderlyingMeataxe64Matrix(m)));
+
+InstallMethod(NumberColumns,[IsMeataxe64MatrixObj], m->MTX64_NumCols(UnderlyingMeataxe64Matrix(m)));
+
+InstallMethod(MatElm, [IsMeataxe64MatrixObj, IsInt, IsInt], 
+        {m, r, c} -> FFEfromFELT(MTX64_GetEntry(UnderlyingMeataxe64Matrix(m), r-1, c-1)));
+
+InstallMethod(SetMatElm, [IsMeataxe64MatrixObj, IsInt, IsInt, IsFFE], 
+        function(m, r, c, x)
+    local  um, f;
+    um := UnderlyingMeataxe64Matrix(m);
+    f := MTX64_FieldOfMatrix(um);   
+    MTX64_SetEntry( um, r-1, c-1, MTX64_FiniteFieldElement(f,x));
+    end);
+
+InstallMethod(\<, [IsMeataxe64MatrixObj, IsMeataxe64MatrixObj],
+        {m1,m2} -> UnderlyingMeataxe64Matrix(m1) < UnderlyingMeataxe64Matrix(m2));
+    
+InstallMethod(ConstructingFilter, [IsMeataxe64MatrixObj], m->IsMeataxe64MatrixObj);
+
+if IsBound(CompatibleVectorFilter) then
+    InstallMethod(CompatibleVectorFilter, [IsMeataxe64MatrixObj], m-> IsMeataxe64VectorObj);
+fi;
 
 
-DeclareCategory("IsMeataxe64MatrixRowReference",IsVectorObj);
-DeclareRepresentation("IsMeataxe64MatrixRowReferenceRep", IsPositionalObjectRep, 2);
+InstallMethod(NewZeroMatrix,[IsMeataxe64MatrixObj, IsField and IsFinite, IsInt, IsInt],
+        {filt, R, nor, noc} -> MakeMeataxe64Matrix(MTX64_NewMatrix(MTX64_FiniteField(Size(R)), nor, noc)));
 
-InstallMethod(\[\], [IsMeataxe64MatrixObj, IsPosInt],
-        function(m,i)
-    local  ref, filts, type;
-    ref := [m,i];
-    filts := IsMeataxe64MatrixRowReferenceRep and IsMeataxe64MatrixRowReference;
-    if IsMutable(m) then
-        filts := filts and IsMutable;
-    else
-        filts := filts and IsCopyable;
+
+
+InstallMethod(NewMatrix,[IsMeataxe64MatrixObj, IsField and IsFinite, IsInt, IsList],
+        function(filt, R, noc, list) 
+    local  nor, m, i, l;
+    if Length(list) = 0 then
+        return MakeMeataxe64Matrix(MTX64_NewMatrix(MTX64_FiniteField(Size(R)), 0, noc));
     fi;
-    type := NewType(ElementsFamily(FamilyObj(m)),  filts);
-    Objectify(type,ref);
-    return ref;
+    if IsFFE(list[1]) then
+        nor := QuoInt(Length(list),noc);
+    else
+        nor := Length(list);
+    fi;
+    m := MTX64_NewMatrix(MTX64_FiniteField(Size(R)), nor, noc);
+    if IsFFE(list[1]) then
+        for i in [1..nor] do
+            MTX64_InsertVector(m, i, list{[noc*(i-1)+1..noc*i]});
+        od;
+    else
+        for i in [1..nor] do
+            l := list[i];
+            if not IsList(l) then
+                l := Unpack(l);
+            fi;
+            MTX64_InsertVector(m, l, i-1);            
+        od;
+    fi;
+    return MakeMeataxe64Matrix(m);
 end);
 
-DeclareAttribute("UnderlyingMatrixObj", IsMeataxe64MatrixRowReference);
-DeclareAttribute("RowNumber", IsMeataxe64MatrixRowReference);
+#
+# Methods for performance
+#
+    
+
+InstallMethod( \*,
+        [ IsMeataxe64MatrixObj, IsFFE ],
+        {m,x} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(m)*x));
+
+InstallMethod( \*,
+        [ IsFFE, IsMeataxe64MatrixObj ],
+        {x,m} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(m)*x));
+
+InstallMethod( \*, [IsMeataxe64MatrixObj, IsMeataxe64MatrixObj],
+        {m1,m2} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(m1)*
+                UnderlyingMeataxe64Matrix(m2)));
+
+InstallMethod( \*, [IsMeataxe64VectorObj, IsMeataxe64MatrixObj],
+        {v,m} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(v)*
+                UnderlyingMeataxe64Matrix(m)));
+
+InstallMethod( \*, [IsMeataxe64MatrixObj, IsMeataxe64VectorObj],
+        {m, v} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(m)*
+                UnderlyingMeataxe64Matrix(v)));
 
 
-InstallMethod(UnderlyingMatrixObj, [IsMeataxe64MatrixRowReferenceRep and IsMeataxe64MatrixRowReference],
-        x->x![1]);
-InstallMethod(RowNumber, [IsMeataxe64MatrixRowReferenceRep and IsMeataxe64MatrixRowReference],
-        x->x![2]);
+InstallMethod( \+, [IsMeataxe64MatrixObj, IsMeataxe64MatrixObj],
+        {m1,m2} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(m1)+
+                UnderlyingMeataxe64Matrix(m2)));
+
+InstallMethod( \-, [IsMeataxe64MatrixObj, IsMeataxe64MatrixObj],
+        {m1,m2} -> MakeMeataxe64Matrix(UnderlyingMeataxe64Matrix(m1)-
+                UnderlyingMeataxe64Matrix(m2)));
+
+InstallMethod( AdditiveInverse, [IsMeataxe64MatrixObj],
+        m -> MakeMeataxe64Matrix(-UnderlyingMeataxe64Matrix(m)));
+
+InstallMethod( AdditiveInverse, [IsMeataxe64MatrixObj],
+        m -> MakeMeataxe64Matrix(-UnderlyingMeataxe64Matrix(m)));
 
 
-InstallMethod(BaseDomain, [IsMeataxe64MatrixRowReference], 
-        r->BaseDomain(UnderlyingMatrixObj(r)));
 
-InstallMethod(Length, [IsMeataxe64MatrixRowReference],
-        r->NumberRows(UnderlyingMatrixObj(r)));
+#
+# completely generic method, should be elsewhere I think
+#
 
-InstallMethod(\[\], [IsMeataxe64MatrixRowReference, IsPosInt],
-        {r,i} -> MatElm(UnderlyingMatrixObj(r),RowNumber(r),i));
+InstallOtherMethod( Unpack, [IsMatrixObj],
+        m -> List([1..NumberRows(m)], i -> List([1..NumberColumns(m)], j-> m[i,j])));
 
-InstallMethod(\[\]\:\=, [IsMeataxe64MatrixRowReference, IsPosInt, IsFFE],
-        {r,i,x} -> SetMatElm(UnderlyingMatrixObj(r),RowNumber(r),i,x));
 
-InstallMethod(PositionNonZero, [IsMeataxe64MatrixRowReference],
-        function(r)
-    local  u, m, res;
-    u := UnderlyingMatrixObj(r);
-    m := UnderlyingMeataxe64Matrix(u);    
-    res := MTX64_DNzl(m, RowNumber(r));
-    if res = fail then
-        return MTX64_NumCols(m)+1;
+
+#
+# Echelization based methods
+#
+
+InstallMethod( Meataxe64Echelonization, [IsMeataxe64MatrixObj], 
+        m -> MTX64_Echelize(UnderlyingMeataxe64Matrix(m)));
+
+
+InstallMethod( RankMat, [IsMeataxe64MatrixObj],
+        m -> Meataxe64Echelonization(m).rank);
+
+InstallMethod( RankMatDestructive, [IsMeataxe64MatrixObj and IsMutable],
+        m -> Meataxe64Echelonization(m).rank);
+
+InstallMethod( InverseMutable, [IsMeataxe64MatrixObj],
+        function(m)
+    local e,n;
+    n := NumberColumns(m);
+    if n <> NumberRows(m) then
+        Error("Inverse: Matrix must be square");
+    fi;    
+    e := Meataxe64Echelonization(m);
+    if e.rank <> n then
+        return fail;
+    fi;
+    return MakeMeataxe64Matrix(-e.multiplier);
+end);
+
+InstallOtherMethod(NullspaceMat, [IsMeataxe64MatrixObj],
+        m -> MakeMeataxe64Matrix(NullspaceMat(UnderlyingMeataxe64Matrix(m))));
+
+BindGlobal("MTX64_SEM_fix", function(r)
+    if IsBound(r.vectors) then
+        r.vectors := MakeMeataxe64Matrix(r.vectors);
+    fi;
+    if IsBound(r.coeffs) then
+        r.coeffs := MakeMeataxe64Matrix(r.coeffs);
+    fi;
+    if IsBound(r.relations) then
+        r.relations := MakeMeataxe64Matrix(r.relations);
+    fi;
+    return r;
+end);
+
+
+InstallOtherMethod(SemiEchelonMatTransformationDestructive, [IsMeataxe64MatrixObj and IsMutable], 
+        m -> MTX64_SEM_fix(MTX64_SEMT(UnderlyingMeataxe64Matrix(m), Meataxe64Echelonization(m))));
+InstallOtherMethod(SemiEchelonMatTransformation, [IsMeataxe64MatrixObj], 
+        m -> MTX64_SEM_fix(MTX64_SEMT(UnderlyingMeataxe64Matrix(m), Meataxe64Echelonization(m))));
+InstallOtherMethod(SemiEchelonMatDestructive, [IsMeataxe64MatrixObj and IsMutable], 
+        m -> MTX64_SEM_fix(MTX64_SEM(UnderlyingMeataxe64Matrix(m), Meataxe64Echelonization(m))));
+InstallOtherMethod(SemiEchelonMat, [IsMeataxe64MatrixObj], 
+        m -> MTX64_SEM_fix(MTX64_SEM(UnderlyingMeataxe64Matrix(m), Meataxe64Echelonization(m))));
+    
+InstallOtherMethod(SolutionMat, [IsMeataxe64MatrixObj, IsMeataxe64VectorObj],
+        function(m,v)
+    local  res,um;
+    um := UnderlyingMeataxe64Matrix(m);    
+    res := MTX64_SolutionsMat(um,UnderlyingMeataxe64Matrix(v), Meataxe64Echelonization(m));
+    if MTX64_GetEntryOfBitString(res[1],0) = 1 then
+        return MakeMeataxe64Matrix(res[2]);
     else
-        return res+1;
+        return fail;
     fi;
 end);
-
-InstallMethod(ListOp, [IsMeataxe64MatrixRowReference],
-        function(r)
-    local  u, i, m;
-    u := UnderlyingMeataxe64Matrix(r);
-    i := RowNumber(r);
-    m := NumberColumns(u);
-    return List([1..m], j->u[i,j]);
-end);
-
-InstallMethod(ListOp, [IsMeataxe64MatrixRowReference, IsFunction],
-        function(r,f)
-    local  u, i, m;
-    u := UnderlyingMeataxe64Matrix(r);
-    i := RowNumber(r);
-    m := NumberColumns(u);
-    return List([1..m], j->f(u[i,j]));
-end);
-
-InstallMethod(Unpack, [IsMeataxe64MatrixRowReference], ListOp);
-
-InstallMethod(ShallowCopy, [IsMeataxe64MatrixRowReference],
-        function(r)
-    local  u, m, c;
-    u := UnderlyingMatrixObj(r);
-    m := UnderlyingMeataxe64Matrix(u);
-    c := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), 1, MTX64_NumCols(m));
-    MTX64_DCpy(m, c, RowNumber(r), 1);
-    return MakeMeataxe64Vector(c);
-end);
-
-   
-         
-         
-        
