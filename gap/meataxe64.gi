@@ -502,6 +502,25 @@ InstallOtherMethod(\[\], [IsMTX64Matrix, IsPosInt],
     return MTX64_ExtractVector(m, i-1);
 end);
 
+InstallOtherMethod(ELMS_LIST, [IsMTX64Matrix, IsList],
+        MTX64_ELMS_LIST);
+
+ InstallOtherMethod(ReversedOp, [IsMTX64Matrix],
+        function(m)
+    local nor;
+    nor := MTX64_NumRows(m);
+    return MTX64_ELMS_LIST(m, [nor,nor-1..1]);
+end);
+
+InstallOtherMethod(Permuted, [IsMTX64Matrix, IsPerm],
+        function(m, p)
+    local nor;
+    nor := MTX64_NumRows(m);
+    return MTX64_ELMS_LIST(m, ListPerm(p,nor));
+end);
+    
+
+
 InstallMethod(MTX64_ExtractMatrix, [IsMTX64Matrix],
         function(m)
     local  f, q, gm, len, i;
@@ -727,6 +746,49 @@ end);
 InstallOtherMethod(Characteristic, "for meataxe64 matrices", [IsMTX64Matrix],
         m->MTX64_FieldCharacteristic(MTX64_FieldOfMatrix(m)));
 
+InstallOtherMethod( DegreeFFE,
+   [ "IsMTX64Matrix" ],
+   mat -> MTX64_FieldDegree( MTX64_FieldOfMatrix( mat ) ) );
+
+InstallOtherMethod( ZeroSameMutability,
+   [ "IsMTX64Matrix and IsMutable" ],
+   mat -> MTX64_NewMatrix( MTX64_FieldOfMatrix( mat ),
+                           MTX64_NumRows( mat ),
+                           MTX64_NumCols( mat ) ) );
+
+InstallOtherMethod( ZeroSameMutability,
+        [ "IsMTX64Matrix" ],
+        function(mat)
+    if IsMutable(mat) then
+        TryNextMethod();
+    fi;
+    return MakeImmutable( MTX64_NewMatrix( MTX64_FieldOfMatrix( mat ),
+                           MTX64_NumRows( mat ),
+                   MTX64_NumCols( mat ) ) );
+end);
+
+
+InstallOtherMethod( \*,
+   [ "IsMTX64Matrix", "IsFFE" ],
+   function( mat, ffe )
+   return mat * MTX64_FiniteFieldElement( MTX64_FieldOfMatrix( mat ), ffe );
+   end );
+
+InstallOtherMethod( \*,
+   [ "IsFFE", "IsMTX64Matrix" ],
+   function( ffe, mat )
+   return MTX64_FiniteFieldElement( MTX64_FieldOfMatrix( mat ), ffe ) * mat;
+   end );
+
+# ugly hack, until some GAP library code has been adjusted
+InstallOtherMethod( Length,
+   [ "IsMTX64Matrix" ],
+   MTX64_NumRows );
+
+# ugly hack, until some GAP library code has been adjusted
+InstallOtherMethod( BrauerCharacterValue,
+   [ "IsMTX64Matrix" ],
+   MethodsOperation( BrauerCharacterValue, 1 )[2].func );
 
 InstallGlobalFunction("MTX64_Submatrix",
         function(m, starty, leny, startx, lenx)
@@ -735,7 +797,7 @@ InstallGlobalFunction("MTX64_Submatrix",
     noc := MTX64_NumCols(m);
     if startx = 1 and lenx = noc then
         sm := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), leny, noc);
-        MTX64_DCpy(m, sm, starty-1, leny);
+        MTX64_DCpy(m, sm, starty-1, 0, leny);
     else
         sm := MTX64_NewMatrix(MTX64_FieldOfMatrix(m), leny, lenx);
         MTX64_DCut(m, starty-1, leny, startx-1, sm);

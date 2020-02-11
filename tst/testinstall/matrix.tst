@@ -58,7 +58,7 @@ gap> Display(m);
  . 3 6
 gap> m2 := MTX64_NewMatrix(MTX64_FiniteField(7),6,3);
 < matrix 6x3 : <MTX64 GF(7)>>
-gap> MTX64_DCpy(m, m2, 1, 1);
+gap> MTX64_DCpy(m, m2, 1, 0, 1);
 gap> Display(m2);
  5 1 4
  . . .
@@ -66,17 +66,17 @@ gap> Display(m2);
  . . .
  . . .
  . . .
-gap> MTX64_DCpy(m, m2, 4, 1);
+gap> MTX64_DCpy(m, m2, 4, 1, 1);
 Error, Meataxe64: row range too large for matrix: 5 3
-gap> MTX64_DCpy(m, m2, 1, 4);
+gap> MTX64_DCpy(m, m2, 1, 1, 4);
 Error, Meataxe64: row range too large for matrix: 5 3
 gap> m3 := MTX64_NewMatrix(MTX64_FiniteField(7),6,4);
 < matrix 6x4 : <MTX64 GF(7)>>
-gap> MTX64_DCpy(m, m3, 1, 2);                        
+gap> MTX64_DCpy(m, m3, 1, 1, 2);                        
 Error, Meataxe64 matrices not same width
 gap> m4 := MTX64_NewMatrix(MTX64_FiniteField(11),6,3);
 < matrix 6x3 : <MTX64 GF(11)>>
-gap> MTX64_DCpy(m, m4, 1, 2);                         
+gap> MTX64_DCpy(m, m4, 1, 1, 2);                         
 Error, Meataxe64 matrices not over the same field
 gap> m2 := MTX64_NewMatrix(MTX64_FiniteField(7),6,3);
 < matrix 6x3 : <MTX64 GF(7)>>

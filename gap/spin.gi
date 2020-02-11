@@ -12,7 +12,7 @@ MTX64_SpinRelative := function(seeds, gens, isInvol, ech)
     e := ShallowCopy(ech);
     rs := MTX64_CleanExtend(e, seeds);
     rs := MTX64_RowSelect(rs, seeds);
-    MTX64_DCpy(rs[1],sb,0, e.rank);
+    MTX64_DCpy(rs[1],sb,0, 0, e.rank);
     nextseeds := List(gens, x->0);
     repeat
         done := true;
@@ -81,6 +81,7 @@ MTX64_OnSubQuo := function(basis, gens)
                quo := List(gens, x-> MTX64_OnQuoMat(basis, x, ech)));
     
 end;
+
 
 MTX64_CPInner := function(mat)
     local  f, n, v, sp, facs, e;

@@ -106,7 +106,7 @@ MTX64_EchelizeLR := function(mat, optrec)
         ku := ku + a2ps[1]*kl;
         #        ret.multiplier := MTX64_RowCombine(rs[2],ku,kl);
         ret.multiplier := MTX64_NewMatrix(f, ret.rank, ret.rank);
-        MTX64_DCpy(ku,ret.multiplier,0,res.rank);
+        MTX64_DCpy(ku,ret.multiplier,0,0,res.rank);
         MTX64_DPaste(kl, res.rank, res2.rank, 0, ret.multiplier);        
     fi;
     Info(InfoMTX64_NG,2,"Returning rank ",ret.rank);        
@@ -148,7 +148,7 @@ MTX64_CleanExtendInner := function( ech, mat, optrec)
     if r2 = 0 then
         if optrec.cleanerNeeded then
             newcleaner := MTX64_NewMatrix(f,n-ech.rank,ech.rank);
-            MTX64_DCpy(ech.cleaner, newcleaner, 0, n1-ech.rank);
+            MTX64_DCpy(ech.cleaner, newcleaner, 0, 0, n1-ech.rank);
             MTX64_DPaste(matp*ech.multiplier, n1-ech.rank, n - n1, 0, newcleaner);
             ech.cleaner := newcleaner;            
         fi;
@@ -192,7 +192,7 @@ MTX64_CleanExtendInner := function( ech, mat, optrec)
         MTX64_DPaste(k1b,0,n2-r2,0,kl);
         MTX64_DPaste(ech2.cleaner,0,n2-r2,r1,kl);
         ech.cleaner := MTX64_NewMatrix(f, n-ech.rank, ech.rank);
-        MTX64_DCpy(ku,ech.cleaner,0,n1-r1);
+        MTX64_DCpy(ku,ech.cleaner,0,0,n1-r1);
         MTX64_DPaste(kl, n1-r1, n2-r2, 0,ech.cleaner);
     fi;
     if optrec.multiplierNeeded then
@@ -222,9 +222,9 @@ MTX64_EchelizeUD := function(mat, optrec)
     splitAt := Minimum(QuoInt(n+1,2),Int(m* (5/4)));
     Info(InfoMTX64_NG,2, "Cutting off ",splitAt," rows");
     a1 := MTX64_NewMatrix(f, splitAt, m);
-    MTX64_DCpy(mat, a1, 0, splitAt);
+    MTX64_DCpy(mat, a1, 0, 0, splitAt);
     a2 := MTX64_NewMatrix(f, n-splitAt, m);
-    MTX64_DCpy(mat, a2, splitAt, n-splitAt);        
+    MTX64_DCpy(mat, a2, splitAt, 0, n-splitAt);        
     optrec2 := ShallowCopy(optrec);
     optrec2.remnantNeeded := true;
     if optrec.cleanerNeeded then
@@ -313,7 +313,7 @@ MTX64_EchelizeInner := function(mat, optrec)
     if zeroRows > n/optrec.trim  then
         Info(InfoMTX64_NG,2,"Trimming ",zeroRows," initial zero rows");    
         a := MTX64_NewMatrix(f,n-zeroRows,m);
-        MTX64_DCpy(mat,a,zeroRows,n-zeroRows);
+        MTX64_DCpy(mat,a,zeroRows,0,n-zeroRows);
         res := MTX64_EchelizeInner(a, optrec);
         rs := MTX64_EmptyBitString(n);
         MTX64_BSShiftOr(res.rowSelect, zeroRows, rs);
@@ -451,12 +451,16 @@ end);
     
    
     
-MTX64_SEMT := function(mat)
+MTX64_SEMT := function(mat, ech...)
     local  f, m, n, res, pivotcols, heads, i, ret, bs;    
     f := MTX64_FieldOfMatrix(mat);
     n := MTX64_NumRows(mat);
     m := MTX64_NumCols(mat);
-    res := MTX64_Echelize(mat);    
+    if Length(ech) > 0 then
+        res := ech[1];
+    else
+        res := MTX64_Echelize(mat);    
+    fi;
     pivotcols := MTX64_PositionsBitString(res.colSelect);
     heads := ListWithIdenticalEntries(m,0);
     for i in [1..res.rank] do
@@ -472,12 +476,16 @@ MTX64_SEMT := function(mat)
     return ret;
 end;
 
-MTX64_SEM := function(mat)
+MTX64_SEM := function(mat, ech...)
     local  f, m, n, res, pivotcols, heads, i, ret, bs;    
     f := MTX64_FieldOfMatrix(mat);
     n := MTX64_NumRows(mat);
     m := MTX64_NumCols(mat);
-    res := MTX64_GAPEchelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
+    if Length(ech) > 0 then
+        res := ech[1];
+    else
+        res := MTX64_GAPEchelize(mat, rec(multiplierNeeded := false, cleanerNeeded := false));    
+    fi;
     pivotcols := MTX64_PositionsBitString(res.colSelect);
     heads := ListWithIdenticalEntries(m,0);
     for i in [1..res.rank] do
@@ -490,16 +498,20 @@ MTX64_SEM := function(mat)
     return ret;
 end;
 
-InstallOtherMethod(SemiEchelonMatTransformationDestructive, [IsMTX64Matrix], MTX64_SEMT);
-InstallOtherMethod(SemiEchelonMatTransformation, [IsMTX64Matrix], MTX64_SEMT);
-InstallOtherMethod(SemiEchelonMatDestructive, [IsMTX64Matrix], MTX64_SEM);
-InstallOtherMethod(SemiEchelonMat, [IsMTX64Matrix], MTX64_SEM);
+InstallOtherMethod(SemiEchelonMatTransformationDestructive, [IsMTX64Matrix], m -> MTX64_SEMT(m));
+InstallOtherMethod(SemiEchelonMatTransformation, [IsMTX64Matrix], m->MTX64_SEMT(m));
+InstallOtherMethod(SemiEchelonMatDestructive, [IsMTX64Matrix], m->MTX64_SEM(m));
+InstallOtherMethod(SemiEchelonMat, [IsMTX64Matrix], m->MTX64_SEM(m));
 
         
-MTX64_SolutionsMat := function(a, bs)
+MTX64_SolutionsMat := function(a, bs, ech...)
     local  res, bss, bp, c, n, solvables, i, x;
-
-    res := MTX64_Echelize(a);
+    
+    if Length(ech) > 0 then
+        res := ech;
+    else
+        res := MTX64_Echelize(a);
+    fi;
     bss := MTX64_ColSelect(res.colSelect, bs);
     bp := bss[1];
     c := bss[2] + bss[1]*res.remnant;
@@ -534,7 +546,7 @@ InstallOtherMethod(TriangulizedMat, [IsMTX64Matrix],
     sem := MTX64_BSColRifZ(bs, -res.remnant);
     MTX64_BSColPutS(bs, sem, One(MTX64_FieldOfMatrix(m)));
     tm := ZeroMutable(m);
-    MTX64_DCpy(sem, tm, 0, res.rank);
+    MTX64_DCpy(sem, tm, 0, 0, res.rank);
     return tm;
 end);
 

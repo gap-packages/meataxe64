@@ -15,6 +15,7 @@
 
 #include "mtx64/bitstring.h"
 #include "mtx64/io.h"
+#include "mtx64/dfmtf.h"
 
 /* This defines four types of object of interest, a FIELD (a large
    structure), a FELT (a 64 bit value representing a field element, a
@@ -303,19 +304,22 @@ static Obj FuncMTX64_SetEntry(Obj self, Obj m, Obj row, Obj col, Obj entry) {
 // from mtx64/field.h
 //
 
-static Obj FuncMTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrow, Obj nrows) {
+static Obj FuncMTX64_DCpy(Obj self, Obj src, Obj dst, Obj startrows, Obj startrowd,
+                          Obj nrows) {
   DSPACE ds;
   Dfmt *sp, *dp;
   CHECK_MTX64_Matrices(src, dst, 1);
   CHECK_MUT(dst);
-  CHECK_MTX64_RowRange(startrow, nrows, src);
-  CHECK_MTX64_RowCount(nrows, dst);
-  UInt sr = INT_INTOBJ(startrow);
+  CHECK_MTX64_RowRange(startrows, nrows, src);
+  CHECK_MTX64_RowRange(startrowd, nrows, dst);
+  UInt srs = INT_INTOBJ(startrows);
+  UInt srd = INT_INTOBJ(startrowd);
   UInt nor = INT_INTOBJ(nrows);
   SetDSpaceOfMTX64_Matrix(dst, &ds);
   sp = DataOfMTX64_Matrix(src);
-  sp = DPAdv(&ds, sr, sp);
+  sp = DPAdv(&ds, srs, sp);
   dp = DataOfMTX64_Matrix(dst);
+  dp = DPAdv(&ds, srd, dp);
   DCpy(&ds, sp, nor, dp);
   return 0;
 }
@@ -467,6 +471,55 @@ static Obj FuncMTX64_CompareMatrices(Obj self, Obj m1, Obj m2) {
   Int res = memcmp(DataOfMTX64_Matrix(m1), DataOfMTX64_Matrix(m2),
                    Size_Data_Matrix(f, noc, nor));
   return INTOBJ_INT((res < 0) ? -1 : (res > 0) ? 1 : 0);
+}
+
+static Obj FuncMTX64_DFMul(Obj self, Obj m1, Obj m2) {
+    CHECK_MTX64_Matrices(m1,m2,1);
+    uint64_t noca = HeaderOfMatrix(m1)->noc;
+    uint64_t nora = HeaderOfMatrix(m1)->nor;
+    uint64_t nocb = HeaderOfMatrix(m1)->noc;
+    uint64_t norb = HeaderOfMatrix(m1)->nor;
+    if (noca != norb)
+        ErrorMayQuit("MTX64_DFMul: matrix sizes incompatible", 0L, 0L);
+    DSPACE dsa, dsbc;
+    Obj f = FieldOfMatrix(m1);
+    Obj m3 = NEW_MTX64_Matrix(f, nora, nocb);
+    SetDSpaceOfMTX64_Matrix(m1, &dsa);
+    SetDSpaceOfMTX64_Matrix(m2, &dsbc);
+    Dfmt *a = DataOfMTX64_Matrix(m1);
+    Dfmt *b = DataOfMTX64_Matrix(m2);
+    Dfmt *c = DataOfMTX64_Matrix(m3);
+    DFMul(&dsa, &dsbc, nora, a, dsa.nob, b, dsbc.nob, c);
+    return m3;
+}
+
+static Obj FuncMTX64_ELMS_LIST(Obj self, Obj m, Obj rows) {
+    CHECK_MTX64_Matrix(m);
+    UInt nor = HeaderOfMatrix(m)->nor;
+    if (!IS_LIST(rows))
+        ErrorMayQuit("MTX64_ELMS_LIST: rows list must be a list not a %s",
+                     (Int)TNAM_OBJ(rows), (Int) 0);
+    UInt nor2 = LEN_LIST(rows);
+    Obj f = FieldOfMatrix(m);
+    Obj m2 = NEW_MTX64_Matrix(f, nor2, HeaderOfMatrix(m)->noc);
+    DSPACE ds;
+    SetDSpaceOfMTX64_Matrix(m, &ds);
+    Dfmt *d = DataOfMTX64_Matrix(m);
+    Dfmt *d2 = DataOfMTX64_Matrix(m2);
+    for (UInt i = 1;  i <= nor2; i++) {
+        Obj ix = ELM_LIST(rows, i);
+        if (!IS_INTOBJ(ix))
+            ErrorMayQuit("MTX64_ELMS_LIST: row index %i must be a small integer,"
+                         " not a %s", i, (Int)TNAM_OBJ(ix));
+        Int ixi = INT_INTOBJ(ix);
+        if (0 >= ixi || nor < ixi)
+            ErrorMayQuit("MTX64_ELMS_LIST: row index %i out of range",
+                         i, 0);
+        Dfmt *d1 = DPAdv(&ds, ixi-1, d);
+        DCpy(&ds, d1, 1, d2);
+        d2 = DPAdv(&ds, 1, d2);
+    }
+    return m2;
 }
 
 
@@ -987,7 +1040,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_GetEntry, 3, "m,i,j"),
     GVAR_FUNC(MTX64_SetEntry, 4, "m,i,j,x"),
 
-    GVAR_FUNC(MTX64_DCpy, 4, "src,dst,startrow,nrows"),
+    GVAR_FUNC(MTX64_DCpy, 5, "src,dst,startrows,startrowd,nrows"),
     GVAR_FUNC(MTX64_DCut, 5, "m,startrow,nrows,startcol,clip"),
     GVAR_FUNC(MTX64_DPaste, 5, "clip,startrow,nrows,startcol,m"),
     GVAR_FUNC(MTX64_DAdd, 3, "nrows,d1,d2"),
@@ -995,6 +1048,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_DSMad, 4, "nrows,scalar,d1,d2"),
     GVAR_FUNC(MTX64_DSMul, 3, "nrows,scalar,d1"),
     GVAR_FUNC(MTX64_DNzl, 2, "m, row"),
+    GVAR_FUNC(MTX64_DFMul, 2, "m1, m2"),
 
     GVAR_FUNC(MTX64_ShallowCopyMatrix, 1, "m"),
     GVAR_FUNC(MTX64_CompareMatrices, 2, "m1, m2"),
@@ -1008,6 +1062,7 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_Make8BitConversion, 1, "f"),
     GVAR_FUNC(MTX64_InsertVec8Bit, 3, "d, v, row"),
     GVAR_FUNC(MTX64_ExtractVec8Bit, 2, "d, row"),
+    GVAR_FUNC(MTX64_ELMS_LIST, 2, "m, rows"),
 
     GVAR_FUNC(MTX64_WriteMatrix, 2, "m, fn"),
     GVAR_FUNC(MTX64_ReadMatrix, 1, "fn"),
