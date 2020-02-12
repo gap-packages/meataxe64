@@ -89,7 +89,6 @@ PackageDoc := rec(
 Dependencies := rec(
   GAP := ">= 4.11",
                    NeededOtherPackages := [ [ "GAPDoc", ">= 1.5" ], 
-                           [ "AutoDoc", ">= 0.0.0"],
                           [ "datastructures", ">= 0.0.0"] ],
   SuggestedOtherPackages := [ ],
   ExternalConditions := [ ],
