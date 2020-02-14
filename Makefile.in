@@ -1,0 +1,65 @@
+#
+# Makefile rules for the meataxe64 package
+#
+KEXT_NAME = meataxe64
+KEXT_SOURCES = \
+   src/meataxe64.c \
+   src/functions.c \
+   src/slab.c \
+   src/bitstring.c \
+   src/mtx64/bitstring.c \
+   src/mtx64/conex.c \
+   src/mtx64/dfmtf.c \
+   src/mtx64/fech.c \
+   src/mtx64/ffn5.c \
+   src/mtx64/field.c \
+   src/mtx64/fmul.c \
+   src/mtx64/fpef.c \
+   src/mtx64/fphpmi.cc \
+   src/mtx64/fphpmi1.cc \
+   src/mtx64/ftra.c \
+   src/mtx64/funs1.c \
+   src/mtx64/funs2.c \
+   src/mtx64/funs3.c \
+   src/mtx64/funs4.c \
+   src/mtx64/funs5.c \
+   src/mtx64/gauss.c \
+   src/mtx64/hpmi.c \
+   src/mtx64/io.c \
+   src/mtx64/linf.c \
+   src/mtx64/mech.c \
+   src/mtx64/mmul.c \
+   src/mtx64/mpef.c \
+   src/mtx64/pcritc.c \
+   src/mtx64/pmul.c \
+   src/mtx64/proggies.c \
+   src/mtx64/slab.c \
+   src/mtx64/tabmake.c \
+   src/mtx64/tfarm1.c \
+   src/mtx64/tfarm2.c \
+   src/mtx64/util.c
+
+ASM_SOURCES = \
+    src/mtx64/pc1.s \
+    src/mtx64/pc2.s \
+    src/mtx64/pc3.s \
+    src/mtx64/pc5.s \
+    src/mtx64/tfarm0.s
+
+ifeq ($(shell uname), Darwin)
+KEXT_SOURCES += $(subst mtx64/,mtx64/osx-,$(ASM_SOURCES))
+else
+KEXT_SOURCES += $(ASM_SOURCES)
+endif
+
+KEXT_CXXFLAGS = -std=c++11
+KEXT_LDFLAGS = -lpthread
+
+# The following uses a pattern rule as a trick to make things work safely with
+# parallel make; see also <https://stackoverflow.com/a/3077254/928031>.
+$(subst mtx64/,mtx64/osx%,$(ASM_SOURCES)): $(ASM_SOURCES) etc/asmfix.g
+	$(GAP) -A -q etc/asmfix.g
+
+# include shared GAP package build system
+GAPPATH = @GAPPATH@
+include Makefile.gappkg
