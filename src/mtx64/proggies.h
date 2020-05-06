@@ -33,6 +33,35 @@ void M3Read (M3 a);           // kick off read thread
 void M3Write(M3 a);           // kick off write thread
 void M3Dest(M3 a);            // destroy M3 struct
 
+// Represents a D format matrix that is to be chopped and worked on.
+// There is probably scope for combining theis with M3 in some way
+
+typedef struct
+{
+    Dfmt * basemat;          // A
+
+    const FIELD *f;                // B
+    uint64_t nor;            // B
+    uint64_t noc;            // B
+    MOJ fmoj;                // C
+    uint64_t r;              // D
+    uint64_t c;              // D
+    uint64_t * rnor;         // D
+    uint64_t * cnoc;         // D
+    uint64_t rextra;         // D
+    uint64_t cextra;         // D
+    MOJ ** m;                // E
+    MOJ fl;                  // F
+
+} M4S;
+typedef M4S * M4;
+
+M4  M4Cons(Dfmt *m, const FIELD *f, uint64_t nor, uint64_t noc); 
+void M4EvenChop (M4 a, uint64_t divr, uint64_t divc, uint64_t padr, uint64_t padc);
+void M4MOJs  (M4 a);          // allocate MOJs
+void M4MOJsStable  (M4 a);          // allocate MOJs and declare them stable
+void M4Dest(M4 a);            // destroy M3 struct
+
 #define MULPROG 1
 #define MADPROG 2
 // 3 spare - used to be transpose
@@ -48,6 +77,18 @@ void M3Dest(M3 a);            // destroy M3 struct
 #define ADIPROG 13
 #define MKRPROG 14
 #define PC0PROG 15
+
+#define TMLPROG 20
+#define ADTPROG (TMLPROG + 1)
+#define CPTPROG (ADTPROG + 1)
+
+#define TML(pri, fmoj, a, b, c) \
+    TFSubmit(pri, TMLPROG, fmoj, a, b, -2l, &c, -1l)
+#define ADT(pri, fmoj, a, b, c) \
+    TFSubmit(pri, ADTPROG, fmoj, a, b, c,  -1l)
+#define CPT(pri, fmoj, a, c) \
+    TFSubmit(pri, CPTPROG, fmoj, a, c, -1l)
+
 
 #define MUL(pri, fmoj, a, b, c) \
   TFSubmit(pri, MULPROG, fmoj, a, b, -2l, &c, -1l)

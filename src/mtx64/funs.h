@@ -37,6 +37,7 @@ extern void fInvert(const char *tmp, const char *m1, int s1,
 // funs3 field-changing routines
 extern void fFrobenius(const char *m1, int s1, const char *m2, int s2);
 
+
 extern int  fFieldContract(const char *m1, int s1, uint64_t newfield,
                            const char *m2, int s2);
 extern void fFieldExtend(const char *m1, int s1, uint64_t newfield,

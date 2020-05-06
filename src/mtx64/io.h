@@ -6,6 +6,7 @@
 
 typedef struct
 {
+    uint64_t eftyp; // 1 actual file, 2 Dfmt reference
     uint64_t P1;
     uint64_t P2;
     uint64_t P3;
@@ -20,6 +21,11 @@ typedef struct
     int null;
     char * fn;     // filename
     int nex;
+    uint8_t *data; // for type 2
+    uint64_t offset;
+    uint64_t fdef;
+    uint64_t nor;
+    uint64_t noc;
 }   EFIL;
 
 extern void EPeek(const char * fname, uint64_t * header);
@@ -34,5 +40,6 @@ extern int  EWClose1(EFIL * e, int flag);
 extern void LogCmd(int argc, char ** argv);
 extern void LogString(int type, const char *string);
 extern void CLogCmd(int argc, const char *argv[]);
+
 
 /* end of io.h  */

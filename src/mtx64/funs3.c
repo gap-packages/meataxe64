@@ -14,19 +14,28 @@
 #include "tuning.h"
 #include "field.h"
 #include "pcrit.h"
-#include "funs.h"
 #include "io.h"
+#include "funs.h"
+#include "funs1.h"
 #include "bitstring.h"
 
 // fFrobenius
 
-void fFrobenius(const char *m1, int s1, const char *m2, int s2)
-{
+void fFrobenius(const char *m1, int s1, const char *m2, int s2) {
     EFIL *e1,*e2;
-    FELT f1,f2,f3;
-    FELT sig[63][63];
     uint64_t hdr[5];
     uint64_t fdef,nor,noc;
+    e1=ERHdr(m1,hdr);
+    fdef=hdr[1];
+    nor=hdr[2];
+    noc=hdr[3];
+    e2 = EWHdr(m2,hdr);
+    fFrobenius1(e1, e2, fdef, nor, noc, s1, s2);
+}
+
+void fFrobenius1(EFIL *e1, EFIL *e2, uint64_t fdef, uint64_t nor, uint64_t noc, int s1, int s2) {
+    FELT f1,f2,f3;
+    FELT sig[63][63];
     FIELD * f;
     DSPACE ds,dp;
     Dfmt *v1,*v2,*vpx,*vpa;
@@ -35,14 +44,9 @@ void fFrobenius(const char *m1, int s1, const char *m2, int s2)
     int mode;
     uint8_t lut[256];
 
-    e1=ERHdr(m1,hdr);
-    fdef=hdr[1];
-    nor=hdr[2];
-    noc=hdr[3];
 
     f = malloc(FIELDLEN);
     FieldASet(fdef,f);
-    e2 = EWHdr(m2,hdr);
     DSSet(f,noc,&ds);
     v1=malloc(ds.nob);
     v2=malloc(ds.nob);
@@ -239,29 +243,37 @@ extern int  fFieldContract(const char *m1, int s1, uint64_t fdef2,
                            const char *m2, int s2)
 {
     EFIL *e1,*e2;
+    uint64_t fdef1;
+    uint64_t hdr[5];
+    e1=ERHdr(m1,hdr);
+    fdef1=hdr[1];
+    uint64_t nor=hdr[2];
+    uint64_t noc=hdr[3];
+    hdr[1]=fdef2;
+    e2 = EWHdr(m2,hdr);
+    int res =  fFieldContract1(e1,e2,fdef1, fdef2, nor, noc, s1,s2);
+    if (res)
+        remove(m2);
+    return res;
+}
+
+extern int fFieldContract1(EFIL *e1, EFIL *e2, uint64_t fdef, uint64_t fdef2, uint64_t nor, uint64_t noc, int s1, int s2) {
     FIELD *f1,*f2;
     DSPACE ds1,ds2;
     Dfmt *v1,*v2;
-    uint64_t fdef1,nor,noc,i,j;
+    uint64_t i,j;
     uint64_t ratio,good,mode;
-    uint64_t hdr[5];
     FELT x1,x2;
 
-    e1=ERHdr(m1,hdr);
-    fdef1=hdr[1];
-    nor=hdr[2];
-    noc=hdr[3];
     f1 = malloc(FIELDLEN);
     f2 = malloc(FIELDLEN);
-    FieldASet(fdef1,f1);
+    FieldASet(fdef,f1);
     FieldASet(fdef2,f2);
     if( (f1->charc!=f2->charc) || ((f1->pow%f2->pow)!=0) ) 
     {
         LogString(80,"Field contraction not possible");
         exit(23);
     }
-    hdr[1]=fdef2;
-    e2 = EWHdr(m2,hdr);
     DSSet(f1,noc,&ds1);
     DSSet(f2,noc,&ds2);
     v1=malloc(ds1.nob);
@@ -338,20 +350,29 @@ extern int  fFieldContract(const char *m1, int s1, uint64_t fdef2,
     EWClose1(e2,s2);
     if (good == 0)
     {
-        remove(m2);
         return 1;
     }
     return 0;
 }
 
 extern void fFieldExtend(const char *m1, int s1, uint64_t fdef2,
-                         const char *m2, int s2)
+                         const char *m2, int s2) {
+   EFIL *e1,*e2;
+   uint64_t fdef1,nor,noc;
+   uint64_t hdr[5];
+   e1=ERHdr(m1,hdr);
+   fdef1=hdr[1];
+   nor=hdr[2];
+   noc=hdr[3];
+   hdr[1]=fdef2;
+   e2 = EWHdr(m2,hdr);
+   fFieldExtend1(e1,e2,fdef1,fdef2, nor,noc,s1,s2);
+}
+
+extern void fFieldExtend1(EFIL *e1, EFIL *e2, uint64_t fdef, uint64_t fdef2, uint64_t nor, uint64_t noc, int s1, int s2)
 {
-    uint64_t fdef1,nor,noc;
-    uint64_t hdr[5];
     uint64_t i,j;
     uint64_t siz;
-    EFIL *e1,*e2;
     FIELD *f1,*f2;
     DSPACE ds1,ds2;
     Dfmt *v1,*v2;
@@ -360,13 +381,9 @@ extern void fFieldExtend(const char *m1, int s1, uint64_t fdef2,
     uint64_t z;
     FELT * tab;
 
-    e1=ERHdr(m1,hdr);
-    fdef1=hdr[1];
-    nor=hdr[2];
-    noc=hdr[3];
     f1 = malloc(FIELDLEN);
     f2 = malloc(FIELDLEN);
-    FieldASet(fdef1,f1);
+    FieldASet(fdef,f1);
     FieldASet(fdef2,f2);
     if( (f1->charc!=f2->charc) || ((f2->pow%f1->pow)!=0) ) 
     {
@@ -374,8 +391,6 @@ extern void fFieldExtend(const char *m1, int s1, uint64_t fdef2,
         exit(23);
     }
 
-    hdr[1]=fdef2;
-    e2 = EWHdr(m2,hdr);
     DSSet(f1,noc,&ds1);
     DSSet(f2,noc,&ds2);
     v1=malloc(ds1.nob);

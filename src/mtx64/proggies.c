@@ -17,8 +17,8 @@
 #include "tuning.h"
 #include "pcrit.h"
 
-// #define DEBUG 1
-// #define DEBUG1 1
+//#define DEBUG 1
+//#define DEBUG1 1
 
 M3  M3Cons(const char * fn, int sil)  // construct and set filename
 {
@@ -51,6 +51,8 @@ MOJ M3FieldMOJ (uint64_t fdef)          // make field moj
     TFQuickReady(mj);
     return mj;
 }
+
+
 
 void M3EvenChop (M3 a, uint64_t divr, uint64_t divc, 
                  uint64_t padr, uint64_t padc)   
@@ -243,6 +245,141 @@ void M3Dest(M3 a)
 {
     int i;
     free(a->fn);
+    free(a->rnor);
+    free(a->cnoc);
+    for(i=0;i<a->r;i++) free(*(a->m+i));
+    free(a->m);
+    free(a);
+}
+
+
+// Used to make field MOJs from pre-existing field structures.
+MOJ MOJbyPtr( void * ptr) {
+    MOJ m = TFNewMOJ();
+    TFGetReadRef(m);
+    m->mem  =ptr; 
+    return m;
+}
+
+M4  M4Cons(Dfmt *m, const FIELD *f, uint64_t nor, uint64_t noc) {
+    M4 a;
+    a = malloc(sizeof(M4S));
+    a->basemat = m;
+    a->f = f;
+    a->nor = nor;
+    a->noc = noc;
+    a->fmoj = MOJbyPtr((void *)f);
+    TFStable(a->fmoj);
+    a->fl = NULL; //what is this
+    return a;
+
+}
+
+            
+// This should share most of its code with the M3 version
+void M4EvenChop (M4 a, uint64_t divr, uint64_t divc, uint64_t padr, uint64_t padc) {
+        uint64_t def,rem,i;
+/*  Then allocate the sizes lists  */
+    a->rnor=malloc(a->r*sizeof(uint64_t));
+    a->cnoc=malloc(a->c*sizeof(uint64_t));
+/*  Then share out nor equally  */
+    def=a->nor/a->r;
+    def=(def/divr)*divr;
+    rem=a->nor-(def*a->r);
+// so def is basic local size and rem is remainder to distribute
+    for(i=0;i<a->r;i++)
+    {
+        a->rnor[i]=def;
+        if(rem>=divr)
+        {
+            a->rnor[i]+=divr;
+            rem-=divr;
+        }
+    }
+    if((rem%padr)!=0) a->rextra=padr-(rem%padr);
+          else        a->rextra=0;
+    rem+=a->rextra;
+    a->rnor[a->r-1]+=rem;
+/*  similarly noc  */
+    def=a->noc/a->c;
+    def=(def/divc)*divc;
+    rem=a->noc-(def*a->c);
+
+    for(i=0;i<a->c;i++)
+    {
+        a->cnoc[i]=def;
+        if(rem>=divc)
+        {
+            a->cnoc[i]+=divc;
+            rem-=divc;
+        }
+    }
+    if((rem%padc)!=0) a->cextra=padc-(rem%padc);
+          else        a->cextra=0;
+    rem+=a->cextra;
+    a->cnoc[a->c-1]+=rem;
+}
+
+
+struct tilemojstruct {
+    Dfmt * m;
+    uint64_t nor;
+    uint64_t noc;
+    uint64_t stride;
+    uint64_t fullnoc;
+};
+
+typedef struct tilemojstruct * TMOJ;
+
+MOJ TileMOJ( Dfmt *m, uint64_t nor, uint64_t noc, uint64_t stride, uint64_t fullnoc){
+    MOJ moj = TFNewMOJ();
+    TFAllocate(moj, sizeof(struct tilemojstruct));
+    TMOJ t = (TMOJ)TFPointer(moj);
+    t->m = m;
+    t->nor = nor;
+    t->noc = noc;
+    t->stride = stride;
+    t->fullnoc = fullnoc;
+    printf(" %lu %lu %lu %p\n", nor, noc, stride, m);
+    return moj;
+}
+
+void M4MOJs(M4 a) {          // allocate MOJs
+    int i,j;
+    uint64_t row = 0;
+    a->m=malloc(a->r*sizeof(MOJ*));
+    DSPACE ds;
+    DSSet(a->f, a->noc, &ds);
+    for(i=0;i<a->r;i++)
+    {
+        *(a->m+i) = malloc(a->c*sizeof(MOJ));
+        uint64_t col = 0;
+        for(j=0;j<a->c;j++)
+            {
+                DSPACE ds1;
+                DSSet(a->f, col, &ds1);
+                a->m[i][j] = TileMOJ(a->basemat + ds.nob *row + ds1.nob,
+                                     a->rnor[i], a-> cnoc[j], ds.nob, a->noc);
+                col += a->cnoc[j];
+            }
+        row += a->rnor[i];
+    }
+
+}
+
+void M4MOJsStable(M4 a) {
+    uint64_t i,j;
+    M4MOJs(a);
+    for (i = 0; i < a->r; i++) {
+        for(j = 0; j < a->c; j++) {
+            TFStable(a->m[i][j]);
+        }
+    }
+}
+void M4Dest(M4 a)            // destroy M4 struct
+// Shoulf this decrement some refcounts
+{
+    int i;
     free(a->rnor);
     free(a->cnoc);
     for(i=0;i<a->r;i++) free(*(a->m+i));
@@ -750,6 +887,143 @@ printf("MKR %lu x %lu -> %lu\n",lit[0],lit[1],big[1]);
     TFStable(RES);
 }
 
+
+
+
+void addt(MOJ FMOJ, MOJ AMOJ, MOJ BMOJ, MOJ CMOJ) {
+    FIELD * f;
+    TMOJ c;
+    f=(FIELD *)  TFPointer(FMOJ);
+    uint64_t *a=(uint64_t *) TFPointer(AMOJ);
+    uint64_t *b=(uint64_t *) TFPointer(BMOJ);
+    if( (a[0]!=b[0]) || (a[1]!=b[1]) )
+        {
+            printf("Add with incompatible matrices %lu %lu + %lu %lu\n",
+                   a[0],a[1],b[0],b[1]);
+            exit(22);
+        }
+    uint64_t nor=a[0];
+    uint64_t noc=a[1];
+    c=(TMOJ) TFPointer(CMOJ);
+    if(c->nor != nor || c->noc != noc)
+    {
+        printf("Add with incompatible destination size %lu %lu vs %lu %lu\n",
+               nor,noc,c->nor,c->noc);
+        exit(22);
+    }
+    
+    uint64_t cstride = c->stride;
+#ifdef DEBUG
+    printf("ADDT %lu x %lu into %lu\n",a[0],a[1],c->fullnoc);
+#endif
+    
+    DSPACE ds;
+    DSSet(f, noc, &ds);
+
+
+    Dfmt *da = ((Dfmt *)a)+16;
+    Dfmt *db = ((Dfmt *)b)+16;
+    Dfmt *dc = c->m;
+
+    TAdd(&ds, nor, da, ds.nob, db, ds.nob, dc, cstride);
+#ifdef DEBUG2
+    printf("******************%p\n",da);
+    for (int i = 0; i < nor; i++) {
+        for (int j = 0; j < noc; j++)
+            printf("%10u ",(int)*(uint32_t *)(da + ds.nob*i + 4*j));
+        printf("\n");
+    }
+    printf("+++++++++++++++++%p\n",db);
+    for (int i = 0; i < nor; i++) {
+        for (int j = 0; j < noc; j++)
+            printf("%10u ",(int)*(uint32_t *)(db + ds.nob*i + 4*j));
+        printf("\n");
+    }
+    printf("================%p\n",dc);
+    for (int i = 0; i < nor; i++) {
+        for (int j = 0; j < noc; j++)
+            printf("%10u ",(int)*(uint32_t *)(dc + cstride*i + 4*j));
+        printf("\n");
+    }
+#endif
+}
+
+void tmul(MOJ FMOJ, MOJ AMOJ, MOJ BMOJ, MOJ CMOJ) {
+    FIELD * f;
+    TMOJ a, b;
+    uint64_t *c;
+    f=(FIELD *)  TFPointer(FMOJ);
+    a=(TMOJ) TFPointer(AMOJ);
+    b=(TMOJ) TFPointer(BMOJ);
+    if(a->noc != b->nor)
+    {
+        printf("Mul with incompatible matrices %lu %lu x %lu %lu\n",
+               a->nor,a->noc,b->nor,b->noc);
+        exit(22);
+    }
+    uint64_t nor1=a->nor;
+    uint64_t noc1=a->noc;
+    uint64_t noc2=b->noc;
+    uint64_t astride = a->stride;
+    uint64_t bstride = b->stride;
+
+#ifdef DEBUG
+    printf("TMUL %lu x %lu x %lu strides %lu %lu\n",nor1,noc1,noc2,astride,bstride);
+#endif
+
+    
+    DSPACE dsa;
+    DSPACE dsbc;
+
+    DSSet(f, noc1, &dsa);
+    DSSet(f, noc2, &dsbc);
+
+    c = TFAllocate(CMOJ,nor1*dsbc.nob+16);
+    c[0] = nor1;
+    c[1] = noc2;
+    Dfmt *dc = (Dfmt *)c + 16;
+    TSMul(&dsa, &dsbc, nor1, a->m, astride, b->m, bstride, dc);
+#ifdef DEBUG2
+    printf(">>>>>>>>>>%p\n",dc);
+    for (int i = 0; i < nor1; i++) {
+        for (int j = 0; j < noc2; j++)
+            printf("%10u ",(int)*(uint32_t *)(dc + dsbc.nob*i + 4*j));
+        printf("\n");
+    }
+#endif
+}
+
+
+void copyt(MOJ FMOJ, MOJ AMOJ, MOJ CMOJ) {
+    FIELD * f;
+    TMOJ c;
+    uint64_t *a;
+    f=(FIELD *)  TFPointer(FMOJ);
+    a = (uint64_t *)TFPointer(AMOJ);
+    c = (TMOJ) TFPointer(CMOJ);
+    if (a[0] != c->nor || a[1] != c->noc) {
+        printf("Copy with incompatible destination size %lu %lu vs %lu %lu\n",
+               a[0],a[1],c->nor,c->noc);
+        exit(22);
+    }
+#ifdef DEBUG
+    printf("COPYT %lu x %lu into %lu\n",a[0],a[1],c->fullnoc);
+#endif
+    DSPACE dsa;
+    DSPACE dsc;
+    Dfmt *da = (Dfmt *)a+16;
+    DSSet(f, a[1], &dsa);
+    DSSet(f, c->fullnoc, &dsc);
+    DPaste(&dsa, da, a[0], 0, &dsc, c->m);
+}
+
+
+void ptmul(MOJ FMOJ, MOJ AMOJ, MOJ BMOJ, MOJ CMOJ) {
+    tmul(FMOJ, AMOJ, BMOJ, CMOJ);
+    TFStable(CMOJ);
+}
+
+
 void dump(MOJ *p, int ct)
 {
     int i;
@@ -861,6 +1135,27 @@ void tfdo(int proggyno, MOJ *p)
 #endif
     pgpc0(p[0], p[1], p[2]);   /* pivot combine with nothing */
     break;
+
+  case TMLPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
+      ptmul(p[0], p[1], p[2], p[3]); /* multiply tiles */
+      break;
+
+  case ADTPROG:
+#ifdef DEBUG1
+    dump(p,3);
+#endif
+      addt(p[0], p[1], p[2], p[3]); /* add putting sum in a tile */
+      break;
+
+  case CPTPROG:
+#ifdef DEBUG1
+    dump(p,2);
+#endif
+      copyt(p[0], p[1], p[2]); /* copy matrix into a tile */
+      break;      
 
   default:
     fprintf(stderr, "Unknown proggy number %d, terminating\n", proggyno);

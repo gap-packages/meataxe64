@@ -19,6 +19,7 @@ void hpmiset(FIELD * f)
     f->recbox=1024;
     f->abase=1;       // usually right
     f->boxlet=1;      
+    f->redfreq=0; 
     if(f->mact[1]=='1') f->recbox=3072;
     if(f->mact[1]=='2') f->recbox=5000;
     if(f->charc==2)
@@ -108,35 +109,33 @@ void hpmiset(FIELD * f)
         f->bwasize=16384;
         hpmitabas(f);
     }
-    if( (f->charc>=197)&&(f->charc<=27397079)  && f->mact[0] >= 'g')
+    if( (f->charc>=197)&&(f->charc<=27397079)  && f->mact[0] >= 'k')
     {
         f->AfmtMagic=10;
-        f->BfmtMagic = f->charc <= 1669 ? 10 : 11 ; 
+        f->BfmtMagic = (f->charc > 1669) ? 11 :10; // double or single
         f->CfmtMagic = f->BfmtMagic;
-        f->BwaMagic= f->BfmtMagic;
+        f->BwaMagic= f->BfmtMagic; 
         f->GreaseMagic=4;  // no grease
         
-        f->SeedMagic= f->BwaMagic;     // expand signed to floats or double
+        f->SeedMagic= f->BfmtMagic;     // expand signed to floats (10) or doubles (11)
         f->cauldron=(f->charc > 1669) ? 80 :160;
-        f->bfmtcauld=f->cauldron*(f->pbytesper == 1 ? 2 : f->pbytesper);
+        f->bfmtcauld=f->cauldron*f->pbytesper;
         f->cfmtcauld=f->cauldron*(f->charc > 1669 ? sizeof(double) : sizeof(float));
-        f->dfmtcauld=f->cauldron*f->pbytesper;
+        f->dfmtcauld=f->bfmtcauld;
         f->alcove=24;
         if (f->mact[0] >= 'm')
             f->boxlet = 5;
         else
             f->boxlet = 3;
-        f->abase = 1;
-        f->alcovebytes=(f->pbytesper == 1 ? 2 : f->pbytesper)*f->alcove*f->boxlet+1;
+        f->abase = 2;
+        f->alcovebytes=f->pbytesper*f->alcove*f->boxlet+1;
         f->czer = 0;
         f->bzer=0;
         f->bbrickbytes=1+f->alcove*f->bfmtcauld;
-        f->bwasize=f->alcove*f->cfmtcauld + //real BWA
-            f->alcove*f->boxlet * (f->CfmtMagic == 11 ? 8 :4); //AWA
+        f->bwasize=f->alcove*f->cfmtcauld;
         f->recbox = 195;
         if(f->mact[1]=='1') f->recbox *= 2;
         if(f->mact[1]=='2') f->recbox *= 4;        
-#if 0
         if (f->charc <= 503) // single precision cases
             f->redfreq = 11;
         else if (f->charc <= 523)
@@ -160,23 +159,23 @@ void hpmiset(FIELD * f)
         else if (f->charc <= 1669)
             f->redfreq = 1;
         else if (f->charc <= 2739707) // Double precision
-            f->redfeq =100;
+            f->redfreq =100;
         else if (f->charc <= 3874531)
-            f->redfeq =50;
+            f->redfreq =50;
         else if (f->charc <= 6126161)
-            f->redfeq =20;
+            f->redfreq =20;
         else if (f->charc <= 7908853)
-            f->redfeq =12;
+            f->redfreq =12;
         else if (f->charc <= 8663701)
-            f->redfeq =10;
+            f->redfreq =10;
         else if (f->charc <= 9132353)
-            f->redfeq =9;
+            f->redfreq =9;
         else if (f->charc <= 9686329)
-            f->redfeq =8;
+            f->redfreq =8;
         else if (f->charc <= 10355119)
-            f->redfeq =7;
+            f->redfreq =7;
         else if (f->charc <= 11184799)
-            f->redfeq =6;
+            f->redfreq =6;
         else if (f->charc <= 12252323)
             f->redfreq =5;
         else if (f->charc <= 13698533)
@@ -187,7 +186,6 @@ void hpmiset(FIELD * f)
             f->redfreq =2;
         else 
             f->redfreq =1;
-#endif
 
     }
     if(f->ppaktyp==1233)  // ppaktup==0 new stuff excluded for now
@@ -642,8 +640,12 @@ int BSeed(const FIELD * f, uint8_t * bwa, Bfmt * b)
     }
     if(f->SeedMagic==10)    // expand signed to floats
     {
-        for (i = 0; i < f->alcove * f->cauldron; i++) 
-            *(float *)(bwa + 4*i) = *(int16_t *)(pt1 + 2*i);        
+        if (f->pbytesper == 1)
+            for (i = 0; i < f->alcove * f->cauldron; i++) 
+                *(float *)(bwa + 4*i) = *(int8_t *)(pt1 + i);
+        else 
+            for (i = 0; i < f->alcove * f->cauldron; i++) 
+                *(float *)(bwa + 4*i) = *(int16_t *)(pt1 + 2*i);        
     }
     if(f->SeedMagic==11)    // expand signed to doubles
     {

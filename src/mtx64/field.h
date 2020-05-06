@@ -93,6 +93,7 @@ typedef struct
     uint64_t p90;         // 2^90 mod p (only 64-bit primes)
     uint64_t parms[9];    // AS-code parms
     uint8_t  prog[40];    // AS-code addition chain
+    uint64_t redfreq;      // how oftem to reduce floats
 
 /*   HPMI public variables   */
 
