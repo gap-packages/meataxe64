@@ -1,0 +1,82 @@
+Meataxe64 functions and data fields currently used in the GAP
+Interface
+
+FieldSet -- I haven't looked into whether I should be using one
+            of the variants
+
+FieldAdd
+FieldNeg
+FieldSub
+FieldMul
+FieldInv
+FieldDiv
+
+DSSet (but not PSSet)
+
+
+Bitstring stuff is basically used to build higher-level functions on
+top of Echelize (also in  my original GAP prototype recursive
+echelize and similar).
+
+BSBitRead
+BSBitSet
+BSCombine
+BSColSelect
+BSColRifZ
+BSColPutS
+BSShiftOr
+
+One pair of functions depend on the bit ordering in bitstrings
+and the calculation of the length to allocate
+
+DSPACE.nob -- for getting row lengths
+FIELD.fdef
+FIELD.charc
+FIELD.pow
+FIELD.paktyp  -- for building random vectors, but is defined  by
+              D format standard anyway
+
+
+The next two need to go. I need a nicer way to compute a lookup table
+from Zech logs to FELTS and vice versa that doesn't take forever,
+for fields up to 2^24.
+
+
+FIELD.multyp -- this is just for one function that multiplies
+             field elements by the primitive root. FieldMul is slow
+             for fields of orders over 2^16 and I need this for
+             conversions between GAP and MTX64 up to 2^24.
+
+FIELD.conp -- used to get the primitive element
+
+
+
+All the ER and EW read and write functions - These should be replaced
+by higher level functions that read and write whole matrices.
+
+
+This group are used for matrix access. 
+
+DPak    
+DUnpak
+DCpy
+DCut
+DPaste
+
+
+DNzl -- this is used a few times, and is part of the GAP matrix
+interface (under another name) so I need to export this functionality somehow.
+
+
+The next set can sensibly be replaced by new functions in the new interface
+
+DAdd
+DSub
+DSMad
+DSMul
+SLEch
+SLSizeM
+SLSizeR
+SlSizeC
+SLMul
+SLTra
