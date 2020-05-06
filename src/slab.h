@@ -3,6 +3,7 @@
 
 #include "meataxe64.h"
 #include "mtx64/slab.h"
+#include "mtx64/memfuns.h"
 
 extern StructInitInfo InitSlab;
 #endif

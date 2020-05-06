@@ -82,6 +82,76 @@ static Obj FuncMTX64_SLMultiply(Obj self, Obj a, Obj b) {
   return c;
 }
 
+static Obj FuncMTX64_mfMultiply(Obj self, Obj a, Obj b, Obj threads) {
+  CHECK_MTX64_Matrices(a, b, 0);
+  if (!IS_POS_INT(threads))
+      ErrorMayQuit("mfMultiply: threads must be positive integer not a %s", (Int)TNAM_OBJ(threads), 0L);
+  Matrix_Header *ha = HeaderOfMatrix(a);
+  Matrix_Header *hb = HeaderOfMatrix(b);
+  UInt nora = ha->nor;
+  UInt noca = ha->noc;
+  UInt nocb = hb->noc;
+  if (noca != hb->nor)
+    ErrorMayQuit("mfMultiply: matrices are incompatible shapes", 0, 0);
+  Obj field = FieldOfMatrix(a);
+  Obj c = NEW_MTX64_Matrix(field, nora, nocb);
+  FIELD *f = DataOfFieldObject(field);
+  Dfmt *ap = DataOfMTX64_Matrix(a);
+  Dfmt *bp = DataOfMTX64_Matrix(b);
+  Dfmt *cp = DataOfMTX64_Matrix(c);
+  mfMultiply(INT_INTOBJ(threads), f, ap, bp, cp, nora, noca, nocb);
+  return c;
+}
+
+static Obj FuncMTX64_mfAdd(Obj self, Obj a, Obj b) {
+  CHECK_MTX64_Matrices(a, b, 2);
+  Matrix_Header *ha = HeaderOfMatrix(a);
+  Matrix_Header *hb = HeaderOfMatrix(b);
+  UInt nor = ha->nor;
+  UInt noc = ha->noc;
+  Obj field = FieldOfMatrix(a);
+  DSPACE ds;
+  Obj c = NEW_MTX64_Matrix(field, nor, noc);
+  FIELD *f = DataOfFieldObject(field);
+  Dfmt *ap = DataOfMTX64_Matrix(a);
+  Dfmt *bp = DataOfMTX64_Matrix(b);
+  Dfmt *cp = DataOfMTX64_Matrix(c);
+  DSSet(f, noc, &ds);
+  mfAdd(&ds, ap, bp, cp, nor);
+  return c;
+}
+
+static Obj FuncMTX64_mfSub(Obj self, Obj a, Obj b) {
+  CHECK_MTX64_Matrices(a, b, 2);
+  Matrix_Header *ha = HeaderOfMatrix(a);
+  Matrix_Header *hb = HeaderOfMatrix(b);
+  UInt nor = ha->nor;
+  UInt noc = ha->noc;
+  Obj field = FieldOfMatrix(a);
+  DSPACE ds;
+  Obj c = NEW_MTX64_Matrix(field, nor, noc);
+  FIELD *f = DataOfFieldObject(field);
+  Dfmt *ap = DataOfMTX64_Matrix(a);
+  Dfmt *bp = DataOfMTX64_Matrix(b);
+  Dfmt *cp = DataOfMTX64_Matrix(c);
+  DSSet(f, noc, &ds);
+  mfSub(&ds, ap, bp, cp, nor);
+  return c;
+}
+
+static Obj FuncMTX64_mfFrobenius(Obj self, Obj m1) {
+    CHECK_MTX64_Matrix(m1);
+    Matrix_Header *hm = HeaderOfMatrix(m1);
+    Obj field = FieldOfMatrix(m1);
+    UInt noc = hm->noc;
+    UInt nor = hm->nor;
+    Obj m2 = NEW_MTX64_Matrix(field, nor, noc);
+    DSPACE ds;
+    DSSet(DataOfFieldObject(field), noc, &ds);
+    mfFrobenius( &ds, DataOfMTX64_Matrix(m1), DataOfMTX64_Matrix(m2), nor);
+    return m2;
+}
+
 static void allocateAndChop(Obj m, Obj parts[2][2], UInt n2, UInt n2a,
                             UInt m2, Obj field) {
   parts[0][0] = NEW_MTX64_Matrix(field, n2, m2);
@@ -424,6 +494,12 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_SLMultiplyStrassenNonSquare, 3, "a, b, level"),
     GVAR_FUNC(MTX64_SLTranspose, 1, "m"),
     GVAR_FUNC(MTX64_SLEchelizeDestructive, 1, "a"),
+
+    GVAR_FUNC(MTX64_mfMultiply, 3, "a b threads"),
+    GVAR_FUNC(MTX64_mfAdd, 2, "a b"),
+    GVAR_FUNC(MTX64_mfSub, 2, "a b"),
+    GVAR_FUNC(MTX64_mfFrobenius, 1, "m"),
+    
 
     {0} /* Finish with an empty entry */
 };
