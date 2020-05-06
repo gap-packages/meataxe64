@@ -60,11 +60,11 @@ meataxe64_la_SOURCES = \
    src/mtx64/tfarm2.c \
    src/mtx64/util.c \
    src/mtx64/fphpmi.cc \
-   src/mtx64/fphpmi1.cc \
+   src/mtx64/memfuns.c \
    $(ASM_SOURCES)
 
 meataxe64_la_CPPFLAGS = $(GAP_CPPFLAGS)
-meataxe64_la_CFLAGS = $(GAP_CFLAGS)
+meataxe64_la_CFLAGS = $(GAP_CFLAGS) -Wno-format
 meataxe64_la_CXXFLAGS = -std=c++11 $(GAP_CXXFLAGS)
 meataxe64_la_LDFLAGS = $(GAP_LDFLAGS) -module -avoid-version
 if SYS_IS_CYGWIN
