@@ -22,4 +22,9 @@ uint64_t SLSizeM(const FIELD * f, uint64_t nor, uint64_t noc);
 uint64_t SLSizeC(const FIELD * f, uint64_t nor, uint64_t noc);
 uint64_t SLSizeR(const FIELD * f, uint64_t nor, uint64_t noc);
 
+extern void TSMul(DSPACE *dsa, DSPACE * dsbc, uint64_t nora,
+     const Dfmt * a, uint64_t astride, const Dfmt * b, uint64_t bstride,
+                  Dfmt * c);
+
+
 /* end of slab.h  */

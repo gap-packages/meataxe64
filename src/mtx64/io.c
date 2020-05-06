@@ -258,6 +258,7 @@ EFIL * ERHdr(const char * fname, uint64_t * header)
         exit(12);
     }
     e=malloc(sizeof(EFIL));
+    e->eftyp = 1;
     e->f=f;
     e->bk=malloc(64);
     e->fn=fnamst(fname);
@@ -299,6 +300,7 @@ void EPeek(const char * fname, uint64_t * header)
     }
     e=malloc(sizeof(EFIL));
     e->f=f;
+    e->eftyp=1;
     e->bk=malloc(64);
     r=fread(blk,1,64,e->f);
     (void) r;
@@ -342,6 +344,7 @@ EFIL * EWHdr(const char * fname, const uint64_t * header)
     }
     e=malloc(sizeof(EFIL));
     e->f=f;
+    e->eftyp=1;
     e->bk=malloc(64);
     e->fn=fnamst(fname);
     bcsstart(e);
@@ -365,11 +368,16 @@ EFIL * EWHdr(const char * fname, const uint64_t * header)
 void EWData(EFIL * e, size_t bytes, const uint8_t * d)
 {
     uint64_t i;
-    while(bytes!=0)
-    {
-        i=putbytes(e,d,bytes);
-        d+=i;
-        bytes-=i;
+    if (e->eftyp == 1) {
+        while(bytes!=0)
+            {
+                i=putbytes(e,d,bytes);
+                d+=i;
+                bytes-=i;
+            }
+    } else {
+        memmove(e->data+e->offset, d, bytes);
+        e->offset += bytes;
     }
     return;
 }
@@ -377,11 +385,16 @@ void EWData(EFIL * e, size_t bytes, const uint8_t * d)
 void ERData(EFIL * e, size_t bytes, uint8_t * d)
 {
     uint64_t i;
-    while(bytes!=0)
-    {
-        i=getbytes(e,d,bytes);
-        d+=i;
-        bytes-=i;
+    if (e->eftyp == 1) {
+        while(bytes!=0)
+            {
+                i=getbytes(e,d,bytes);
+                d+=i;
+                bytes-=i;
+            }
+    } else {
+        memmove(d, e->data+e->offset, bytes);
+        e->offset += bytes;
     }
     return;
 }  
@@ -393,6 +406,11 @@ int EWClose1(EFIL * e, int mode)
     int i,j,k,r;
     uint64_t x;
 
+    if (e->eftyp == 2) {
+        free(e);
+        return 0;
+    }
+    
 /* first flush the last block  */
 /* needs to be clean to get checksum correct  */
     if(e->bk[0]==10)
@@ -460,6 +478,10 @@ int ERClose1(EFIL * e, int mode)
     int r,i,j,k;
     uint64_t x;
     uint64_t * pt;
+    if (e->eftyp != 1) {
+        free(e);
+        return 0;
+    }
     XLock();
     logfile=fopen("logfile","ab");
     r=fread(e->bk,1,64,e->f);
@@ -519,5 +541,33 @@ extern void LogString(int type, const char *string)
     XUnlock();
     if((type>=80)&&(type<=89)) fprintf(stderr,"%s\n",string);
 }
+
+EFIL *ERHdrD(const DSPACE *ds, const Dfmt *d, uint64_t nor, uint64_t *header) {
+    EFIL *ef = malloc(sizeof(EFIL));
+    ef->eftyp = 2;
+    ef->data = (Dfmt *)d;
+    ef->nor = nor;
+    ef->noc = ds->noc;
+    ef->fdef = ds->f->fdef;
+    ef->offset = 0;
+    header[0] = 1;
+    header[1] = ef->fdef;
+    header[2] = nor;
+    header[3] = ds->noc;
+    header[4] = 0;
+    return ef;
+}
+
+EFIL *EWHdrD(Dfmt *d, const uint64_t *header) {
+    EFIL *ef = malloc(sizeof(EFIL));
+    ef->eftyp = 2;
+    ef->data = d;
+    ef->nor = header[2];
+    ef->noc = header[1];
+    ef->fdef = header[1];
+    ef->offset = 0;
+    return ef;
+}
+
 
 /* end of io.c  */

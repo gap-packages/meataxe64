@@ -54,7 +54,7 @@ extern void mfAdd(const DSPACE *ds, const Dfmt *a, const Dfmt *b,
                Dfmt *c, uint64_t nor);
 extern void mfSub(const DSPACE *ds, const Dfmt *a, const Dfmt *b,
                Dfmt *c, uint64_t nor);
-extern void mfSMul(const DSPACE *ds, const Dfmt *a, FELT x, uint64_t nor);
+extern void mfSMul(const DSPACE *ds, const Dfmt *a, FELT x, uint64_t nor, Dfmt *b);
 extern void mfSMad(const DSPACE *ds, Dfmt *a, const Dfmt *b, FELT x,
                uint64_t nor);
 

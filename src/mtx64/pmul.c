@@ -98,11 +98,21 @@ void PLMul(DSPACE *dsa, DSPACE *dsbc, uint64_t nora,
 /*  Do the matrix multiplication  */
             for(k=0;k<cauls;k++)
             {
+                uint64_t red_count = 0;
                 for(j=0;j<alca;j++)
                 {
+                    Afmt *aa1 =  aa+j*(f->abase+((rowstodo+ f->boxlet -1)/f->boxlet)*f->alcovebytes);
+                    if (f->redfreq) {
+                        if (++red_count == f->redfreq) {
+                            red_count = 0;
+                            *aa1 = 1;
+                        } else {
+                            *aa1 = 0;
+                        }
+                    }
                     BrickMad(f,
                              bwa,
-                             aa+j*(f->abase+((rowstodo+ f->boxlet -1)/f->boxlet)*f->alcovebytes),
+                             aa1,
                              bb+(k*alca+j)*f->bbrickbytes,
                              cc+(box*f->recbox+k*nora)*f->cfmtcauld
                             );
