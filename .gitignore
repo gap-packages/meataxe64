@@ -35,3 +35,7 @@ src/mtx64.old
 /src/TAGS
 /src/mtx64/TAGS
 .DS_Store
+
+*.lo
+*.la
+

@@ -1,4 +1,3 @@
-#
 # Makefile rules for the meataxe64 package
 #
 KEXT_NAME = meataxe64
@@ -16,7 +15,6 @@ KEXT_SOURCES = \
    src/mtx64/fmul.c \
    src/mtx64/fpef.c \
    src/mtx64/fphpmi.cc \
-   src/mtx64/fphpmi1.cc \
    src/mtx64/ftra.c \
    src/mtx64/funs1.c \
    src/mtx64/funs2.c \
@@ -52,7 +50,8 @@ else
 KEXT_SOURCES += $(ASM_SOURCES)
 endif
 
-KEXT_CXXFLAGS = -std=c++11
+KEXT_CFLAGS = -Wno-format -Wno-comment
+KEXT_CXXFLAGS = -std=c++11 -Wno-format
 KEXT_LDFLAGS = -lpthread
 
 # The following uses a pattern rule as a trick to make things work safely with
