@@ -52,3 +52,8 @@
 /tmp/
 /gh-pages/
 *~
+/etc/benchdata.g
+mtx64v2b.old
+src/mtx64.old
+/src/TAGS
+/src/mtx64/TAGS

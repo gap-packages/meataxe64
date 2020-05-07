@@ -347,9 +347,9 @@ gap> m2 := MTX64_ReadMatrix(Filename(d,"a"));
 gap> m2 = m;
 true
 gap> m3 := MTX64_ReadMatrix( 17);
-Error, MTX64_ReadMatrix: filename must be a string
+Error, MTX64_ReadMatrix: filename must be a string not a integer
 gap> MTX64_WriteMatrix( m2, 11);
-Error, MTX64_WriteMatrix: filename must be a string
+Error, MTX64_WriteMatrix: filename must be a string not a integer
 gap> MTX64_HashMatrix(m);
 -327586356389823045
 gap> MTX64_RANDOM_MAT( MTX64_FiniteField(3), 10, 10, 10);

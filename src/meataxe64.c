@@ -803,10 +803,41 @@ static Obj FuncMTX64_ExtractVec8Bit(Obj self, Obj d, Obj rownum) {
 
 // IO
 
+
+// There is a potential race in this function, which could lead to a
+// segfault, if the path becomes unwritable between the call to SyIsWritableFile
+// and the one to EWHdr
+
+static Int CheckWritablePath(const Char *name) {
+#if 0
+    /* use this with GAP versions which include the call */
+    return SyIsWritablePath(name);
+#else
+    if (0 == SyIsDirectoryPath(name))
+        return -1;
+    if (0 == SyIsWritableFile(name))
+        return 0;
+    if (0 == SyIsExistingFile(name))
+        return -1;
+    Char *slash = rindex(name, '/');
+    if (!slash)
+        return SyIsWritableFile(".");
+    Char basename[slash - name + 1];
+    memcpy(basename, name, slash - name);
+    basename[slash-name] = '\0';
+    return SyIsWritableFile(basename);
+#endif
+        
+}
+
 static Obj FuncMTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
   CHECK_MTX64_Matrix(mx);
   if (!IsStringConv(fname))
-    ErrorMayQuit("MTX64_WriteMatrix: filename must be a string", 0, 0);
+      ErrorMayQuit("MTX64_WriteMatrix: filename must be a string not a %s",
+                   (Int)TNAM_OBJ(fname), 0);
+  const Char *name = CONST_CSTR_STRING(fname);
+  if (0 != CheckWritablePath(name))
+      ErrorMayQuit("MTX64_WriteMatrix: path %s cannot be written to", (Int) name, 0);
   UInt header[5];
   Obj fld = FieldOfMatrix(mx);
   UInt nor = HeaderOfMatrix(mx)->nor;
@@ -815,8 +846,7 @@ static Obj FuncMTX64_WriteMatrix(Obj self, Obj mx, Obj fname) {
   header[1] = DataOfFieldObject(fld)->fdef;
   header[2] = nor;
   header[3] = noc;
-  EFIL *f = EWHdr((const char *)CHARS_STRING(fname),
-                  (uint64_t *)header); // exits if file won't open
+  EFIL *f = EWHdr(name, (uint64_t *)header);
   EWData(f, Size_Data_Matrix(fld, noc, nor), DataOfMTX64_Matrix(mx));
   EWClose(f);
   return True;
@@ -826,9 +856,13 @@ static Obj MTX64_FiniteField;
 
 static Obj FuncMTX64_ReadMatrix(Obj self, Obj fname) {
   if (!IsStringConv(fname))
-    ErrorMayQuit("MTX64_ReadMatrix: filename must be a string", 0, 0);
+      ErrorMayQuit("MTX64_ReadMatrix: filename must be a string not a %s",
+                   (Int)TNAM_OBJ(fname), 0);
+  const Char *name = CONST_CSTR_STRING(fname);
+  if (0 != SyIsReadableFile(name))
+      ErrorMayQuit("MTX64_WriteMatrix: path %s cannot be read from", (Int) name, 0);
   UInt header[5];
-  EFIL *f = ERHdr((const char *)CHARS_STRING(fname), (uint64_t *)header);
+  EFIL *f = ERHdr(name, (uint64_t *)header);
   // We need to pass this construction out to GAP because the caching
   // of fields and families happens there
   if (header[0] != 1)
