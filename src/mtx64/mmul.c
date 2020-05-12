@@ -12,7 +12,7 @@
 #include "proggies.h"
 #include "tuning.h"
 
-// #define DEBUG 1
+#define DEBUG 0
 
 void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s3)
 {
@@ -158,7 +158,7 @@ void mmul(const char *m1, int s1, const char *m2, int s2, const char * m3, int s
     M3MOJs(A);          // Allocate MOJs for A
     M3MOJs(B);          // ditto for B
     M3EvenChop(C,8,caul,8,f->entbyte*8);
-#ifdef DEBUG
+#if DEBUG
 printf("%lu %ld Strategy %d chops %lu %lu %lu buf %d\n",
               A->fdef, A->nor, strat,A->c,A->r,C->c,buffering);
 printf(" Arow");

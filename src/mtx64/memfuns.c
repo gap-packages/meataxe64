@@ -19,7 +19,7 @@
 #include "funs.h"
 #include "funs1.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 
 void mfMultiply(uint64_t threads, const FIELD * f, 
@@ -91,7 +91,7 @@ void mfMultiply(uint64_t threads, const FIELD * f,
        M4EvenChop(C,8,caul,1,1);
 
 
-       #ifdef DEBUG
+       #if DEBUG
 printf("%lu %ld  chops %lu %lu %lu\n",
               A->f->charc, A->nor, A->c,A->r,C->c);
 printf(" Arow");

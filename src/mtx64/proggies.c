@@ -340,7 +340,6 @@ MOJ TileMOJ( Dfmt *m, uint64_t nor, uint64_t noc, uint64_t stride, uint64_t full
     t->noc = noc;
     t->stride = stride;
     t->fullnoc = fullnoc;
-    printf(" %lu %lu %lu %p\n", nor, noc, stride, m);
     return moj;
 }
 
