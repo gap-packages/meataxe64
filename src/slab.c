@@ -139,6 +139,39 @@ static Obj FuncMTX64_mfSub(Obj self, Obj a, Obj b) {
   return c;
 }
 
+static Obj FuncMTX64_mfSMul(Obj self, Obj m, Obj x) {
+  CHECK_MTX64_MATRIX_FELT(m,x);
+  Matrix_Header *h = HeaderOfMatrix(m);
+  UInt nor = h->nor;
+  UInt noc = h->noc;
+  Obj field = FieldOfMatrix(m);
+  DSPACE ds;
+  Obj p = NEW_MTX64_Matrix(field, nor, noc);
+  FIELD *f = DataOfFieldObject(field);
+  Dfmt *mp = DataOfMTX64_Matrix(m);
+  Dfmt *pp = DataOfMTX64_Matrix(p);
+  DSSet(f, noc, &ds);
+  mfSMul(&ds,mp,GetFELTFromFELTObject(x),nor, pp);
+  return p;
+}
+
+static Obj FuncMTX64_mfSMad(Obj self, Obj a, Obj b, Obj x) {
+  CHECK_MTX64_Matrices(a,b,2);
+  CHECK_MTX64_MATRIX_FELT(a,x);
+  CHECK_MUT(b);
+  Matrix_Header *ha = HeaderOfMatrix(a);
+  UInt nor = ha->nor;
+  UInt noc = ha->noc;
+  Obj field = FieldOfMatrix(a);
+  DSPACE ds;
+  FIELD *f = DataOfFieldObject(field);
+  Dfmt *ap = DataOfMTX64_Matrix(a);
+  Dfmt *bp = DataOfMTX64_Matrix(b);
+  DSSet(f, noc, &ds);
+  mfSMad(&ds, ap,  bp, GetFELTFromFELTObject(x),nor);
+  return (Obj)0;
+}
+
 static Obj FuncMTX64_mfFrobenius(Obj self, Obj m1) {
     CHECK_MTX64_Matrix(m1);
     Matrix_Header *hm = HeaderOfMatrix(m1);
@@ -151,6 +184,40 @@ static Obj FuncMTX64_mfFrobenius(Obj self, Obj m1) {
     mfFrobenius( &ds, DataOfMTX64_Matrix(m1), DataOfMTX64_Matrix(m2), nor);
     return m2;
 }
+
+static Obj FuncMTX64_mfFieldContract(Obj self, Obj m1, Obj newField) {
+    CHECK_MTX64_Matrix(m1);
+    Matrix_Header *hm = HeaderOfMatrix(m1);
+    Obj field = FieldOfMatrix(m1);
+    UInt noc = hm->noc;
+    UInt nor = hm->nor;
+    CHECK_SUBFIELD(field,newField);
+    Obj m2 = NEW_MTX64_Matrix(newField, nor, noc);
+    DSPACE ds1;
+    DSPACE ds2;
+    DSSet(DataOfFieldObject(field), noc, &ds1);
+    DSSet(DataOfFieldObject(newField), noc, &ds2);
+    mfFieldContract( &ds1, DataOfMTX64_Matrix(m1), &ds2, DataOfMTX64_Matrix(m2), nor);
+    return m2;
+}
+
+static Obj FuncMTX64_mfFieldExtend(Obj self, Obj m1, Obj newField) {
+    CHECK_MTX64_Matrix(m1);
+    Matrix_Header *hm = HeaderOfMatrix(m1);
+    Obj field = FieldOfMatrix(m1);
+    UInt noc = hm->noc;
+    UInt nor = hm->nor;
+    CHECK_SUBFIELD(newField,field);
+    Obj m2 = NEW_MTX64_Matrix(newField, nor, noc);
+    DSPACE ds1;
+    DSPACE ds2;
+    DSSet(DataOfFieldObject(field), noc, &ds1);
+    DSSet(DataOfFieldObject(newField), noc, &ds2);
+    mfFieldExtend( &ds1, DataOfMTX64_Matrix(m1), &ds2, DataOfMTX64_Matrix(m2), nor);
+    return m2;
+}
+
+
 
 static void allocateAndChop(Obj m, Obj parts[2][2], UInt n2, UInt n2a,
                             UInt m2, Obj field) {
@@ -495,10 +562,14 @@ static StructGVarFunc GVarFuncs[] = {
     GVAR_FUNC(MTX64_SLTranspose, 1, "m"),
     GVAR_FUNC(MTX64_SLEchelizeDestructive, 1, "a"),
 
-    GVAR_FUNC(MTX64_mfMultiply, 3, "a b threads"),
-    GVAR_FUNC(MTX64_mfAdd, 2, "a b"),
-    GVAR_FUNC(MTX64_mfSub, 2, "a b"),
+    GVAR_FUNC(MTX64_mfMultiply, 3, "a, b, threads"),
+    GVAR_FUNC(MTX64_mfAdd, 2, "a, b"),
+    GVAR_FUNC(MTX64_mfSub, 2, "a, b"),
+    GVAR_FUNC(MTX64_mfSMul, 2, "a, x"),
+    GVAR_FUNC(MTX64_mfSMad, 3, "a, b, x"),
     GVAR_FUNC(MTX64_mfFrobenius, 1, "m"),
+    GVAR_FUNC(MTX64_mfFieldContract, 2, "m, f"),
+    GVAR_FUNC(MTX64_mfFieldExtend, 2, "m, f"),
     
 
     {0} /* Finish with an empty entry */
