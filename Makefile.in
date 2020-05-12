@@ -26,6 +26,7 @@ KEXT_SOURCES = \
    src/mtx64/io.c \
    src/mtx64/linf.c \
    src/mtx64/mech.c \
+   src/mtx64/memfuns.c \
    src/mtx64/mmul.c \
    src/mtx64/mpef.c \
    src/mtx64/pcritc.c \
