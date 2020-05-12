@@ -177,6 +177,24 @@ static inline void CHECK_MTX64_RowRange(Obj startrow, Obj nrows, Obj m) {
 }
 
 
+static inline void CHECK_SUBFIELD(Obj bigfield, Obj smallfield) {
+   if (!IS_MTX64_Field(bigfield) || !IS_MTX64_Field(smallfield)) {
+     ErrorMayQuit("Meataxe64: arguments should be Meataxe64 fields", 0, 0);
+   }
+   UInt qb = DataOfFieldObject(bigfield)->fdef;
+   UInt qs = DataOfFieldObject(smallfield)->fdef;
+   if (qb % qs != 0) {
+     ErrorMayQuit("Meataxe64: incompatiable field sizes %i %i",qb,qs);
+   }
+   UInt x = qs;
+   while (x < qb) {
+     x *= qs;
+   }
+   if (x > qb) {
+     ErrorMayQuit("Meataxe64: incompatible field sizes %i %i",qb,qs);
+   }
+}
+
 // This is used to populate a DSpace structure on the fly. Since it
 // contains a C pointer to the field, we can't keep it alive through a GC
 
