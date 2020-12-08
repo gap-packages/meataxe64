@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/gap-packages/meataxe64.svg?branch=master)](https://travis-ci.org/gap-packages/meataxe64)
+[![Build Status](https://travis-ci.com/gap-packages/meataxe64.svg?branch=master)](https://travis-ci.com/gap-packages/meataxe64)
 [![Code Coverage](https://codecov.io/github/gap-packages/meataxe64/coverage.svg?branch=master&token=)](https://codecov.io/gh/gap-packages/meataxe64)
 
 # The meataxe64 GAP package
