@@ -12,7 +12,7 @@ Some information and documentation can be found in the manual, available
 as PDF `doc/manual.pdf` or as HTML `doc/chap0_mj.html`, or on the package
 homepage at
 
-<http://gap-packages.github.io/meataxe64/>
+<https://gap-packages.github.io/meataxe64/>
 
 ## Requirements
 
