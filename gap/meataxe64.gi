@@ -78,7 +78,7 @@ BindGlobal("MTX64_FieldEltType", MemoizeFunction(function(q)
     return NewType(fam, IsMTX64FiniteFieldElement and IsDataObjectRep);
 end, rec(flush := false)));
 
-BIND_GLOBAL("MTX64_MatrixType",MemoizeFunction(function(q)
+BindGlobal("MTX64_MatrixType",MemoizeFunction(function(q)
     local fam, type;
     fam := NewFamily(STRINGIFY("MTX64_GF(", q, ")_MatrixFamily"));
     fam!.q := q;
