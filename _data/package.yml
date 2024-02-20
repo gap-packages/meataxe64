@@ -1,5 +1,6 @@
 name: meataxe64
-version: 0.1
+version: "0.1"
+license: "GPL-2.0-or-later"
 date: 2019-08-23
 description: |
     meataxe64
@@ -44,3 +45,27 @@ abstract: |
 status: dev
 doc-html: doc/chap0.html
 doc-pdf: doc/manual.pdf
+citeas: |
+    <p class='BibEntry'>
+    [<span class='BibKey'>LPP19</span>]   <b class='BibAuthor'>Linton, S., Parker, R. and Pfeiffer, M.</b>,
+     <i class='BibTitle'>meataxe64, meataxe64,
+             Version 0.1</i>
+     (<span class='BibYear'>2019</span>)<br />
+    (<span class='BibNote'>GAP package</span>),
+    <span class='BibHowpublished'><a href="https://gap-packages.github.io/meataxe64/">https://gap-packages.github.io/meataxe64/</a></span>.
+    </p>
+    
+
+bibtex: |
+    @misc{ meataxe640.1,
+      author =           {Linton, S. and Parker, R. and Pfeiffer, M.},
+      title =            {{meataxe64}, meataxe64, {V}ersion 0.1},
+      month =            {Aug},
+      year =             {2019},
+      note =             {GAP package},
+      howpublished =     {\href      {https://gap-packages.github.io/meataxe64/}
+                          {\texttt{https://gap-packages.github.io/}\discretionary
+                          {}{}{}\texttt{meataxe64/}}},
+      printedkey =       {LPP19}
+    }
+
