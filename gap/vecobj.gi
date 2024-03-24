@@ -242,7 +242,7 @@ end);
 InstallMethod(ConstructingFilter, [IsMeataxe64VectorObj],
         v->IsMeataxe64VectorObj);
 
-InstallMethod(NewVector, [IsMeataxe64VectorObj, IsField and IsFinite, IsList],
+InstallTagBasedMethod(NewVector, IsMeataxe64VectorObj,
         function (t, f, l)
     local  m;
     m := MTX64_NewMatrix(MTX64_FiniteField(Size(f)), 1, Length(l));
@@ -250,7 +250,7 @@ InstallMethod(NewVector, [IsMeataxe64VectorObj, IsField and IsFinite, IsList],
     return MakeMeataxe64Vector(m);
 end);
 
-InstallMethod(NewZeroVector, [IsMeataxe64VectorObj, IsField and IsFinite, IsInt],
+InstallTagBasedMethod(NewZeroVector, IsMeataxe64VectorObj,
         function (t, f, len)
     local  m;
     m := MTX64_NewMatrix(MTX64_FiniteField(Size(f)), 1,len);
