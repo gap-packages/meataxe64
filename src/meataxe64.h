@@ -2,7 +2,8 @@
 #define MTX64_MEATAXE64_H
 #include <stdio.h>
 #include <stdint.h>
-#include "src/compiled.h" /* GAP headers */
+
+#include "compiled.h"   // GAP headers
 
 #ifndef GAP_STATIC_ASSERT
 #define GAP_STATIC_ASSERT(a,b)
