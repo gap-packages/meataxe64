@@ -31,8 +31,7 @@ to be compiled).
 Clone the GIT repository and then, from the top directory do
 
 ```
-./autogen.sh
-./configure --with-gap-root=<path to your GAP root directory>
+./configure <path to your GAP root directory>
 make
 ```
 
