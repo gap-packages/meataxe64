@@ -55,12 +55,12 @@ if IsBound(CompatibleVectorFilter) then
 fi;
 
 
-InstallMethod(NewZeroMatrix,[IsMeataxe64MatrixObj, IsField and IsFinite, IsInt, IsInt],
+InstallMethodOrTagBasedMethod(NewZeroMatrix,[IsMeataxe64MatrixObj, IsField and IsFinite, IsInt, IsInt],
         {filt, R, nor, noc} -> MakeMeataxe64Matrix(MTX64_NewMatrix(MTX64_FiniteField(Size(R)), nor, noc)));
 
 
 
-InstallMethod(NewMatrix,[IsMeataxe64MatrixObj, IsField and IsFinite, IsInt, IsList],
+InstallMethodOrTagBasedMethod(NewMatrix,[IsMeataxe64MatrixObj, IsField and IsFinite, IsInt, IsList],
         function(filt, R, noc, list) 
     local  nor, m, i, l;
     if Length(list) = 0 then
