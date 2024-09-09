@@ -509,11 +509,11 @@ static Obj FuncMTX64_ELMS_LIST(Obj self, Obj m, Obj rows) {
     for (UInt i = 1;  i <= nor2; i++) {
         Obj ix = ELM_LIST(rows, i);
         if (!IS_INTOBJ(ix))
-            ErrorMayQuit("MTX64_ELMS_LIST: row index %i must be a small integer,"
+            ErrorMayQuit("MTX64_ELMS_LIST: row index %d must be a small integer,"
                          " not a %s", i, (Int)TNAM_OBJ(ix));
         Int ixi = INT_INTOBJ(ix);
         if (0 >= ixi || nor < ixi)
-            ErrorMayQuit("MTX64_ELMS_LIST: row index %i out of range",
+            ErrorMayQuit("MTX64_ELMS_LIST: row index %d out of range",
                          i, 0);
         Dfmt *d1 = DPAdv(&ds, ixi-1, d);
         DCpy(&ds, d1, 1, d2);

@@ -164,7 +164,7 @@ static Obj FuncMTX64_RowSelectShifted(Obj self, Obj bitstring, Obj m,
   UInt nor = HeaderOfMatrix(m)->nor;
   UInt noc = HeaderOfMatrix(m)->noc;
   if (nor != ishift + DataOfBitStringObject(bitstring)[0])
-    ErrorMayQuit("mismatched matrix length: matrix %i, bitstring + shift %i",
+    ErrorMayQuit("mismatched matrix length: matrix %d, bitstring + shift %d",
                  nor, ishift + DataOfBitStringObject(bitstring)[0]);
   UInt nos = DataOfBitStringObject(bitstring)[1];
   Obj fld = FieldOfMatrix(m);
