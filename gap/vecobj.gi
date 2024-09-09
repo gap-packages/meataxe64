@@ -13,6 +13,16 @@
 #
 
 
+# for compatibility with both GAP 4.13 and older GAP versions
+BindGlobal("InstallMethodOrTagBasedMethod", function(oper, requirements, method)
+  if IsBoundGlobal("InstallTagBasedMethod") then
+    # for GAP 4.13 or newer
+    ValueGlobal("InstallTagBasedMethod")(oper, requirements[1], method);
+  else
+    # for GAP 4.12 or older
+    InstallMethod(oper, requirements, method);
+  fi;
+end);
 
 
 InstallGlobalFunction(UnderlyingMeataxe64Matrix,
@@ -242,7 +252,7 @@ end);
 InstallMethod(ConstructingFilter, [IsMeataxe64VectorObj],
         v->IsMeataxe64VectorObj);
 
-InstallTagBasedMethod(NewVector, IsMeataxe64VectorObj,
+InstallMethodOrTagBasedMethod(NewVector, [IsMeataxe64VectorObj, IsField and IsFinite, IsList],
         function (t, f, l)
     local  m;
     m := MTX64_NewMatrix(MTX64_FiniteField(Size(f)), 1, Length(l));
@@ -250,7 +260,7 @@ InstallTagBasedMethod(NewVector, IsMeataxe64VectorObj,
     return MakeMeataxe64Vector(m);
 end);
 
-InstallTagBasedMethod(NewZeroVector, IsMeataxe64VectorObj,
+InstallMethodOrTagBasedMethod(NewZeroVector, [IsMeataxe64VectorObj, IsField and IsFinite, IsInt],
         function (t, f, len)
     local  m;
     m := MTX64_NewMatrix(MTX64_FiniteField(Size(f)), 1,len);
