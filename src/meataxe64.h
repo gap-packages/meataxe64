@@ -185,7 +185,7 @@ static inline void CHECK_SUBFIELD(Obj bigfield, Obj smallfield) {
    UInt qb = DataOfFieldObject(bigfield)->fdef;
    UInt qs = DataOfFieldObject(smallfield)->fdef;
    if (qb % qs != 0) {
-     ErrorMayQuit("Meataxe64: incompatiable field sizes %d %d",qb,qs);
+     ErrorMayQuit("Meataxe64: incompatible field sizes %d %d",qb,qs);
    }
    UInt x = qs;
    while (x < qb) {
