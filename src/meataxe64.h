@@ -172,7 +172,7 @@ static inline void CHECK_MTX64_RowCount(Obj row, Obj m) {
 static inline void CHECK_MTX64_RowRange(Obj startrow, Obj nrows, Obj m) {
   CHECK_NONNEG_SMALLINTS(startrow, nrows);
   if (INT_INTOBJ(startrow) + INT_INTOBJ(nrows) > HeaderOfMatrix(m)->nor)
-    ErrorMayQuit("Meataxe64: row range too large for matrix: %i %i",
+    ErrorMayQuit("Meataxe64: row range too large for matrix: %d %d",
                  INT_INTOBJ(startrow) + INT_INTOBJ(nrows),
                  HeaderOfMatrix(m)->nor);
 }
@@ -185,14 +185,14 @@ static inline void CHECK_SUBFIELD(Obj bigfield, Obj smallfield) {
    UInt qb = DataOfFieldObject(bigfield)->fdef;
    UInt qs = DataOfFieldObject(smallfield)->fdef;
    if (qb % qs != 0) {
-     ErrorMayQuit("Meataxe64: incompatiable field sizes %i %i",qb,qs);
+     ErrorMayQuit("Meataxe64: incompatible field sizes %d %d",qb,qs);
    }
    UInt x = qs;
    while (x < qb) {
      x *= qs;
    }
    if (x > qb) {
-     ErrorMayQuit("Meataxe64: incompatible field sizes %i %i",qb,qs);
+     ErrorMayQuit("Meataxe64: incompatible field sizes %d %d",qb,qs);
    }
 }
 
