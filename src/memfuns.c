@@ -1,6 +1,6 @@
 /* Meataxe 64 -- interface to the new memory functions level */
 
-#include "compiled.h"   // GAP headers
+#include "gap_all.h"   // GAP headers
 
 #include "mtx64/field.h"
 // field.h needs to be first, stop clang-format moving it

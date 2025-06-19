@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "compiled.h"   // GAP headers
+#include "gap_all.h"   // GAP headers
 
 #ifndef GAP_STATIC_ASSERT
 #define GAP_STATIC_ASSERT(a,b)
