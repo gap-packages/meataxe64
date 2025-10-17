@@ -10,8 +10,8 @@
  * a few hundred to a few tens of thousands, although there are no hard limits.
  */
 #include "meataxe64.h"
-#include "src/vec8bit.h" /* GAP headers -- we need the internals of these objects */
-#include "src/vecgf2.h" /* GAP headers    for efficient vector conversion */
+#include "vec8bit.h" /* GAP headers -- we need the internals of these objects */
+#include "vecgf2.h" /* GAP headers    for efficient vector conversion */
 
 #include "mtx64/bitstring.h"
 #include "mtx64/io.h"
