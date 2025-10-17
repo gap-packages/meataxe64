@@ -19,8 +19,6 @@
 #include "slab.h" /* headers from other files in this package */
 #include "bitstring.h" /* headers from other files in this package */
 
-#include "src/intfuncs.h"
-
 #include <assert.h>
 
 // meataxe64 is architecture specific
